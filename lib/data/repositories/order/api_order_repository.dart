@@ -167,6 +167,10 @@ class ApiOrderRepository extends TApiRepositoryController<OrderModel>
     required String paymentMethod,
     String? customerNote,
     String? couponCode,
+    // FAZ 07 — stoksuz sipariş yetkisi olan bayi stok bitse de sipariş
+    // verebiliyor; sunucu stok kapısını bu bayrağa göre gevşetiyor
+    // (web `services/order.service.js` → `CanOrderWithoutStock`).
+    bool canOrderWithoutStock = false,
   }) async {
     try {
       final requestBody = {
@@ -178,6 +182,7 @@ class ApiOrderRepository extends TApiRepositoryController<OrderModel>
         // kupon yoksa boş dize gönderilir.
         'customerNote': customerNote ?? '',
         'couponCode': couponCode ?? '',
+        'canOrderWithoutStock': canOrderWithoutStock,
       };
 
       // debugPrint('🛒 [ApiOrderRepository.createOrder] POST ${getEndpoint()}/create body=$requestBody');

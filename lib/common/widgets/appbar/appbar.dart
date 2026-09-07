@@ -13,12 +13,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
-// FAZ 06 — sepet sayacı için: sepet controller'ı gelince aşağıdaki
-// `showActionWithBadge` dalındaki `0` sabiti
-// `CartController.instance.cartItems.length` ile değiştirilecek.
-// import '../../../features/shop/controllers/product/cart_controller.dart';
+import '../../../features/shop/controllers/product/cart_controller.dart';
 import '../../../routes/routes.dart';
 import '../../../utils/constants/colors.dart';
+import '../../../utils/constants/sizes.dart';
 import '../../../utils/constants/text_strings.dart';
 import '../../../utils/device/device_utility.dart';
 import '../../../utils/helpers/helper_functions.dart';
@@ -67,7 +65,6 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
-    // FAZ 06 — final controller = CartController.instance;
     final leadingIconColor = leadingColor ?? (dark ? TColors.light : TColors.dark);
 
     return Padding(
@@ -98,10 +95,10 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
                   OutlinedButton(
                     onPressed: () => Get.toNamed(TRoutes.navigation),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(TSizes.sm),
                       textStyle: Theme.of(context).textTheme.bodySmall,
                     ),
-                    child: const Text(TTexts.skip),
+                    child: Text(TTexts.skip.tr),
                   ),
                 ]
                 : showActions
@@ -109,18 +106,24 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ? actions
                     : [
                       showActionWithBadge
-                          ? badges.Badge(
-                            position: badges.BadgePosition.topEnd(top: 0, end: 0),
-                            // Sayaç balonu TASARIM.md §6'da mercan (`deal`).
-                            badgeStyle: const badges.BadgeStyle(badgeColor: TColors.deal),
-                            // FAZ 06 — sepet controller'ı gelince:
-                            // Obx(() => Text(controller.cartItems.length.toString(), ...))
-                            badgeContent: const Text('0', style: TextStyle(color: Colors.white)),
-                            child: IconButton(
+                          ? Obx(() {
+                            // Sepetteki kalem sayısı; sayaç sıfırsa balon HİÇ
+                            // çizilmez ("0" yazan balon boş sepette de
+                            // dikkat çekiyordu).
+                            final count = CartController.instance.cartItems.length;
+                            final icon = IconButton(
                               onPressed: actionOnPressed,
                               icon: Icon(actionIcon, color: dark ? TColors.light : TColors.dark),
-                            ),
-                          )
+                            );
+                            if (count == 0) return icon;
+                            return badges.Badge(
+                              position: badges.BadgePosition.topEnd(top: 0, end: 0),
+                              // Sayaç balonu TASARIM.md §6'da mercan (`deal`).
+                              badgeStyle: const badges.BadgeStyle(badgeColor: TColors.deal),
+                              badgeContent: Text('$count', style: const TextStyle(color: Colors.white)),
+                              child: icon,
+                            );
+                          })
                           : IconButton(
                             onPressed: actionOnPressed,
                             icon: Icon(actionIcon, color: dark ? TColors.light : TColors.dark),

@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
+import 'features/shop/controllers/product/cart_controller.dart';
+import 'features/shop/controllers/product/compare_controller.dart';
+import 'features/shop/controllers/product/favourites_controller.dart';
+import 'features/shop/screens/cart/cart.dart';
+import 'features/shop/screens/compare/compare.dart';
+import 'features/shop/screens/favourites/favourite.dart';
+import 'features/shop/screens/home/home.dart';
+import 'features/shop/screens/store/store.dart';
 import 'utils/constants/colors.dart';
 import 'utils/constants/sizes.dart';
 import 'utils/helpers/helper_functions.dart';
@@ -47,14 +55,15 @@ class HomeMenu extends StatelessWidget {
               destinations: [
                 _dest(Iconsax.home, controller.selectedMenu.value == 0),
                 _dest(Iconsax.shop, controller.selectedMenu.value == 1),
-                // FAZ 06 — sayaçlar sepet/favori/karşılaştırma controller'ları
-                // geldiğinde bağlanacak; referanstaki kaynaklar şunlar:
-                //   favori    : FavouriteController.instance.favorites.length
-                //   karşılaştır: CompareController.instance.compareIds.length
-                //   sepet     : CartController.instance.noOfCartItems.value
-                _badgeDest(Iconsax.heart, 0, controller.selectedMenu.value == 2),
-                _badgeDest(Icons.balance, 0, controller.selectedMenu.value == 3),
-                _badgeDest(Iconsax.shopping_bag, 0, controller.selectedMenu.value == 4),
+                // Sayaçlar üç controller'dan besleniyor. Girişsiz kullanıcıda
+                // üçü de boş kalır — misafirin listesi "boş" değil YOKTUR,
+                // bu yüzden balon hiç çizilmez.
+                _badgeDest(Iconsax.heart, FavouriteController.instance.favorites.length,
+                    controller.selectedMenu.value == 2),
+                _badgeDest(Icons.balance, CompareController.instance.compareIds.length,
+                    controller.selectedMenu.value == 3),
+                _badgeDest(Iconsax.shopping_bag, CartController.instance.noOfCartItems.value,
+                    controller.selectedMenu.value == 4),
               ],
             ),
           ),
@@ -97,33 +106,13 @@ class AppScreenController extends GetxController {
 
   final Rx<int> selectedMenu = 0.obs;
 
-  /// FAZ 01'de sekmeler yer tutucu. Gerçek ekranlar geldikçe sırayla
-  /// değişecek: 0-1 → FAZ 04 (HomeScreen, StoreScreen),
-  /// 2-3-4 → FAZ 06 (FavouriteScreen, CompareScreen, CartScreen).
+  /// Beş sekmenin tamamı gerçek ekran (yer tutucular FAZ 06'da kalktı).
+  /// Sepet sekmesinde geri oku yok — alt gezinmenin bir sekmesi.
   final screens = const [
-    _PlaceholderScreen(title: 'Ana Sayfa', phase: 'FAZ 04'),
-    _PlaceholderScreen(title: 'Mağaza', phase: 'FAZ 04'),
-    _PlaceholderScreen(title: 'Favoriler', phase: 'FAZ 06'),
-    _PlaceholderScreen(title: 'Karşılaştır', phase: 'FAZ 06'),
-    _PlaceholderScreen(title: 'Sepet', phase: 'FAZ 06'),
+    HomeScreen(),
+    StoreScreen(),
+    FavouriteScreen(),
+    CompareScreen(),
+    CartScreen(),
   ];
-}
-
-/// Henüz yazılmamış sekmelerin yerini tutan geçici ekran. İskeletin gezinme
-/// akışı bununla sınanıyor; ilgili fazda silinecek.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title, required this.phase});
-
-  final String title;
-  final String phase;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text('$title — $phase', style: Theme.of(context).textTheme.bodyMedium),
-      ),
-    );
-  }
 }

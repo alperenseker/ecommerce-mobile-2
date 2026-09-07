@@ -1,8 +1,8 @@
 /// İki sütunlu ürün/marka ızgarası.
 ///
-/// `mainAxisExtent` varsayılanı 300: TASARIM.md §6'daki ürün kartı görselin
-/// altına başlık + fiyat + stok hapı + "sepete ekle" düğmesi koyuyor, bu
-/// yüzden referanstaki 270 taşıyordu.
+/// `mainAxisExtent` varsayılanı [TSizes.productCardHeight]: TASARIM.md §6'daki
+/// ürün kartı görselin altına başlık + fiyat + stok hapı + "sepete ekle"
+/// düğmesi koyuyor, bu yüzden referanstaki 270'lik hücre taşıyordu.
 library;
 
 import 'package:flutter/material.dart';

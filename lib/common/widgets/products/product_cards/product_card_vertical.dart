@@ -9,15 +9,15 @@
 /// olduğunda araya [Spacer] giriyor, böylece fiyat + düğme her kartta aynı
 /// hizada duruyor.
 ///
-/// 🔴 FAZ 05 — karta dokununca açılacak `ProductDetailScreen` henüz yok;
-/// `// FAZ 05` satırı o fazda açılacak.
+/// Karta dokunmak ürün detayını açar (FAZ 05'te bağlandı).
 library;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../features/shop/controllers/product/product_controller.dart';
 import '../../../../features/shop/models/product_model.dart';
-// FAZ 05 — import '../../../../features/shop/screens/product_detail/product_detail.dart';
+import '../../../../features/shop/screens/product_detail/product_detail.dart';
 import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/enums.dart';
 import '../../../../utils/constants/sizes.dart';
@@ -42,14 +42,14 @@ class TProductCardVertical extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final salePercentage =
-        ProductController.instance.calculateSalePercentage(product.price, product.salePrice);
+        ProductController.instance.calculateSalePercentage(product.price, product.oldPrice);
     final dark = THelperFunctions.isDarkMode(context);
     // Küçük resmi ekranda kaplayacağı boyutta çöz (tam çözünürlükte değil);
     // yoksa bir ızgara dolusu büyük fotoğraf belleği bitiriyor ve cihaz ısınıyor.
     final thumbCacheWidth = (160 * MediaQuery.of(context).devicePixelRatio).round();
 
     return GestureDetector(
-      // FAZ 05 — onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+      onTap: () => Get.to(() => ProductDetailScreen(product: product)),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
@@ -135,12 +135,19 @@ class TProductCardVertical extends StatelessWidget {
             /// -- Fiyat + stok hapı
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: TSizes.sm),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              // 🔴 Row DEĞİL Wrap: iki `Flexible` çocuk kalan genişliği EŞİT
+              // bölüşüyordu, oysa stok hapı ihtiyacından fazlasını alıyordu.
+              // Fiyatı gizli ürünlerde (433 üründen 204'ü) "Price on request"
+              // yarısına sığmayıp "Price on re…" diye kırpılıyordu. Wrap ile
+              // ikisi de doğal genişliğini alır, sığmazsa hap alt satıra iner
+              // (üstteki Spacer bu payı zaten tutuyor).
+              child: Wrap(
+                spacing: TSizes.xs,
+                runSpacing: TSizes.xs / 2,
+                crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
-                  Flexible(child: PricingWidget(product: product)),
-                  const SizedBox(width: TSizes.xs),
-                  Flexible(child: ProductStockBadge(product: product, compact: true)),
+                  PricingWidget(product: product),
+                  ProductStockBadge(product: product, compact: true),
                 ],
               ),
             ),

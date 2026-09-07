@@ -40,7 +40,7 @@ class ForgetPasswordScreen extends StatelessWidget {
               child: TextFormField(
                 controller: controller.email,
                 validator: TValidator.validateEmail,
-                decoration: const InputDecoration(labelText: TTexts.email, prefixIcon: Icon(Iconsax.direct_right)),
+                decoration: InputDecoration(labelText: TTexts.email.tr, prefixIcon: const Icon(Iconsax.direct_right)),
               ),
             ),
             const SizedBox(height: TSizes.spaceBtwSections),

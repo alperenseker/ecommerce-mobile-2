@@ -43,6 +43,7 @@ abstract class OrderRepository {
     required String paymentMethod,
     String? customerNote,
     String? couponCode,
+    bool canOrderWithoutStock = false,
   });
 
   Future<OrderModel> updateOrderStatus({

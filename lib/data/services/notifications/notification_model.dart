@@ -42,14 +42,33 @@ class NotificationModel {
       senderId: map.containsKey('senderId') ? map['senderId'] ?? '' : '',
       recipientIds: map.containsKey('recipientIds') ? List<String>.from(map['recipientIds'] ?? []) : [],
       type: map.containsKey('type') ? map['type'] ?? '' : '',
-      createdAt: map.containsKey('createdAt') && map['createdAt'] != null ? (map['createdAt']).toDate() : DateTime.now(),
-      // default to current time if null
-      seenAt: map.containsKey('seenAt') && map['seenAt'] != null ? (map['seenAt']).toDate() : null,
+      // 🔴 Tarih ÜÇ biçimde gelebilir. Referans Firestore'a bağlıydı ve
+      // doğrudan `.toDate()` çağırıyordu; bu API ise ISO **dize** gönderiyor
+      // (`"2026-06-25T06:46:03.589336Z"`) ve `.toDate()` çalışma anında
+      // NoSuchMethodError atıp bildirimin tamamını düşürüyordu.
+      createdAt: _parseDate(map['createdAt']) ?? DateTime.now(),
+      seenAt: _parseDate(map['seenAt']),
       seenBy: map.containsKey('seenBy') ? Map<String, bool>.from(map['seenBy'] ?? {}) : {},
       route: map.containsKey('route') ? map['route'] ?? '' : '',
       routeId: map.containsKey('routeId') ? map['routeId'] ?? '' : '',
       isBroadcast: map.containsKey('isBroadcast') ? map['isBroadcast'] ?? false : false,
     );
+  }
+
+  /// ISO dize · epoch (ms) · `DateTime` · Firestore `Timestamp` — hepsini
+  /// kabul eder, çözemezse `null` döner (çağıran varsayılanına düşer).
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String) return DateTime.tryParse(value);
+    try {
+      // Firestore `Timestamp` gibi `toDate()` taşıyan nesneler.
+      final converted = (value as dynamic).toDate();
+      return converted is DateTime ? converted : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   static NotificationModel empty() => NotificationModel(

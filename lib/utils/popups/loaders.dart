@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../constants/colors.dart';
+import '../constants/sizes.dart';
 import '../helpers/helper_functions.dart';
 
 class TLoaders {
@@ -33,10 +34,10 @@ class TLoaders {
         duration: const Duration(seconds: 3),
         backgroundColor: Colors.transparent,
         content: Container(
-          padding: const EdgeInsets.all(12.0),
-          margin: const EdgeInsets.symmetric(horizontal: 30),
+          padding: const EdgeInsets.all(TSizes.toastPadding),
+          margin: const EdgeInsets.symmetric(horizontal: TSizes.toastMargin),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(TSizes.toastRadius),
             color: THelperFunctions.isDarkMode(Get.context!) ? TColors.darkerGrey.withValues(alpha: 0.9) : TColors.grey.withValues(alpha: 0.9),
           ),
           child: Center(child: Text(message, style: Theme.of(Get.context!).textTheme.labelLarge)),
@@ -55,7 +56,7 @@ class TLoaders {
       backgroundColor: TColors.primary,
       snackPosition: SnackPosition.BOTTOM,
       duration: Duration(seconds: duration),
-      margin: const EdgeInsets.all(10),
+      margin: const EdgeInsets.all(TSizes.snackBarMargin),
       icon: const Icon(Iconsax.check, color: TColors.white),
     ));
   }
@@ -70,7 +71,7 @@ class TLoaders {
       backgroundColor: Colors.orange,
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(TSizes.snackBarMargin),
       icon: const Icon(Iconsax.warning_2, color: TColors.white),
     ));
   }
@@ -85,7 +86,7 @@ class TLoaders {
       backgroundColor: Colors.red.shade600,
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(TSizes.snackBarMargin),
       icon: const Icon(Iconsax.warning_2, color: TColors.white),
     ));
   }

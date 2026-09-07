@@ -131,6 +131,13 @@ class AddressModel {
 
   @override
   String toString() {
-    return '$street, $city, $state $postalCode, $country';
+    // 🔴 Boş alanlar ATLANIR. 1C'den gelen şirket adresi tek satırlık serbest
+    // metindir; şehir/bölge/posta kodu/ülke boş geliyor ve ham birleştirme
+    // ekrana "…, , ," basıyordu. Bölge boşken de "şehir  posta" arasında çift
+    // boşluk kalıyordu.
+    final regionAndPostal = [state, postalCode].where((s) => s.trim().isNotEmpty).join(' ');
+    return [street, city, regionAndPostal, country]
+        .where((s) => s.trim().isNotEmpty)
+        .join(', ');
   }
 }

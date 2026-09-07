@@ -39,7 +39,7 @@ class VerifyEmailController extends GetxController {
       await AuthenticationRepository.instance.sendEmailVerification();
       TLoaders.successSnackBar(title: TTexts.emailSent.tr, message:  TTexts.emailCheckVerify.tr);
     } catch (e) {
-      TLoaders.errorSnackBar(title: 'Oh Snap!', message: e.toString());
+      TLoaders.errorSnackBar(title: TTexts.ohSnap.tr, message: e.toString());
     }
   }
 
@@ -54,7 +54,7 @@ class VerifyEmailController extends GetxController {
           Get.off(
             () => SuccessScreen(
               image: TImages.successfullyRegisterAnimation,
-              title: TTexts.yourAccountCreatedTitle,
+              title: TTexts.yourAccountCreatedTitle.tr,
               subTitle: TTexts.yourAccountCreatedSubTitle,
               onPressed: () => AuthenticationRepository.instance.screenRedirect(),
             ),
@@ -82,7 +82,7 @@ class VerifyEmailController extends GetxController {
       Get.off(
         () => SuccessScreen(
           image: TImages.successfullyRegisterAnimation,
-          title: TTexts.yourAccountCreatedTitle,
+          title: TTexts.yourAccountCreatedTitle.tr,
           subTitle: TTexts.yourAccountCreatedSubTitle,
           onPressed: () => AuthenticationRepository.instance.screenRedirect(),
         ),

@@ -123,7 +123,7 @@ class ForgetPasswordController extends GetxController {
       TFullScreenLoader.stopLoading();
       TLoaders.successSnackBar(
         title: TTexts.changeYourPasswordTitle.tr,
-        message: 'Your password has been reset. Please log in.',
+        message: TTexts.passwordResetDone.tr,
       );
       Get.offAll(() => const LoginScreen());
     } catch (e) {

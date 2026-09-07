@@ -17,7 +17,10 @@ class ApiNotificationRepository
   ApiNotificationRepository()
       : super(
           fromJson: (json) => NotificationModel.fromJson(
-            json['id']?.toString() ?? '',
+            // Sunucu kimliği **`Id`** diye gönderiyor; yalnız `id` okunduğu
+            // için her bildirim boş kimlikle kuruluyordu ve "okundu"
+            // işaretlemesi hedefini bulamıyordu.
+            (json['id'] ?? json['Id'] ?? json['NotificationId'] ?? '').toString(),
             {
               'title': json['title'] ?? json['Title'] ?? '',
               'body': json['body'] ?? json['Body'] ?? '',
@@ -49,4 +52,27 @@ class ApiNotificationRepository
 
   @override
   String getEndpoint() => 'notifications';
+
+  /// 🔴 Bu metot **uygulanmak zorunda**: temel sınıftaki hâli
+  /// `UnimplementedError` fırlatıyor ve `NotificationController` tam olarak
+  /// bunu çağırıyordu — bildirim listesi bu yüzden her zaman boştu
+  /// (`FAZ 02`'nin `ApiAttributeRepository` için yazdığı tuzağın aynısı).
+  ///
+  /// Uç **süzgeçsiz** döner (jetonsuz bile 200); alıcıya göre süzme
+  /// `NotificationController.onlyMine` içindedir, burada değil.
+  @override
+  Future<List<NotificationModel>> fetchAllItems() async {
+    try {
+      final response = await dio.get(getEndpoint());
+
+      if (isSuccess(response.data)) {
+        final data = dataOf(response.data);
+        final List<dynamic> rows = data is List ? data : <dynamic>[];
+        return rows.map((json) => fromJson(json as Map<String, dynamic>)).toList();
+      }
+      throw messageOf(response.data) ?? 'Failed to fetch notifications';
+    } catch (e) {
+      throw handleException(e);
+    }
+  }
 }

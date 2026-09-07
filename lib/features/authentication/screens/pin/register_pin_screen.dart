@@ -31,11 +31,11 @@ class RegisterPinScreen extends StatelessWidget {
               const SizedBox(height: TSizes.spaceBtwSections),
 
               /// Title
-              Text(TTexts.enter4digitPINCode, style: Theme.of(context).textTheme.headlineLarge),
+              Text(TTexts.enter4digitPINCode.tr, style: Theme.of(context).textTheme.headlineLarge),
               const SizedBox(height: TSizes.spaceBtwItems),
 
               /// subTitle
-              Text(TTexts.pinCodeMessage, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+              Text(TTexts.pinCodeMessage.tr, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: TSizes.spaceBtwSections),
 
               /// PIN alanı

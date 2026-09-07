@@ -137,9 +137,11 @@ class ProductController extends GetxController {
     double smallestPrice = double.infinity;
     double largestPrice = 0.0;
 
-    // Varyant yoksa basit fiyat (indirimli varsa o).
+    // Varyant yoksa ODENECEK fiyat: sunucunun `Price` alani. `salePrice`
+    // (= `OldPrice`) indirimden ONCEKI fiyattir, odenecek olan degil —
+    // bkz. [ProductModel.oldPrice].
     if (product.productType == ProductType.simple || (product.variations?.isEmpty ?? true)) {
-      return ((product.salePrice ?? 0.0) > 0.0 ? product.salePrice : product.price).toString();
+      return product.price.toString();
     } else {
       // Varyantlar arasındaki en küçük ve en büyük fiyatı bul.
       for (var variation in product.variations!) {
@@ -163,11 +165,17 @@ class ProductController extends GetxController {
   }
 
   /// -- İndirim yüzdesi
-  String? calculateSalePercentage(double originalPrice, double? salePrice) {
-    if (salePrice == null || salePrice <= 0.0) return null;
-    if (originalPrice <= 0) return null;
+  ///
+  /// [currentPrice] sunucunun `Price`i, [oldPrice] `OldPrice`i (modelde
+  /// `salePrice` alaninda durur). Indirim yalnız eski fiyat **daha buyukse**
+  /// vardir; degilse null doner ve rozet cizilmez. Web `discountPercent` ile
+  /// ayni kural.
+  String? calculateSalePercentage(double currentPrice, double? oldPrice) {
+    if (oldPrice == null || oldPrice <= 0.0) return null;
+    if (currentPrice <= 0) return null;
+    if (oldPrice <= currentPrice) return null;
 
-    double percentage = ((originalPrice - salePrice) / originalPrice) * 100;
+    final percentage = (1 - currentPrice / oldPrice) * 100;
     return percentage.toStringAsFixed(0);
   }
 

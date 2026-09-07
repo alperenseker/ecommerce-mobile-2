@@ -58,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
               FadeIn(
                 delay: const Duration(milliseconds: 400),
                 child: Text(
-                  'Welcome to Fores Store',
+                  TTexts.welcomeTitle.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
@@ -131,6 +131,11 @@ class WelcomeScreen extends StatelessWidget {
                     text: TTexts.haveAnAccount.tr,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: TColors.textSecondary),
                     children: [
+                      // İki parça arasında boşluk yok: ekranda
+                      // "Hesabınız yok mu?Kayıt ol" diye bitişik çıkıyordu.
+                      // Boşluk sözlüğe değil buraya konur (on dosyanın
+                      // sonundaki boşluk gözden kaçar ve kırpılır).
+                      const TextSpan(text: ' '),
                       TextSpan(
                         text: TTexts.signUp.tr,
                         recognizer: TapGestureRecognizer()..onTap = () => Get.toNamed(TRoutes.signup),

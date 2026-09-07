@@ -102,7 +102,7 @@ class OTPController extends GetxController {
       Get.back(result: isVerified);
     } catch (e) {
       TFullScreenLoader.stopLoading();
-      TLoaders.warningSnackBar(title: TTexts.ohSnap, message: e.toString());
+      TLoaders.warningSnackBar(title: TTexts.ohSnap.tr, message: e.toString());
     }
   }
 }

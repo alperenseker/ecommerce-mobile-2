@@ -24,7 +24,7 @@ class THorizontalProductShimmer extends StatelessWidget {
         shrinkWrap: true,
         scrollDirection: Axis.horizontal,
         separatorBuilder: (context, index) => const SizedBox(width: TSizes.spaceBtwItems),
-        itemBuilder: (_, __) => const Row(
+        itemBuilder: (_, _) => const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             /// Görsel

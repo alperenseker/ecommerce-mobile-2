@@ -7,11 +7,9 @@
 /// Stok kuralı [TProductStock] üzerinden okunur: stok yoksa ve kullanıcının
 /// stoksuz sipariş yetkisi de yoksa düğme **kapalıdır** ve "stokta yok" yazar.
 ///
-/// 🔴 FAZ 06 — sepete ekleme fiilen bu fazda BAĞLANMADI. `CartController`
-/// FAZ 06'nın kapsamında (bkz. `faz/06-SEPET-FAVORI-KARSILASTIRMA.md`) ve
-/// `VariationController`/`ImagesController` (FAZ 05) üzerinden ürün detayına
-/// bağlı. Aşağıdaki `// FAZ 06` satırları o fazda açılacak; düğmenin
-/// görünümü, kapalı hâli ve misafir kapısı ŞİMDİ çalışıyor.
+/// Ürün sepetteyse düğme yerine **miktar adımlayıcısı** çizilir (referanstaki
+/// davranış): kullanıcı ızgaradan çıkmadan adet artırıp azaltabilsin.
+/// Miktar değişimi iyimserdir; sunucu hatasında `CartController` geri alır.
 library;
 
 import 'package:flutter/material.dart';
@@ -19,12 +17,13 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../../data/repositories/authentication/authentication_repository.dart';
-// FAZ 06 — import '../../../../../features/shop/controllers/product/cart_controller.dart';
+import '../../../../../features/shop/controllers/product/cart_controller.dart';
 import '../../../../../features/shop/models/product_model.dart';
 import '../../../../../utils/constants/colors.dart';
 import '../../../../../utils/constants/sizes.dart';
 import '../../../../../utils/constants/text_strings.dart';
 import '../../../../../utils/helpers/helper_functions.dart';
+import '../../cart/add_remove_cart_button.dart';
 import 'product_stock_badge.dart';
 
 class ProductCardAddToCartButton extends StatelessWidget {
@@ -39,11 +38,32 @@ class ProductCardAddToCartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     final orderable = TProductStock.resolve(product).canOrder;
+    final cartController = CartController.instance;
 
-    // FAZ 06 — sepetteki adet burada okunacak ve 0'dan büyükse düğme yerine
-    // +/- adımlayıcı çizilecek (referanstaki davranış):
-    // final quantity = CartController.instance.getProductQuantityInCart(product.id);
+    return Obx(() {
+      // Sepetteki adet 0'dan büyükse düğme yerine adımlayıcı çizilir.
+      final quantity = cartController.getProductQuantityInCart(product.id);
+      if (quantity > 0) {
+        return SizedBox(
+          width: double.infinity,
+          height: compact ? 28 : 32,
+          child: Center(
+            child: TProductQuantityWithAddRemoveButton(
+              width: compact ? 24 : 28,
+              height: compact ? 24 : 28,
+              iconSize: TSizes.sm,
+              quantity: quantity,
+              add: () => cartController.addOneToCart(cartController.convertToCartItem(product, 1)),
+              remove: () => cartController.removeOneFromCart(cartController.convertToCartItem(product, 1)),
+            ),
+          ),
+        );
+      }
+      return _button(context, dark, orderable);
+    });
+  }
 
+  Widget _button(BuildContext context, bool dark, bool orderable) {
     return SizedBox(
       width: double.infinity,
       height: compact ? 28 : 32,
@@ -84,8 +104,7 @@ class ProductCardAddToCartButton extends StatelessWidget {
     );
   }
 
-  /// Sepete ekleme. Misafir kapısı şimdiden çalışıyor; sepetin kendisi
-  /// FAZ 06'da bağlanacak.
+  /// Sepete ekleme.
   void _addToCart() {
     final authRepo = AuthenticationRepository.instance;
     if (authRepo.isGuestUser) {
@@ -94,9 +113,8 @@ class ProductCardAddToCartButton extends StatelessWidget {
       return;
     }
 
-    // FAZ 06 — referanstaki hâli:
-    // final cartController = CartController.instance;
-    // final cartItem = cartController.convertToCartItem(product, 1);
-    // cartController.addOneToCart(cartItem);
+    final cartController = CartController.instance;
+    final cartItem = cartController.convertToCartItem(product, 1);
+    cartController.addOneToCart(cartItem);
   }
 }

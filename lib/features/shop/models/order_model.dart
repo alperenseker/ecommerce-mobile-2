@@ -118,6 +118,22 @@ class OrderModel {
   /// değer kullanılır, mantıkta enum.
   final String orderStatusRaw;
 
+  // ─── FAZ 08: kargo bilgisi (sipariş kökünden) ─────────────────────────────
+  // Web (`pages/order.js` → `trackingHtml`) kargo bilgisini siparişin KÖK
+  // alanlarından okuyor: `ShippingCompany`, `TrackingNumber`, `ShippedAt`,
+  // `DeliveredAt`. Referans mobilde yalnız `ShippingInfo` nesnesi vardı ve
+  // sunucu onu doldurmuyor — bu yüzden kök alanlar da ayrıştırılıyor.
+  // Hepsi opsiyoneldir; **yalnız sunucu doldurduysa** ekrana çizilirler.
+
+  /// Kargo firması (`orders.shipping_company`).
+  final String shippingCompany;
+
+  /// Kargo takip numarası (`orders.tracking_number`).
+  final String trackingNumber;
+
+  /// Teslim tarihi (`orders.delivered_at`). Gönderim tarihi [shippingDate].
+  final DateTime? deliveredAt;
+
   OrderModel({
     required this.docId,
     required this.id,
@@ -166,6 +182,9 @@ class OrderModel {
     this.erpSourceName = '',
     this.groupOrderCount,
     this.orderStatusRaw = '',
+    this.shippingCompany = '',
+    this.trackingNumber = '',
+    this.deliveredAt,
   });
 
   String get formattedDate => TFormatter.formatDate(createdAt);
@@ -195,6 +214,14 @@ class OrderModel {
   /// Gösterim için sipariş durumu anahtarı: enum'da karşılığı olmayan
   /// `confirmed` gibi ham değerler korunur.
   String get statusKey => orderStatusRaw.isNotEmpty ? orderStatusRaw : orderStatus.name;
+
+  /// Sunucu kargo bilgisinin HERHANGİ bir alanını doldurdu mu. Hiçbiri yoksa
+  /// sipariş detayında kargo kutusu **hiç çizilmez** (boş kutu gösterilmez).
+  bool get hasShippingInfo =>
+      shippingCompany.isNotEmpty ||
+      trackingNumber.isNotEmpty ||
+      shippingDate != null ||
+      deliveredAt != null;
 
   double calculateSubTotal() => products.fold(0.0, (prev, p) => prev + (p.salePrice * p.quantity));
   double calculateTotalDiscount() => couponDiscountAmount + pointsDiscountAmount;
@@ -257,6 +284,9 @@ class OrderModel {
         'erpSourceName': erpSourceName,
         'groupOrderCount': groupOrderCount,
         'orderStatusRaw': orderStatusRaw,
+        'shippingCompany': shippingCompany,
+        'trackingNumber': trackingNumber,
+        'deliveredAt': deliveredAt?.toIso8601String(),
       };
 
   // ─── fromJson ─────────────────────────────────────────────────────────────
@@ -335,6 +365,10 @@ class OrderModel {
         erpSourceName: _pick(data, ['ErpSourceName', 'erpSourceName', 'erpsourcename']) ?? '',
         groupOrderCount: _parseIntOrNull(_pickRaw(data, ['GroupOrderCount', 'groupOrderCount', 'grouporcount', 'groupordercount'])),
         orderStatusRaw: _pick(data, ['OrderStatus', 'orderStatus', 'orderstatus']) ?? '',
+        // FAZ 08 — kargo bilgisi sipariş kökünde; sunucu doldurmadıysa boş kalır.
+        shippingCompany: _pick(data, ['ShippingCompany', 'shippingCompany', 'shippingcompany']) ?? '',
+        trackingNumber: _pick(data, ['TrackingNumber', 'trackingNumber', 'trackingnumber']) ?? '',
+        deliveredAt: _parseDateTimeOrNull(_pick(data, ['DeliveredAt', 'deliveredAt', 'deliveredat'])),
       );
     } catch (e) {
       rethrow;

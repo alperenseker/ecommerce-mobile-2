@@ -21,7 +21,6 @@ class TProfileActionIcon extends StatelessWidget {
     return Obx(() {
       final image = UserController.instance.user.value.profilePicture;
       return GestureDetector(
-        // FAZ 09 — hesap ekranı gelene kadar bu rota kayıtlı değil.
         onTap: () => Get.toNamed(TRoutes.settings),
         child: Padding(
           padding: const EdgeInsets.only(right: TSizes.xs),

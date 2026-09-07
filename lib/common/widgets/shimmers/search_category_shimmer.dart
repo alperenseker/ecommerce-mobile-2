@@ -21,8 +21,8 @@ class TSearchCategoryShimmer extends StatelessWidget {
       child: ListView.separated(
         shrinkWrap: true,
         itemCount: itemCount,
-        separatorBuilder: (_, __) => const SizedBox(width: TSizes.spaceBtwItems),
-        itemBuilder: (_, __) {
+        separatorBuilder: (_, _) => const SizedBox(width: TSizes.spaceBtwItems),
+        itemBuilder: (_, _) {
           return const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -52,10 +52,10 @@ class ResetPasswordScreen extends StatelessWidget {
                   controller: controller.otpCode,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
-                  validator: (value) => TValidator.validateEmptyText(TTexts.verificationCode, value),
-                  decoration: const InputDecoration(
-                    labelText: TTexts.verificationCode,
-                    prefixIcon: Icon(Iconsax.password_check),
+                  validator: (value) => TValidator.validateEmptyText(TTexts.verificationCode.tr, value),
+                  decoration: InputDecoration(
+                    labelText: TTexts.verificationCode.tr,
+                    prefixIcon: const Icon(Iconsax.password_check),
                   ),
                 ),
               ),

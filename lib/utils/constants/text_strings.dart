@@ -9,6 +9,12 @@ class TTexts {
   static const String spanish = 'spanish';
   static const String russian = 'russian';
 
+  // FAZ 11 — dil adı sözlüğünde Türkçe ve Kazakça karşılığı yoktu; on dilin
+  // sekizi buradan adlandırılıyordu. (Dil ekranı adları `LanguageController.
+  // allLanguages` içinden alır; bu sabitler `TLocalizationHelper` içindir.)
+  static const String turkish = 'turkish';
+  static const String kazakh = 'kazakh';
+
   //Welcome Screen
   static const String welcomeToStore = "welcomeToStore";
   static const String shopSmartBetter = "shopSmartBetter";
@@ -87,11 +93,19 @@ class TTexts {
   //Home Screen
   static const String homeAppbarTitle = "homeAppbarTitle";
   static const String searchInStore = "searchInStore";
+  /// Arama ekranının başlığı.
+  static const String search = "search";
   static const String popularProducts = "Popular Products";
   static const String newArrivals = 'New Arrivals';
   static const String popularCategories = "popularCategories";
   static const String categories = "categories";
   static const String clearFilter = "clearFilter";
+  // FAZ 12 — `clearFilter` bir PARÇA ("… selected · Clear"), tek başına
+  // kullanılamaz. Süzgeç boşken mağaza çipi bu etiketi gösterir.
+  static const String allCategories = "allCategories";
+  // Karşılama ekranının başlığı; referansta ve FAZ 11 sonrasında da
+  // gömülü İngilizce dizeydi, on dilde de İngilizce görünüyordu.
+  static const String welcomeTitle = "welcomeTitle";
   static const String products = "products";
   static const String noDataFound = "noDataFound";
 
@@ -128,6 +142,8 @@ class TTexts {
   // varsayılan · fiyat artan/azalan · yeni · popüler · puan.
   static const String sortDefault = "sortDefault";
   static const String sortRating = "sortRating";
+  /// İndirimli ürünleri öne alan sıralama (referanstaki `'Sale'`).
+  static const String sortSale = "sortSale";
   /// Ana sayfada her ürün bloğunun altındaki "daha fazla" düğmesi.
   static const String moreProducts = "moreProducts";
 
@@ -694,6 +710,219 @@ class TTexts {
   static const String statusReturned = "statusReturned";
   static const String statusRefunded = "statusRefunded";
 
+  // FAZ 05 — ürün detayı ve değerlendirmeler
+  static const String sku = "sku";
+  static const String barcode = "barcode";
+  static const String vat = "vat";
+  static const String model = "model";
+  static const String relatedProducts = "relatedProducts";
+  static const String noDescription = "noDescription";
+  static const String noReviewsYet = "noReviewsYet";
+  static const String writeReview = "writeReview";
+  static const String editReview = "editReview";
+  static const String reviewNeedPurchase = "reviewNeedPurchase";
+  static const String reviewAlreadyExists = "reviewAlreadyExists";
+  static const String reviewFailed = "reviewFailed";
+  static const String productNotFound = "productNotFound";
+  static const String pieces = "pieces";
+
+  // ── FAZ 06 — sepet · favori · karşılaştırma · kupon ──
+  // Girişsiz kullanıcı kapısı: sepet/favori/karşılaştırma sunucuda kullanıcıya
+  // bağlıdır, misafire BOŞ liste değil "önce giriş yapın" gösterilir.
+  static const String signInRequired = "signInRequired";
+  static const String cartLoginText = "cartLoginText";
+  static const String wishlistLoginText = "wishlistLoginText";
+  static const String compareLoginText = "compareLoginText";
+  // Boş durum açıklamaları (TASARIM.md §6: başlık + açıklama + tek düğme)
+  static const String cartEmptyText = "cartEmptyText";
+  static const String wishlistEmptyText = "wishlistEmptyText";
+  static const String comparisonEmptyText = "comparisonEmptyText";
+  static const String couponEmpty = "couponEmpty";
+  static const String couponEmptyText = "couponEmptyText";
+  // Karşılaştırma tablosu satır başlıkları
+  static const String rating = "rating";
+  static const String actions = "actions";
+  static const String remove = "remove";
+  // Favorilerde toplu işlem
+  static const String addAllToCart = "addAllToCart";
+  static const String noneInStock = "noneInStock";
+  static const String addedToCartCount = "addedToCartCount";
+  // Kupon
+  static const String coupon = "coupon";
+  static const String couponCode = "couponCode";
+  static const String applyCoupon = "applyCoupon";
+  static const String redeemCoupon = "redeemCoupon";
+
+  // -- FAZ 07: ödeme ekranı ------------------------------------------------
+  /// Fatura özeti satırları (referansta İngilizce gömülüydü; FAZ 11 sözlüğe
+  /// eklesin diye anahtarlaştırıldı).
+  static const String shippingFee = "shippingFee";
+  static const String taxFee = "taxFee";
+  static const String orderTotal = "orderTotal";
+  static const String free = "free";
+
+  /// Ödeme yöntemi seçici (yalnız `gateway` modunda çizilir).
+  static const String paymentMethods = "paymentMethods";
+  static const String creditCard = "creditCard";
+  static const String creditCardText = "creditCardText";
+  static const String bankTransferText = "bankTransferText";
+  static const String cashOnDeliveryText = "cashOnDeliveryText";
+  static const String paymentPendingApproval = "paymentPendingApproval";
+  static const String paymentPendingApprovalText = "paymentPendingApprovalText";
+
+  /// Sipariş notu (sunucuya `CustomerNote` olarak gider).
+  static const String orderNotes = "orderNotes";
+  static const String orderNotesPlaceholder = "orderNotesPlaceholder";
+
+  /// Limit kutusu — düğme kapalıyken sebebini yazan metinler.
+  static const String cartTotal = "cartTotal";
+  static const String orderBlockedTitle = "orderBlockedTitle";
+
+  /// Adres formu (FAZ 09'un ekranları erken geldi; bkz. DURUM.md).
+  static const String street = "street";
+  static const String addressLine2 = "addressLine2";
+  static const String postalCode = "postalCode";
+  static const String city = "city";
+  static const String state = "state";
+  static const String country = "country";
+  static const String save = "save";
+  static const String addNewAddress = "addNewAddress";
+  static const String updateAddress = "updateAddress";
+  static const String billingAddressLocked = "billingAddressLocked";
+
+
+  // ── FAZ 08 — siparişler, sipariş takibi, iade talepleri ────────────────
+  // Referans ekranlarda bu metinlerin çoğu İngilizce GÖMÜLÜYDÜ; FAZ 11
+  // sözlüklere ekleyebilsin diye anahtarlaştırıldı.
+
+  /// Sipariş listesi (alışveriş = grup)
+  static const String view = "view";
+  static const String orderItems = "orderItems";
+  static const String orderNoItems = "orderNoItems";
+  static const String orderItemsLoadError = "orderItemsLoadError";
+  static const String orderNumber = "orderNumber";
+  static const String orderCount = "orderCount";
+  static const String paymentStatus = "paymentStatus";
+
+  /// Sipariş detayı — grup görünümü
+  static const String purchaseDetails = "purchaseDetails";
+  static const String subOrders = "subOrders";
+  static const String groupSplitNote = "groupSplitNote";
+  static const String viewWholePurchase = "viewWholePurchase";
+  static const String purchaseNotFound = "purchaseNotFound";
+  static const String orderNotFound = "orderNotFound";
+  static const String backToOrders = "backToOrders";
+
+  /// Sipariş detayı — kargo bilgisi (yalnız sunucu doldurduysa çizilir)
+  static const String shippingCompany = "shippingCompany";
+  static const String trackingNumber = "trackingNumber";
+  static const String shippedAt = "shippedAt";
+  static const String deliveredAt = "deliveredAt";
+
+  /// Sipariş detayı — özet ve geçmiş
+  static const String discount = "discount";
+  static const String orderHistory = "orderHistory";
+  static const String historyChangedBy = "historyChangedBy";
+  static const String unitPrice = "unitPrice";
+  static const String cancelOrder = "cancelOrder";
+  static const String cancelOrderConfirm = "cancelOrderConfirm";
+  static const String returnOrder = "returnOrder";
+  static const String reviewProduct = "reviewProduct";
+  static const String reviewed = "reviewed";
+  static const String edit = "edit";
+
+  /// İade talebi — oluşturma
+  static const String returnPolicy = "returnPolicy";
+  static const String returnPolicyText = "returnPolicyText";
+  static const String returnType = "returnType";
+  static const String returnForRefund = "returnForRefund";
+  static const String returnExchange = "returnExchange";
+  static const String returnAndExchangeType = "returnAndExchangeType";
+  static const String selectItemsToReturn = "selectItemsToReturn";
+  static const String selectItemsToReturnText = "selectItemsToReturnText";
+  static const String reasonForReturn = "reasonForReturn";
+  static const String selectReason = "selectReason";
+  static const String additionalDetails = "additionalDetails";
+  static const String additionalDetailsHint = "additionalDetailsHint";
+  static const String submitReturnRequest = "submitReturnRequest";
+  static const String returnPhotos = "returnPhotos";
+  static const String returnPhotosHint = "returnPhotosHint";
+  static const String photoUrlHint = "photoUrlHint";
+  static const String addPhoto = "addPhoto";
+
+  /// İade sebepleri
+  static const String reasonDamagedProduct = "reasonDamagedProduct";
+  static const String reasonWrongItem = "reasonWrongItem";
+  static const String reasonSizeIssue = "reasonSizeIssue";
+  static const String reasonQualityIssue = "reasonQualityIssue";
+  static const String reasonNotAsDescribed = "reasonNotAsDescribed";
+  static const String reasonChangedMind = "reasonChangedMind";
+  static const String reasonOther = "reasonOther";
+
+  /// İade durumları
+  static const String returnStatusRequested = "returnStatusRequested";
+  static const String returnStatusUnderReview = "returnStatusUnderReview";
+  static const String returnStatusApproved = "returnStatusApproved";
+  static const String returnStatusRejected = "returnStatusRejected";
+  static const String returnStatusRefundProcessed = "returnStatusRefundProcessed";
+  static const String returnStatusExchangeProcessed = "returnStatusExchangeProcessed";
+  static const String returnStatusCompleted = "returnStatusCompleted";
+  static const String returnStatusCanceled = "returnStatusCanceled";
+
+  /// İade talebi — ilerleme adımları
+  static const String returnStepRequested = "returnStepRequested";
+  static const String returnStepReview = "returnStepReview";
+  static const String returnStepAction = "returnStepAction";
+  static const String returnStepFinalized = "returnStepFinalized";
+
+  /// İade talebi — detay bölümleri
+  static const String requestId = "requestId";
+  static const String requestOverview = "requestOverview";
+  static const String photoEvidence = "photoEvidence";
+  static const String adminResponse = "adminResponse";
+  static const String shipmentTracking = "shipmentTracking";
+  static const String requestTimeline = "requestTimeline";
+  static const String requestedResolution = "requestedResolution";
+  static const String returnReason = "returnReason";
+  static const String customerNotes = "customerNotes";
+  static const String respondedOn = "respondedOn";
+  static const String returnTrackingNumber = "returnTrackingNumber";
+  static const String exchangeTrackingNumber = "exchangeTrackingNumber";
+  static const String exchangeCarrier = "exchangeCarrier";
+  static const String requestSubmitted = "requestSubmitted";
+  static const String requestApproved = "requestApproved";
+  static const String requestRejected = "requestRejected";
+  static const String refundProcessed = "refundProcessed";
+  static const String exchangeShipped = "exchangeShipped";
+  static const String returnProcessCompleted = "returnProcessCompleted";
+  static const String imageLoadFailed = "imageLoadFailed";
+
+  /// İade talebi — eylemler ve uyarılar
+  static const String cancelRequest = "cancelRequest";
+  static const String cancelRequestHint = "cancelRequestHint";
+  static const String cancelRequestConfirmTitle = "cancelRequestConfirmTitle";
+  static const String cancelRequestConfirmMessage = "cancelRequestConfirmMessage";
+  static const String keepRequest = "keepRequest";
+  static const String yesCancelIt = "yesCancelIt";
+  static const String returnApprovedHint = "returnApprovedHint";
+  static const String returnRejectedHint = "returnRejectedHint";
+  static const String returnCompletedHint = "returnCompletedHint";
+  static const String returnCanceledHint = "returnCanceledHint";
+  static const String contactSupport = "contactSupport";
+  static const String trackStatus = "trackStatus";
+  static const String returnRequestCancelled = "returnRequestCancelled";
+
+  /// İade talebi — hata ve boş durumlar
+  static const String returnSelectItemError = "returnSelectItemError";
+  static const String returnDescriptionError = "returnDescriptionError";
+  static const String returnSubmitFailed = "returnSubmitFailed";
+  static const String returnCancelFailed = "returnCancelFailed";
+  static const String returnLoadFailed = "returnLoadFailed";
+  static const String returnNotSupported = "returnNotSupported";
+  static const String startReturnTitle = "startReturnTitle";
+  static const String startReturnText = "startReturnText";
+  static const String selectOrderFromHistory = "selectOrderFromHistory";
+
   //Format Exception
 
   static const formatInvalidEmail = 'formatInvalidEmail';
@@ -710,4 +939,120 @@ class TTexts {
 
 
 
+
+  /// ─────────────────────────────────────────────────────────────
+  /// FAZ 09 — hesap, adres defteri, ayarlar, dil, bildirimler
+  /// Referans ekranlarda bu metinlerin çoğu İngilizce gömülüydü;
+  /// anahtara çevrildi. FAZ 11 sözlüklere bunları da eklemeli.
+  /// ─────────────────────────────────────────────────────────────
+
+  /// Profil — hesap kimliği
+  static const String accountType = "accountType";
+  static const String accountTypeRetail = "accountTypeRetail";
+  static const String accountTypeCompany = "accountTypeCompany";
+  static const String priceCategory = "priceCategory";
+  static const String companyName = "companyName";
+  static const String director = "director";
+  static const String iinBin = "iinBin";
+  static const String companyDataFrom1C = "companyDataFrom1C";
+  // Not: `company` (satır 683) ve `newPassword` (satır 501) zaten var,
+  // burada yeniden tanımlanmıyor.
+
+  /// Profil — güvenlik ve ad/şifre değiştirme
+  static const String security = "security";
+  static const String changePassword = "changePassword";
+  static const String changePasswordSubTitle = "changePasswordSubTitle";
+  static const String currentPassword = "currentPassword";
+  static const String confirmNewPassword = "confirmNewPassword";
+  static const String confirmPassword = "confirmPassword";
+  static const String passwordsDoNotMatch = "passwordsDoNotMatch";
+  static const String passwordChanged = "passwordChanged";
+  static const String changeName = "changeName";
+  static const String changeNameSubTitle = "changeNameSubTitle";
+  static const String reAuthenticateUser = "reAuthenticateUser";
+  static const String verify = "verify";
+
+  /// Profil — kredi limiti bölümü
+  static const String creditTotal = "creditTotal";
+  static const String creditAvailableShare = "creditAvailableShare";
+
+  /// Adres defteri
+  static const String addresses = "addresses";
+  static const String addressesSubTitle = "addressesSubTitle";
+  static const String savedAddresses = "savedAddresses";
+  static const String noAddressYet = "noAddressYet";
+  static const String noAddressYetMessage = "noAddressYetMessage";
+  static const String editAddress = "editAddress";
+  static const String deleteAddress = "deleteAddress";
+  static const String deleteAddressMessage = "deleteAddressMessage";
+  static const String addressDeleted = "addressDeleted";
+  static const String addressDeleteFailed = "addressDeleteFailed";
+  static const String setAsDefault = "setAsDefault";
+  static const String defaultAddress = "defaultAddress";
+  static const String companyBillingLocked = "companyBillingLocked";
+
+  /// Ayarlar ekranı
+  static const String guestUser = "guestUser";
+  static const String guestSignInPrompt = "guestSignInPrompt";
+
+  /// Bildirimler
+  static const String notification = "notification";
+  static const String noNotifications = "noNotifications";
+  static const String notificationTitleLabel = "notificationTitleLabel";
+  static const String notificationMessageLabel = "notificationMessageLabel";
+  static const String notificationRedirect = "notificationRedirect";
+
+  /// Dil ekranı
+  static const String defaultLabel = "defaultLabel";
+  static const String selectLanguage = "selectLanguage";
+  static const String chooseYourLanguage = "chooseYourLanguage";
+  static const String allLanguages = "allLanguages";
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FAZ 10 — destek sohbeti
+  // 🔴 FAZ 11 bu anahtarları sözlüklere de eklemeli; yoksa ekranda anahtar
+  // adı görünür. `chat`, `chatSubTitle`, `typing`, `ohSnap`, `unableFindChat`,
+  // `unableFetchMessage`, `unableSendMessage` zaten yukarıda tanımlı.
+  // ─────────────────────────────────────────────────────────────────────────
+  static const String supportChat = "supportChat";
+  static const String supportTeam = "supportTeam";
+  static const String supportOnline = "supportOnline";
+  static const String liveSupport = "liveSupport";
+  static const String chats = "chats";
+  static const String chatSignInPrompt = "chatSignInPrompt";
+  static const String chatWelcomeMessage = "chatWelcomeMessage";
+  static const String chatInputHint = "chatInputHint";
+  static const String noChatsYet = "noChatsYet";
+  static const String noRecentMessage = "noRecentMessage";
+  static const String imageMessage = "imageMessage";
+  static const String audioMessage = "audioMessage";
+  static const String attachImage = "attachImage";
+  static const String attachImageHint = "attachImageHint";
+  static const String attachmentFailed = "attachmentFailed";
+  static const String chatLoadFailed = "chatLoadFailed";
+  static const String tryAgain = "tryAgain";
+  static const String send = "send";
+
+  // ─── FAZ 11 — sözlüğe bağlanabilmesi için anahtarlanan gömülü metinler ───
+  // Bu metinler kodda İngilizce sabit olarak duruyordu; dil değiştirildiğinde
+  // ekranda İngilizce kalıyorlardı.
+  static const String warning = 'warning';
+  static const String userFetchFailed = 'userFetchFailed';
+  static const String dataNotSaved = 'dataNotSaved';
+  static const String dataNotSavedMessage = 'dataNotSavedMessage';
+  static const String wishlistAddFailed = 'wishlistAddFailed';
+  static const String wishlistRemoveFailed = 'wishlistRemoveFailed';
+  static const String passwordResetDone = 'passwordResetDone';
+  static const String newPasswordSubTitle = 'newPasswordSubTitle';
+  static const String confirmYourPassword = 'confirmYourPassword';
+
+  // Ana sayfa kaydırmalı afişi (metinler web `home.slider*` ile birebir).
+  static const String sliderSubtitle1 = 'sliderSubtitle1';
+  static const String sliderTitle1 = 'sliderTitle1';
+  static const String sliderSubtitle2 = 'sliderSubtitle2';
+  static const String sliderSubtitle2Accent = 'sliderSubtitle2Accent';
+  static const String sliderTitle2 = 'sliderTitle2';
+  static const String sliderDescription2 = 'sliderDescription2';
+  static const String sliderSubtitle3 = 'sliderSubtitle3';
+  static const String sliderTitle3 = 'sliderTitle3';
 }

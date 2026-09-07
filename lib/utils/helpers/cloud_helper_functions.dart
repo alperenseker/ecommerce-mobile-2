@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../constants/text_strings.dart';
 
 /// Generic helper functions for handling [FutureBuilder]/[StreamBuilder] state.
 class TCloudHelperFunctions {
@@ -9,11 +12,11 @@ class TCloudHelperFunctions {
     }
 
     if (!snapshot.hasData || snapshot.data == null) {
-      return const Center(child: Text('No Data Found!'));
+      return Center(child: Text(TTexts.noDataFound.tr));
     }
 
     if (snapshot.hasError) {
-      return const Center(child: Text('Something went wrong.'));
+      return Center(child: Text(TTexts.somethingWentWrong.tr));
     }
 
     return null;
@@ -28,12 +31,12 @@ class TCloudHelperFunctions {
 
     if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
       if (nothingFound != null) return nothingFound;
-      return const Center(child: Text('No Data Found!'));
+      return Center(child: Text(TTexts.noDataFound.tr));
     }
 
     if (snapshot.hasError) {
       if (error != null) return error;
-      return const Center(child: Text('Something went wrong.'));
+      return Center(child: Text(TTexts.somethingWentWrong.tr));
     }
 
     return null;

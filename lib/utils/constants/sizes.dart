@@ -59,8 +59,10 @@ class TSizes {
   // FAZ 04 — ürün kartı ızgara ölçüleri.
   // Kart görselin altına başlık + fiyat + stok hapı + "sepete ekle" düğmesi
   // koyuyor (TASARIM.md §6); referanstaki 270'lik hücre bunları taşırıyordu.
-  static const double productCardHeight = 300.0;
-  static const double productCardImageHeight = 148.0;
+  static const double productCardHeight = 330.0;
+  static const double productCardImageHeight = 130.0;
+  /// Yatay kartın sabit yüksekliği; yatay raflar da bu değeri kullanır.
+  static const double productCardHorizontalHeight = 176.0;
 
   // Input field
   // 48px yükseklik + 8px köşe: form alanı ile düğme aynı dili konuşsun.
@@ -85,4 +87,13 @@ class TSizes {
 
   // Grid view spacing
   static const double gridViewSpacing = 16.0;
+
+  // FAZ 12 — açılır bildirim (toast / snackbar) ölçüleri.
+  // Referansta bu dört değer çağrı yerlerine gömülüydü (12 · 30 · 10 · 20) ve
+  // üç snackbar birbirinden FARKLI kenar boşluğuyla çıkıyordu: başarı 10,
+  // uyarı ve hata 20. Aynı yerden çıkan üç balon aynı hizada durmalı.
+  static const double toastPadding = 12.0;
+  static const double toastRadius = 30.0;
+  static const double toastMargin = 30.0;
+  static const double snackBarMargin = 16.0;
 }

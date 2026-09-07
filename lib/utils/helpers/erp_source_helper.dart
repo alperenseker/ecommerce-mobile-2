@@ -14,11 +14,11 @@ class TCartCompanyGroup {
   final String name;
   final List<CartItemModel> items;
 
-  /// Bu şirketin ara toplamı (indirimli fiyat varsa o kullanılır).
-  double get subtotal => items.fold(
-        0.0,
-        (sum, item) => sum + ((item.salePrice > 0.0 ? item.salePrice : item.price) * item.quantity),
-      );
+  /// Bu şirketin ara toplamı.
+  ///
+  /// Birim fiyat [CartItemModel.unitPrice] üzerinden okunur — `salePrice`
+  /// sunucuda "indirimden ÖNCEKİ fiyat" anlamına geliyor (FAZ 05).
+  double get subtotal => items.fold(0.0, (sum, item) => sum + item.totalAmount);
 
   /// Bu şirketten sepetteki toplam adet.
   int get quantity => items.fold(0, (sum, item) => sum + item.quantity);
@@ -71,28 +71,31 @@ class TErpSource {
 
   /// Sepet kalemlerini şirkete göre kümeler.
   ///
-  /// Sıralama: şirketi bilinen kümeler ada göre, şirketi çözülemeyenler en
-  /// sonda. Boş sepette boş liste döner.
+  /// 🔴 Sıralama **kalemlerin sepetteki sırasıdır** (ilk görülen şirket önce);
+  /// web `data/product-model.js` → `groupByErp` ile aynı kural. Kullanıcı
+  /// eklediği sırayı hatırlıyor, listeyi alfabetik dizmek kalemi "kaybolmuş"
+  /// gösteriyordu. Sunucudaki bölme sırası `erp_sources.sort_order`'a göredir,
+  /// yani ekrandaki sıra ile sipariş numarasındaki sıra aynı olmak zorunda
+  /// DEĞİLDİR — bölme kararını yine sunucu veriyor.
+  ///
+  /// Şirketi çözülemeyen kalemler de sırasını korur, sona atılmaz: onları da
+  /// kullanıcı bir yerde eklemiştir.
+  ///
+  /// Boş sepette boş liste döner.
   static List<TCartCompanyGroup> groupCartItems(List<CartItemModel> items) {
+    // `LinkedHashMap` (Dart'ta varsayılan Map) ekleme sırasını koruduğu için
+    // ayrıca bir indeks tutmaya gerek yok.
     final buckets = <String, List<CartItemModel>>{};
     for (final item in items) {
       buckets.putIfAbsent(normalizeCode(item.erpSource), () => <CartItemModel>[]).add(item);
     }
 
-    final groups = buckets.entries
+    return buckets.entries
         .map((entry) => TCartCompanyGroup(
               code: entry.key,
               name: entry.key.isEmpty ? unknownLabel : label(entry.key),
               items: entry.value,
             ))
         .toList();
-
-    groups.sort((a, b) {
-      if (a.code.isEmpty) return 1;
-      if (b.code.isEmpty) return -1;
-      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    });
-
-    return groups;
   }
 }

@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 
 import 'app.dart';
 import 'data/repositories/authentication/authentication_repository.dart';
+import 'features/personalization/controllers/language_controller.dart';
 
 /// -- Uygulamanın giriş noktası
 Future<void> main() async {
@@ -26,8 +27,11 @@ Future<void> main() async {
   /// yönlendirir; bu yüzden burada ayrıca `remove()` çağrılmaz.
   Get.put(AuthenticationRepository());
 
-  // FAZ 11 — dil katmanı geldiğinde bu satır açılacak.
-  // Get.lazyPut(() => LanguageController(), fenix: true);
+  /// -- Dil katmanı (FAZ 09).
+  /// `App` kurulmadan ÖNCE kurulur: `onInit` kayıtlı dili okuyup
+  /// `Get.updateLocale` çağırıyor ve `GetMaterialApp` başlangıç locale'ini
+  /// bu controller'dan alıyor. `fenix: true` — ekran kapansa da ayakta kalır.
+  Get.put(LanguageController(), permanent: true);
 
   /// -- Uygulama burada başlıyor...
   runApp(const App());

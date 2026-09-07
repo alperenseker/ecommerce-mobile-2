@@ -36,7 +36,7 @@ class PinController extends GetxController {
       hasError.value = false;
 
       // Start Loading
-      TFullScreenLoader.openLoadingDialog(TTexts.storingPin, TImages.docerAnimation);
+      TFullScreenLoader.openLoadingDialog(TTexts.storingPin.tr, TImages.docerAnimation);
 
       // Check Internet Connectivity
       final isConnected = await NetworkManager.instance.isConnected();
@@ -52,14 +52,14 @@ class PinController extends GetxController {
       TFullScreenLoader.stopLoading();
 
       // Show Success Message
-      TLoaders.successSnackBar(title: TTexts.congratulations, message: TTexts.pinCodeSuccessMessage);
+      TLoaders.successSnackBar(title: TTexts.congratulations.tr, message: TTexts.pinCodeSuccessMessage.tr);
 
       // Move to Referral Screen
       // Get.toNamed(TRoutes.navigation);
     } catch (e) {
       // Remove Loader
       TFullScreenLoader.stopLoading();
-      TLoaders.errorSnackBar(title: TTexts.error, message: e.toString());
+      TLoaders.errorSnackBar(title: TTexts.error.tr, message: e.toString());
     }
   }
 
@@ -107,7 +107,7 @@ class PinController extends GetxController {
         TFullScreenLoader.stopLoading();
 
         // Show Success Message
-        TLoaders.successSnackBar(title: TTexts.congratulations, message: TTexts.pinCodeSuccessMessage);
+        TLoaders.successSnackBar(title: TTexts.congratulations.tr, message: TTexts.pinCodeSuccessMessage.tr);
 
         // Move Back
         Get.back();
@@ -147,7 +147,7 @@ class PinController extends GetxController {
       final userController = UserController.instance;
       if (userController.user.value.pin != enteredOTP.value) {
         hasError.value = true;
-        TLoaders.errorSnackBar(title: TTexts.invalidPin, message: TTexts.inValidPinMessage);
+        TLoaders.errorSnackBar(title: TTexts.invalidPin.tr, message: TTexts.inValidPinMessage.tr);
         TFullScreenLoader.stopLoading();
         return false;
       }

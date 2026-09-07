@@ -40,7 +40,7 @@ class TLoginForm extends StatelessWidget {
                 controller: controller.password,
                 validator: (value) => TValidator.validateEmptyText(TTexts.password.tr, value),
                 decoration: InputDecoration(
-                  labelText: TTexts.password,
+                  labelText: TTexts.password.tr,
                   prefixIcon: const Icon(Iconsax.password_check),
                   suffixIcon: IconButton(
                     onPressed: () => controller.hidePassword.value = !controller.hidePassword.value,

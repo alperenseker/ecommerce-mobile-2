@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import 'bindings/general_bindings.dart';
+import 'features/personalization/controllers/language_controller.dart';
+import 'localization/languages.dart';
 import 'routes/app_routes.dart';
 import 'utils/constants/colors.dart';
 import 'utils/constants/image_strings.dart';
@@ -16,13 +18,18 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FAZ 11 — dil seçimi geldiğinde locale + translations buradan beslenecek:
-    // final langController = Get.find<LanguageController>();
+    // Dil katmanı FAZ 09'da bağlandı. `LanguageController` `main.dart`'ta
+    // `permanent` kuruluyor, bu yüzden burada hazır.
+    //
+    // 🔴 Sözlüklerin kendisi FAZ 11'in işi: `Languages` bugün boş bir
+    // yükleyici (bkz. `localization/languages.dart`). Sözlük yokken `.tr`
+    // anahtarın kendisini döndürüyor; `TTexts` değerleri okunabilir metin
+    // olduğu için ekranda ham anahtar değil İngilizce görünüyor.
+    final langController = LanguageController.instance;
     return GetMaterialApp(
       title: TTexts.appName,
-      // FAZ 11 — çeviri katmanı:
-      // locale: langController.selectedLocale.value,
-      // translations: Languages(),
+      locale: langController.selectedLocale.value,
+      translations: Languages(),
       fallbackLocale: const Locale('en', 'US'),
       theme: TAppTheme.lightTheme,
       themeMode: ThemeMode.system,

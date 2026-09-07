@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 
+import '../constants/text_strings.dart';
 import '../popups/loaders.dart';
 
 /// Manages the network connectivity status and provides methods to check and handle connectivity changes.
@@ -24,7 +25,7 @@ class NetworkManager extends GetxController {
   Future<void> _updateConnectionStatus(List<ConnectivityResult> result) async {
     _connectionStatus.value = result;
     if (result.contains(ConnectivityResult.none)) {
-      TLoaders.customToast(message: 'No Internet Connection');
+      TLoaders.customToast(message: TTexts.noInternet.tr);
     }
   }
 

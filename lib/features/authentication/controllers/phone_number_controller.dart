@@ -45,7 +45,7 @@ class SignInController extends GetxController {
     try {
       // Ensure country code is selected
       if (selectedCountryCode.value.isEmpty) {
-        TLoaders.customToast(message: TTexts.selectCountryCode);
+        TLoaders.customToast(message: TTexts.selectCountryCode.tr);
         return;
       }
 
@@ -53,7 +53,7 @@ class SignInController extends GetxController {
       if (!signInFormKey.currentState!.validate()) return;
 
       // Show loading dialog
-      TFullScreenLoader.openLoadingDialog(TTexts.performingPhoneAuth, TImages.docerAnimation);
+      TFullScreenLoader.openLoadingDialog(TTexts.performingPhoneAuth.tr, TImages.docerAnimation);
 
       // Check internet connectivity
       if (!await _checkInternetConnectivity()) return;
@@ -72,7 +72,7 @@ class SignInController extends GetxController {
 
       if (otpVerified) {
         // Show success message if OTP is verified
-        TLoaders.successSnackBar(title: TTexts.phoneVerifiedTitle, message: TTexts.phoneVerifiedMessage);
+        TLoaders.successSnackBar(title: TTexts.phoneVerifiedTitle.tr, message: TTexts.phoneVerifiedMessage.tr);
 
         // Kayıtlı değilse kullanıcıyı veritabanında oluştur.
         await UserController.instance.fetchUserRecord();
@@ -109,7 +109,7 @@ class SignInController extends GetxController {
   void _handleException(Object e) {
     // Stop loading dialog and show error message
     TFullScreenLoader.stopLoading();
-    TLoaders.errorSnackBar(title: TTexts.ohSnap, message: e.toString());
+    TLoaders.errorSnackBar(title: TTexts.ohSnap.tr, message: e.toString());
   }
 
   Future<void> registerUserInTheDatabase(String phoneNumber) async {

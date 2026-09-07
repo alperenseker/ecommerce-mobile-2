@@ -4,15 +4,15 @@
 /// Görünüm dikey kartla aynı dili konuşur (TASARIM.md §6): beyaz, 12px köşe,
 /// 1px çerçeve, gölgesiz; görsel açık gri altlıkta.
 ///
-/// 🔴 FAZ 05 — `ProductDetailScreen` henüz yok; `// FAZ 05` satırı o fazda
-/// açılacak.
+/// Karta dokunmak ürün detayını açar (FAZ 05'te bağlandı).
 library;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../features/shop/controllers/product/product_controller.dart';
 import '../../../../features/shop/models/product_model.dart';
-// FAZ 05 — import '../../../../features/shop/screens/product_detail/product_detail.dart';
+import '../../../../features/shop/screens/product_detail/product_detail.dart';
 import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/enums.dart';
 import '../../../../utils/constants/sizes.dart';
@@ -36,14 +36,15 @@ class TProductCardHorizontal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final salePercentage =
-        ProductController.instance.calculateSalePercentage(product.price, product.salePrice);
+        ProductController.instance.calculateSalePercentage(product.price, product.oldPrice);
     final dark = THelperFunctions.isDarkMode(context);
     final thumbCacheWidth = (120 * MediaQuery.of(context).devicePixelRatio).round();
 
     return GestureDetector(
-      // FAZ 05 — onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+      onTap: () => Get.to(() => ProductDetailScreen(product: product)),
       child: Container(
         width: 310,
+        height: TSizes.productCardHorizontalHeight,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: dark ? TColors.darkSurface : TColors.white,
@@ -56,7 +57,7 @@ class TProductCardHorizontal extends StatelessWidget {
             /// -- Görsel
             SizedBox(
               width: 120,
-              height: 140,
+              height: double.infinity,
               child: Container(
                 color: dark ? TColors.darkBorder : TColors.lightContainer,
                 child: Stack(
@@ -99,12 +100,15 @@ class TProductCardHorizontal extends StatelessWidget {
                     const SizedBox(height: TSizes.xs),
                     TProductRatingText(rating: product.rating ?? 0, reviewsCount: product.reviewsCount ?? 0),
                     const Spacer(),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    // Dikey karttaki ile aynı gerekçe: eşit bölüşen iki
+                    // `Flexible` yerine doğal genişlik + gerekirse alt satır.
+                    Wrap(
+                      spacing: TSizes.xs,
+                      runSpacing: TSizes.xs / 2,
+                      crossAxisAlignment: WrapCrossAlignment.end,
                       children: [
-                        Flexible(child: PricingWidget(product: product)),
-                        const SizedBox(width: TSizes.xs),
-                        Flexible(child: ProductStockBadge(product: product, compact: true)),
+                        PricingWidget(product: product),
+                        ProductStockBadge(product: product, compact: true),
                       ],
                     ),
                     const SizedBox(height: TSizes.xs),

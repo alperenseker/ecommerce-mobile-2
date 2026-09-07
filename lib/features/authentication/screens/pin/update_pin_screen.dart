@@ -61,7 +61,7 @@ class UpdatePinScreen extends StatelessWidget {
               /// -- Verify Pin Button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: () => controller.updatePin(), child: const Text(TTexts.updatePin)),
+                child: ElevatedButton(onPressed: () => controller.updatePin(), child: Text(TTexts.updatePin.tr)),
               ),
             ],
           ),

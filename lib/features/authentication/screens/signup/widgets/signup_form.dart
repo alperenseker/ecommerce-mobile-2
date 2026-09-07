@@ -60,7 +60,7 @@ class TSignupForm extends StatelessWidget {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return TValidator.validateEmptyText('IIN / BIN', value);
+                        return TValidator.validateEmptyText('IIN / BIN'.tr, value);
                       }
                       // 12 hane kuralı yalnız şirket akışında zorunlu.
                       if (value.trim().length != 12) {
@@ -79,9 +79,9 @@ class TSignupForm extends StatelessWidget {
                       Expanded(
                         child: TextFormField(
                           controller: controller.firstName,
-                          validator: (value) => TValidator.validateEmptyText('First name', value),
+                          validator: (value) => TValidator.validateEmptyText(TTexts.firstName.tr, value),
                           expands: false,
-                          decoration: const InputDecoration(labelText: TTexts.firstName, prefixIcon: Icon(Iconsax.user)),
+                          decoration: InputDecoration(labelText: TTexts.firstName.tr, prefixIcon: const Icon(Iconsax.user)),
                         ),
                       ),
                       const SizedBox(width: TSizes.spaceBtwInputFields),

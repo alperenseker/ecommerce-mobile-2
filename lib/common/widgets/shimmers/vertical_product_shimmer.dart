@@ -1,7 +1,7 @@
 /// Dikey ürün kartı ızgarası için yükleme parıltısı.
 ///
-/// Ölçüler [TProductCardVertical] ile aynı olmalı; yoksa kartlar gelince
-/// ızgara zıplıyor. Yükseklik [TGridLayout] varsayılanıyla (300) hizalı.
+/// Ölçüler ürün kartıyla aynı olmalı; yoksa kartlar gelince
+/// ızgara zıplıyor.
 library;
 
 import 'package:flutter/material.dart';
@@ -22,11 +22,11 @@ class TVerticalProductShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return TGridLayout(
       itemCount: itemCount,
-      itemBuilder: (_, __) => const Column(
+      itemBuilder: (_, _) => const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Görsel
-          TShimmerEffect(width: double.infinity, height: 148),
+          TShimmerEffect(width: double.infinity, height: TSizes.productCardImageHeight),
           SizedBox(height: TSizes.spaceBtwItems / 2),
 
           /// Başlık

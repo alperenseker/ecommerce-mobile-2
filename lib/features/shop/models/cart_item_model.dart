@@ -40,14 +40,28 @@ class CartItemModel {
     this.erpSource = '',
   });
 
-  /// Calculate Total Amount
-  double get totalAmount => ((salePrice > 0 ? salePrice : price) * quantity);
+  /// Kalemin birim fiyatı — **daima `price`**.
+  ///
+  /// 🔴 FAZ 05'te ortaya çıkan fiyat semantiği: sunucuda `Price` GÜNCEL,
+  /// `OldPrice` indirimden ÖNCEKİ fiyattır ve `ProductModel` `OldPrice`ı
+  /// `salePrice` alanına ayrıştırıyor (alan adı referanstan geliyor,
+  /// değiştirilmedi). Eski kod "salePrice varsa indirimli fiyat odur" diyordu;
+  /// indirimli bir üründe müşteriye **eski, yüksek** fiyatı ödetirdi.
+  /// Sunucu sepeti zaten `UnitPrice`ı `price`e yazıyor, `salePrice`ı 0
+  /// bırakıyor — yani tek doğru kaynak `price`.
+  double get unitPrice => price;
 
-  double get discount => ((price - salePrice) * quantity);
+  /// Satır tutarı.
+  double get totalAmount => unitPrice * quantity;
 
-  double get totalAmountWithoutSale => (price * quantity);
+  /// İndirim gösterimi için eski alanlar. `salePrice` bugün "indirimden önceki
+  /// fiyat" anlamında ve canlıda 433/433 üründe 0; tutar hesabında
+  /// KULLANILMAZ (bkz. [unitPrice]).
+  double get discount => ((salePrice - price) * quantity);
 
-  double get salePercentage => (100 - ((salePrice / price) * 100));
+  double get totalAmountWithoutSale => (salePrice > 0 ? salePrice : price) * quantity;
+
+  double get salePercentage => salePrice > price && salePrice > 0 ? (100 - ((price / salePrice) * 100)) : 0;
 
   /// Empty Cart
   static CartItemModel empty() => CartItemModel(productId: '', quantity: 0);

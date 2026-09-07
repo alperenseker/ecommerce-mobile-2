@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../utils/constants/sizes.dart';
@@ -41,7 +42,7 @@ class SuccessScreen extends StatelessWidget {
                 /// Buttons
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(onPressed: onPressed, child: const Text(TTexts.tContinue)),
+                  child: ElevatedButton(onPressed: onPressed, child: Text(TTexts.tContinue.tr)),
                 ),
               ],
             ),

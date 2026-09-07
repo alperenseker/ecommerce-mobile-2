@@ -115,7 +115,7 @@ class UserController extends GetxController {
         }
       }
     } catch (e) {
-      TLoaders.warningSnackBar(title: 'Warning', message: 'Unable to fetch your information. Try again.');
+      TLoaders.warningSnackBar(title: TTexts.warning.tr, message: TTexts.userFetchFailed.tr);
     } finally {
       profileLoading.value = false;
     }
@@ -141,8 +141,8 @@ class UserController extends GetxController {
       }
     } catch (e) {
       TLoaders.warningSnackBar(
-        title: 'Data not saved',
-        message: 'Something went wrong while saving your information. You can re-save your data in your Profile.',
+        title: TTexts.dataNotSaved.tr,
+        message: TTexts.dataNotSavedMessage.tr,
       );
     }
   }
@@ -174,7 +174,7 @@ class UserController extends GetxController {
       user.value.deviceToken = newToken;
       user.refresh();
     } catch (e) {
-      TLoaders.errorSnackBar(title: 'Error', message: 'Failed to update user record: $e');
+      TLoaders.errorSnackBar(title: TTexts.error.tr, message: '${TTexts.failToUpdateUserRecord.tr} $e');
     }
   }
 
@@ -272,7 +272,7 @@ class UserController extends GetxController {
       });
       user.refresh();
     } catch (e) {
-      TLoaders.errorSnackBar(title: 'Error', message: '${TTexts.failToUpdateUserRecord.tr} $e');
+      TLoaders.errorSnackBar(title: TTexts.error.tr, message: '${TTexts.failToUpdateUserRecord.tr} $e');
     }
   }
 
@@ -308,7 +308,7 @@ class UserController extends GetxController {
       user.value.points = points;
       user.refresh();
     } catch (e) {
-      TLoaders.errorSnackBar(title: 'Error', message: '${TTexts.failToUpdateUserRecord.tr} $e');
+      TLoaders.errorSnackBar(title: TTexts.error.tr, message: '${TTexts.failToUpdateUserRecord.tr} $e');
     }
   }
 
@@ -344,7 +344,7 @@ class UserController extends GetxController {
       user.value.points = points;
       user.refresh();
     } catch (e) {
-      TLoaders.errorSnackBar(title: 'Error', message: '${TTexts.failToUpdateUserRecord.tr} $e');
+      TLoaders.errorSnackBar(title: TTexts.error.tr, message: '${TTexts.failToUpdateUserRecord.tr} $e');
     }
   }
 

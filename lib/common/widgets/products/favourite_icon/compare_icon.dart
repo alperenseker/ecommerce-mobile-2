@@ -2,9 +2,8 @@
 ///
 /// TASARIM.md §6: yuvarlak beyaz düğme (32px), ince çerçeve.
 ///
-/// 🔴 FAZ 06 — karşılaştırma mantığı `CompareController`'da; o controller
-/// FAZ 06'nın kapsamında ve ürün detayına (FAZ 05) bağlı. Aşağıdaki
-/// `// FAZ 06` satırları o fazda açılacak.
+/// Seçili hâl `CompareController.compareIds` üzerinden okunur; sınır (4 ürün)
+/// ve "aynı kategori" kuralı controller'da.
 ///
 /// NOT: Aynı adı taşıyan ikinci bir sınıf `products/compare_icon/` altında da
 /// var (referansta da öyle); ikisi farklı imzalarla çağrılıyor, bu yüzden
@@ -12,10 +11,12 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../data/repositories/authentication/authentication_repository.dart';
-// FAZ 06 — import '../../../../features/shop/controllers/product/compare_controller.dart';
+import '../../../../features/shop/controllers/product/compare_controller.dart';
 import '../../../../features/shop/models/product_model.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../icons/t_circular_icon.dart';
 
 /// A custom icon widget which handles its own logic to add or remove products
@@ -34,29 +35,28 @@ class TCompareIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FAZ 06 — final controller = Get.put(CompareController());
-    // return Obx(() => TCircularIcon(
-    //       icon: Icons.balance,
-    //       color: controller.isInCompare(productModel.id) ? TColors.primary : null,
-    //       onPressed: () => controller.toggleCompare(productModel.id, productModel),
-    //       ...
-    //     ));
-    return TCircularIcon(
-      width: width,
-      height: height,
-      size: size,
-      showBorder: true,
-      icon: Icons.balance,
-      onPressed: _toggle,
+    // Controller `general_bindings`te kayıtlı (bkz. favourite_icon.dart).
+    final controller = CompareController.instance;
+    return Obx(
+      () => TCircularIcon(
+        width: width,
+        height: height,
+        size: size,
+        showBorder: true,
+        icon: Icons.balance,
+        color: controller.isInCompare(productModel.id) ? TColors.primary : null,
+        onPressed: () => _toggle(controller),
+      ),
     );
   }
 
-  void _toggle() {
+  void _toggle(CompareController controller) {
     final authRepo = AuthenticationRepository.instance;
     if (authRepo.isGuestUser) {
+      // Karşılaştırma listesi sunucuda kullanıcıya bağlı.
       authRepo.showSignInRequiredPopup();
       return;
     }
-    // FAZ 06 — CompareController.instance.toggleCompare(productModel.id, productModel);
+    controller.toggleCompare(productModel.id, productModel);
   }
 }

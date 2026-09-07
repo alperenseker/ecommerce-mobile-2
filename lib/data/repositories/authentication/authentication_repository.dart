@@ -14,6 +14,9 @@ import 'package:tstore_ecommerce_app/features/personalization/models/user_model.
 import '../../../features/authentication/screens/onboarding/onboarding.dart';
 import '../../../features/authentication/screens/welcome/welcome_screen.dart';
 import '../../../features/personalization/controllers/user_controller.dart';
+import '../../../features/shop/controllers/product/cart_controller.dart';
+import '../../../features/shop/controllers/product/compare_controller.dart';
+import '../../../features/shop/controllers/product/favourites_controller.dart';
 import '../../../features/personalization/controllers/user_settings_controller.dart';
 import '../../../home_menu.dart';
 import '../../../routes/routes.dart';
@@ -338,6 +341,15 @@ class AuthenticationRepository extends GetxController {
       if (Get.isRegistered<UserSettingsController>()) {
         UserSettingsController.instance.clear();
       }
+
+      // 🔴 Sepet / favori / karşılaştırma da sıfırlanmalı. Bunlar kullanıcıya
+      // ait listelerdir ve `fenix: true` ile ayakta kaldıkları için çıkıştan
+      // sonra da bellekte duruyorlardı: misafir, bir önceki hesabın favori ve
+      // karşılaştırma sayaçlarını alt gezinmede görmeye devam ediyordu.
+      // Yalnız yerel durum silinir; sunucuya istek atılmaz (jeton yok).
+      if (Get.isRegistered<CartController>()) CartController.instance.clearLocalState();
+      if (Get.isRegistered<FavouriteController>()) FavouriteController.instance.clearLocalState();
+      if (Get.isRegistered<CompareController>()) CompareController.instance.clearLocalState();
       await deviceStorage.write('isGuestMode', true);
       await deviceStorage.write('isFirstTime', false);
       screenRedirect();

@@ -2,17 +2,18 @@
 ///
 /// TASARIM.md §6: yuvarlak beyaz düğme (32px), ince çerçeve.
 ///
-/// 🔴 FAZ 06 — istek listesi mantığı `FavouriteController`'da ve o controller
-/// FAZ 06'nın kapsamında. Aşağıdaki `// FAZ 06` satırları o fazda açılınca
-/// düğme dolu kalbe döner. Misafir kapısı ŞİMDİ çalışıyor.
+/// Dolu/boş kalp `FavouriteController.favorites` aynasından okunur; kart,
+/// ürün detayı ve favori listesi böylece kendiliğinden senkron kalır.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../data/repositories/authentication/authentication_repository.dart';
-// FAZ 06 — import '../../../../features/shop/controllers/product/favourites_controller.dart';
+import '../../../../features/shop/controllers/product/favourites_controller.dart';
 import '../../../../features/shop/models/product_model.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../icons/t_circular_icon.dart';
 
 class TFavouriteIcon extends StatelessWidget {
@@ -33,29 +34,30 @@ class TFavouriteIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FAZ 06 — final controller = Get.put(FavouriteController());
-    // return Obx(() => TCircularIcon(
-    //       icon: controller.isFavourite(productId) ? Iconsax.heart5 : Iconsax.heart,
-    //       color: controller.isFavourite(productId) ? TColors.error : null,
-    //       onPressed: () => controller.toggleFavoriteProduct(productId, productModel),
-    //       ...
-    //     ));
-    return TCircularIcon(
-      width: width,
-      height: height,
-      size: size,
-      showBorder: true,
-      icon: Iconsax.heart,
-      onPressed: _toggle,
+    // Controller `general_bindings`te kayıtlı; her kart çiziminde `Get.put`
+    // çağırmak boşuna bir nesne daha yaratıyordu.
+    final controller = FavouriteController.instance;
+    return Obx(
+      () => TCircularIcon(
+        width: width,
+        height: height,
+        size: size,
+        showBorder: true,
+        icon: controller.isFavourite(productId) ? Iconsax.heart5 : Iconsax.heart,
+        // Dolu kalp mercan (`deal`); indigo eylem rengiyle karışmasın.
+        color: controller.isFavourite(productId) ? TColors.deal : null,
+        onPressed: () => _toggle(controller),
+      ),
     );
   }
 
-  void _toggle() {
+  void _toggle(FavouriteController controller) {
     final authRepo = AuthenticationRepository.instance;
     if (authRepo.isGuestUser) {
+      // Favoriler sunucuda kullanıcıya bağlı; misafirin listesi yoktur.
       authRepo.showSignInRequiredPopup();
       return;
     }
-    // FAZ 06 — FavouriteController.instance.toggleFavoriteProduct(productId, productModel);
+    controller.toggleFavoriteProduct(productId, productModel);
   }
 }

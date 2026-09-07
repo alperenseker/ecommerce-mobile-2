@@ -95,6 +95,12 @@ class ProductModel {
   int twoStarCount;
   int oneStarCount;
 
+  /// FAZ 05 — kunye/ozellik tablosunda gosterilen iki alan. Sunucu ikisini de
+  /// urun listesinde gonderiyor (`Barcode`, `VatRate`); web `product.js` ->
+  /// `specsHtml` de bunlari basiyor. `vatRate` sunucudan METIN geliyor ("18").
+  String? barcode;
+  String? vatRate;
+
   // Dimensions & Packaging (shown in the product Specifications section)
   double? weight; // Unit weight (kg)
   double? weightNet; // Net package/box weight (kg)
@@ -158,6 +164,8 @@ class ProductModel {
     this.twoStarCount = 0,
     this.oneStarCount = 0,
     this.likes = 0,
+    this.barcode,
+    this.vatRate,
     this.weight,
     this.weightNet,
     this.weightGross,
@@ -213,6 +221,27 @@ class ProductModel {
       return variations!.fold<int>(0, (previousValue, newValue) => previousValue + newValue.stock);
     }
   }
+
+  /// 🔴 FIYAT SEMANTIGI (sunucu + web `data/product-model.js`):
+  ///   * `Price`    -> **GUNCEL** fiyat (odenecek olan)
+  ///   * `OldPrice` -> indirimden ONCEKI fiyat; modelde [salePrice] alanina
+  ///     ayristiriliyor (alan adi referanstan geliyor, degistirilmedi)
+  /// Indirim YALNIZ eski fiyat guncelden buyukse vardir. Alan adina bakip
+  /// "salePrice varsa indirimli fiyat odur" demek fiyati TERS cevirir:
+  /// musteriye eski fiyati odetir ve rozete "--25%" yazdirir.
+  ///
+  /// Canlida bugun `OldPrice` her uruncte 0 (2026-09-04: 433/433), yani bu
+  /// dal hic calismiyor — ama calistigi gun dogru calissin.
+
+  /// Ustu cizili gosterilecek eski fiyat; indirim yoksa null.
+  double? get oldPrice => (salePrice ?? 0) > price && price > 0 ? salePrice : null;
+
+  /// Gercekten indirim var mi. Fiyati gizli urunde indirim de gosterilmez —
+  /// yuzde rozeti fiyati dolayli olarak sizdirirdi.
+  bool get hasDiscount => !isPriceHidden && oldPrice != null;
+
+  /// Indirim yuzdesi (tam sayi). Indirim yoksa 0.
+  int get discountPercent => hasDiscount ? ((1 - price / oldPrice!) * 100).round() : 0;
 
   /// Helper Function
   ///
@@ -404,6 +433,8 @@ class ProductModel {
     'ratingCount': ratingCount,
     'reviewsCount': reviewsCount,
     'likes': likes,
+    'barcode': barcode,
+    'vatRate': vatRate,
     // New review distribution fields
     'fiveStarCount': fiveStarCount,
     'fourStarCount': fourStarCount,
@@ -492,6 +523,8 @@ class ProductModel {
       twoStarCount: get<int>(['twoStarCount']) ?? 0,
       oneStarCount: get<int>(['oneStarCount']) ?? 0,
       likes: get<int>(['likes']) ?? 0,
+      barcode: get<String>(['barcode', 'Barcode']),
+      vatRate: get<dynamic>(['vatRate', 'VatRate'])?.toString(),
       weight: getNum(['weight', 'Weight']),
       weightNet: getNum(['weightNet', 'WeightNet']),
       weightGross: getNum(['weightGross', 'WeightGross']),

@@ -26,12 +26,12 @@ class PricingWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        /// Eski fiyat — yalnız indirim varsa ve fiyat gizli değilse.
-        if (!product.isPriceHidden &&
-            product.productType == ProductType.simple &&
-            (product.salePrice ?? 0) > 0)
+        /// Eski fiyat — yalnız gerçekten indirim varsa ve fiyat gizli değilse.
+        /// Üstü çizilen ESKİ fiyattır (`OldPrice`), güncel olan değil;
+        /// bkz. [ProductModel.oldPrice].
+        if (product.hasDiscount && product.productType == ProductType.simple)
           Text(
-            '₸${product.price}',
+            '₸${product.oldPrice}',
             style: Theme.of(context)
                 .textTheme
                 .labelMedium!

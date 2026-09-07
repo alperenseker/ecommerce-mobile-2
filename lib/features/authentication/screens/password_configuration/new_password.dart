@@ -37,9 +37,9 @@ class NewPasswordScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('New Password', style: Theme.of(context).textTheme.headlineMedium),
+                Text(TTexts.newPassword.tr, style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: TSizes.spaceBtwItems),
-                Text('Create a new password for your account.',
+                Text(TTexts.newPasswordSubTitle.tr,
                     style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -52,7 +52,7 @@ class NewPasswordScreen extends StatelessWidget {
                     validator: (value) =>
                         _passwordRulesMet(value ?? '') ? null : 'Password does not meet the requirements',
                     decoration: InputDecoration(
-                      labelText: TTexts.newPassword,
+                      labelText: TTexts.newPassword.tr,
                       prefixIcon: const Icon(Iconsax.password_check),
                       suffixIcon: IconButton(
                         onPressed: () => controller.hidePassword.value = !controller.hidePassword.value,
@@ -69,13 +69,13 @@ class NewPasswordScreen extends StatelessWidget {
                     controller: controller.confirmPassword,
                     obscureText: controller.hidePassword.value,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Confirm your password';
-                      if (value != controller.newPassword.text) return 'Passwords do not match';
+                      if (value == null || value.isEmpty) return TTexts.confirmYourPassword.tr;
+                      if (value != controller.newPassword.text) return TTexts.passwordsDoNotMatch.tr;
                       return null;
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm Password',
-                      prefixIcon: Icon(Iconsax.password_check),
+                    decoration: InputDecoration(
+                      labelText: TTexts.confirmPassword.tr,
+                      prefixIcon: const Icon(Iconsax.password_check),
                     ),
                   ),
                 ),

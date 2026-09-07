@@ -46,7 +46,7 @@ class TPhoneNumberField extends StatelessWidget {
             searchDecoration: InputDecoration(fillColor: isDark ? TColors.darkContainer : TColors.lightContainer),
             dialogBackgroundColor: isDark ? TColors.darkSurface : TColors.white,
           ),
-          hintText: TTexts.phoneNo,
+          hintText: TTexts.phoneNo.tr,
           errorStyle: const TextStyle(color: TColors.error),
         ),
       ),
