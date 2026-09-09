@@ -1,14 +1,11 @@
-/// Referanstan olduğu gibi taşınan basit `http` sarmalayıcı.
-///
-/// ⚠️ **Kullanılmıyor** ve taban adresi hâlâ şablon değeri
-/// (`your-api-base-url.com`). Gerçek ağ trafiği `THttpClient` (dio_client.dart)
-/// üzerinden gider. Referansta da böyle duruyor; fonksiyon eksiltmemek için
-/// silinmedi.
-library;
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+/// `package:http` tabanlı eski yardımcı — **kullanılmıyor**.
+///
+/// Taban adresi hâlâ şablon değerinde (`your-api-base-url.com`) ve hiçbir yerden
+/// çağrılmıyor; ağ trafiğinin tamamı [THttpClient] üzerinden geçer. Referansla
+/// dosya eşitliği bozulmasın diye duruyor.
 class THttpHelper {
   static const String _baseUrl = 'https://your-api-base-url.com'; // Replace with your API base URL
 

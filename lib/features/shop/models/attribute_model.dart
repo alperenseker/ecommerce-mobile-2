@@ -1,8 +1,6 @@
-/// Katalog geneli öznitelik tanımı (`attributes` ucu).
-library;
-
 import 'package:t_utils/t_utils.dart';
 
+/// Katalog özniteliği (`attributes` ucu).
 class AttributeModel {
   String id;
   String name;

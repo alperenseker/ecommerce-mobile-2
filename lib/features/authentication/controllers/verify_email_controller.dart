@@ -1,13 +1,3 @@
-/// E-posta doğrulama ekranının controller'ı.
-///
-/// Doğrulama bağlantısı gönderilir ve profil ucu 3 saniyede bir yoklanarak
-/// `isEmailVerified` bayrağı beklenir; doğrulanınca başarı ekranına geçilir.
-///
-/// ⚠️ Buradaki `ApiAuth`, `api_authentication_repository.dart` içindeki
-/// **`package:http` sürümüdür** (profil ucu yalnız orada var). Aynı adı
-/// taşıyan `api_auth.dart` ile aynı dosyaya import edilmemeli.
-library;
-
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -19,6 +9,15 @@ import '../../../utils/constants/image_strings.dart';
 import '../../../utils/constants/text_strings.dart';
 import '../../../utils/popups/loaders.dart';
 
+/// E-posta doğrulama ekranının denetleyicisi.
+///
+/// ⚠️ Profili 3 saniyede bir yoklayarak `isEmailVerified` bayrağını izliyor:
+/// sunucu doğrulama anında istemciye haber veren bir kanal sunmuyor, tek yol
+/// bu. Ekran kapanınca sayaç [onClose] içinde durduruluyor.
+///
+/// ⚠️ `ApiAuth` adında **iki** sınıf var; bu dosya `package:http` kullanan
+/// `api_authentication_repository.dart` sürümünü çağırıyor (profil ucu yalnız
+/// orada). İkisini aynı dosyaya import etme.
 class VerifyEmailController extends GetxController {
   static VerifyEmailController get instance => Get.find();
 
@@ -55,7 +54,7 @@ class VerifyEmailController extends GetxController {
             () => SuccessScreen(
               image: TImages.successfullyRegisterAnimation,
               title: TTexts.yourAccountCreatedTitle.tr,
-              subTitle: TTexts.yourAccountCreatedSubTitle,
+              subTitle: TTexts.yourAccountCreatedSubTitle.tr,
               onPressed: () => AuthenticationRepository.instance.screenRedirect(),
             ),
           );
@@ -83,7 +82,7 @@ class VerifyEmailController extends GetxController {
         () => SuccessScreen(
           image: TImages.successfullyRegisterAnimation,
           title: TTexts.yourAccountCreatedTitle.tr,
-          subTitle: TTexts.yourAccountCreatedSubTitle,
+          subTitle: TTexts.yourAccountCreatedSubTitle.tr,
           onPressed: () => AuthenticationRepository.instance.screenRedirect(),
         ),
       );

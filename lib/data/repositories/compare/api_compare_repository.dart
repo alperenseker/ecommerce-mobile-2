@@ -1,9 +1,3 @@
-/// Ürün karşılaştırma listesi (`compare/...`).
-///
-/// Ekleme isteğinde `ignoreCategory: true` gönderilir — mağaza kategori
-/// eşleşmesi zorunlu olmadan karşılaştırmaya izin veriyor.
-library;
-
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
@@ -11,12 +5,16 @@ import '../../../features/shop/models/compare_item_model.dart';
 import '../../repositories/authentication/authentication_repository.dart';
 import '../../../utils/http/dio_client.dart';
 
-/// Karşılaştırma uçlarıyla konuşur. [ApiWishlistRepository] ile aynı deseni
-/// izler: aynı taban adres, aynı yetki başlığı, aynı `success`/`data` açımı.
+/// Karşılaştırma uçlarıyla konuşur.
+///
+/// Biçim olarak [ApiWishlistRepository] ile aynıdır (aynı taban adres, aynı
+/// yetki başlığı, aynı `success`/`data` açma mantığı). `compare/add` gövdesinde
+/// `ignoreCategory: true` gider: kullanıcı farklı kategorilerdeki ürünleri de
+/// yan yana koyabilmeli.
 class ApiCompareRepository extends GetxController {
   static ApiCompareRepository get instance => Get.find();
 
-  /// Uygulama genelinde paylaşılan `Dio` (bkz. [THttpClient]).
+  /// Shared app-wide Dio (see [THttpClient]).
   final Dio _dio = THttpClient.dio;
 
   Options get _authOptions {
@@ -29,7 +27,7 @@ class ApiCompareRepository extends GetxController {
 
   dynamic _getData(Map<String, dynamic> data) => data['data'] ?? data['Data'];
 
-  /// `GET compare/user/{userId}` → kullanıcının (ilk) karşılaştırma listesi.
+  /// GET /compare/user/{userId} -> the user's (first) comparison list.
   Future<({String? comparisonId, List<CompareItemModel> items})> fetchUserComparison(String userId) async {
     try {
       final response = await _dio.get('compare/user/$userId', options: _authOptions);
@@ -61,7 +59,7 @@ class ApiCompareRepository extends GetxController {
     return (comparisonId: comparisonId, items: items);
   }
 
-  /// `POST compare/add`. Başarı bayrağı + arka uç mesajı döner (
+  /// POST /compare/add. Returns success flag + backend message (for the
   /// same-category / limit / already-added validations).
   Future<({bool success, String message})> addToCompare({
     required String userId,
@@ -92,7 +90,7 @@ class ApiCompareRepository extends GetxController {
     }
   }
 
-  /// `DELETE compare/remove/{comparisonItemId}`
+  /// DELETE /compare/remove/{comparisonItemId}
   Future<bool> removeFromCompare(String comparisonItemId) async {
     try {
       final response = await _dio.delete('compare/remove/$comparisonItemId', options: _authOptions);
@@ -103,7 +101,7 @@ class ApiCompareRepository extends GetxController {
     }
   }
 
-  /// `DELETE compare/clear/{comparisonId}`
+  /// DELETE /compare/clear/{comparisonId}
   Future<bool> clearCompare(String comparisonId) async {
     try {
       final response = await _dio.delete('compare/clear/$comparisonId', options: _authOptions);

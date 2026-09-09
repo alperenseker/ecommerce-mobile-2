@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../constants/colors.dart';
 
-/// Bağlantı düğmesi. TASARIM.md §2 renk tablosu: bağlantılar indigo, w600
-/// ("hepsini gör" bağlantıları dâhil). Karanlıkta da aynı indigo kalır.
+/// Yazı düğmesi teması.
+///
+/// TASARIM.md §6'da "hepsini gör" bağlantısı indigo ve `w600`; yazı düğmesi
+/// uygulamadaki bağlantıların ortak biçimi olduğu için renk `primary` yapıldı
+/// (referansta siyahtı, bağlantı olduğu anlaşılmıyordu).
 class TTextButtonTheme {
-  TTextButtonTheme._();
+  TTextButtonTheme._(); // Örnek oluşturulmasını engeller
 
+  /* -- Açık tema -- */
   static final lightTextButtonTheme = TextButtonThemeData(
     style: TextButton.styleFrom(
       foregroundColor: TColors.primary,
@@ -14,6 +18,7 @@ class TTextButtonTheme {
     ),
   );
 
+  /* -- Karanlık tema -- */
   static final darkTextButtonTheme = TextButtonThemeData(
     style: TextButton.styleFrom(
       foregroundColor: TColors.primary,

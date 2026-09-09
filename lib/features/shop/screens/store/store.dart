@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../common/widgets/appbar/appbar.dart';
-import '../../../../common/widgets/appbar/profile_action_icon.dart';
+import '../../../../common/widgets/appbar/appbar_actions.dart';
 import '../../../../common/widgets/loaders/t_empty_state.dart';
 import '../../../../common/widgets/products/product_cards/product_card_vertical.dart';
 import '../../../../common/widgets/shimmers/vertical_product_shimmer.dart';
@@ -43,7 +43,7 @@ class StoreScreen extends StatelessWidget {
       child: Scaffold(
         appBar: TAppBar(
           title: Text(TTexts.tStore.tr, style: Theme.of(context).textTheme.headlineSmall),
-          actions: const [TProfileActionIcon()],
+          actions: const [TAppBarActions()],
           showActions: true,
           showSkipButton: false,
         ),
@@ -53,39 +53,12 @@ class StoreScreen extends StatelessWidget {
             /// -- Arama kutusu + süzgeç düğmesi
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  TSizes.defaultSpace, TSizes.sm, TSizes.defaultSpace, TSizes.spaceBtwItems / 2),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: storeController.searchTextController,
-                      onChanged: storeController.search,
-                      textInputAction: TextInputAction.search,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Iconsax.search_normal, size: 20),
-                        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 20),
-                        hintText: TTexts.searchInStore.tr,
-                        isDense: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: TSizes.sm, horizontal: TSizes.md),
-                        // Sorgu varken temizleme (X) düğmesi çıkar.
-                        suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 20),
-                        suffixIcon: Obx(() {
-                          if (storeController.searchQuery.value.isEmpty) return const SizedBox.shrink();
-                          return IconButton(
-                            icon: const Icon(Iconsax.close_circle, size: 18),
-                            onPressed: storeController.clearSearch,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          );
-                        }),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: TSizes.spaceBtwItems / 2),
-                  const TStoreFilterBar(),
-                ],
+                TSizes.defaultSpace,
+                TSizes.sm,
+                TSizes.defaultSpace,
+                TSizes.spaceBtwItems / 2,
               ),
+              child: _SearchBar(storeController: storeController),
             ),
 
             /// -- Kategori sekmeleri (kök kategoriler, çoklu seçim)
@@ -173,7 +146,7 @@ class StoreScreen extends StatelessWidget {
                           TSizes.defaultSpace,
                           TSizes.spaceBtwSections,
                           TSizes.defaultSpace,
-                          TSizes.defaultSpace + MediaQuery.of(context).viewPadding.bottom,
+                          TSizes.defaultSpace + MediaQuery.paddingOf(context).bottom,
                         ),
                         child: Align(
                           alignment: Alignment.bottomCenter,
@@ -201,6 +174,91 @@ class StoreScreen extends StatelessWidget {
   }
 }
 
+/// Mağaza başlığındaki arama çubuğu + süzgeç düğmesi.
+///
+/// Ana sayfadaki arama kutusuyla aynı dil: **hap biçim**, marka renginde
+/// arama ikonu, odakta indigo çerçeve. Yanındaki süzgeç düğmesi de aynı
+/// yükseklikte ve aynı köşede duruyor ki ikisi tek bir şerit gibi okunsun.
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({required this.storeController});
+
+  final StoreController storeController;
+
+  /// Ana sayfadaki hap arama kutusuyla ve yanındaki süzgeç düğmesiyle aynı
+  /// yükseklik.
+  static const double height = 52.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = THelperFunctions.isDarkMode(context);
+    final idleBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(height / 2),
+      borderSide: BorderSide(color: dark ? TColors.darkBorder : TColors.borderPrimary),
+    );
+
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: storeController.searchTextController,
+            onChanged: storeController.search,
+            textInputAction: TextInputAction.search,
+            style: theme.textTheme.bodyLarge,
+            // Metni kutunun ortasına oturtur; ikonlar kendi dolgularını
+            // taşıdığı için yatay boşluğu `contentPadding` vermez.
+            textAlignVertical: TextAlignVertical.center,
+            decoration: InputDecoration(
+              hintText: TTexts.searchInStore.tr,
+              hintStyle: theme.textTheme.bodyLarge!.apply(color: TColors.darkGrey),
+              filled: true,
+              fillColor: dark ? TColors.darkSurface : TColors.white,
+
+              /// 🔴 `isDense` YOK ve yükseklik dıştan bir `SizedBox` ile
+              /// zorlanmıyor: ikisi birlikte `InputDecorator`ın metin kutusunu
+              /// eziyor, alan olduğundan küçük ve bozuk görünüyordu. Yükseklik
+              /// dolgudan doğuyor, [height] yalnız alt sınır.
+              isDense: false,
+              constraints: const BoxConstraints(minHeight: height),
+              contentPadding: const EdgeInsets.symmetric(vertical: TSizes.sm + TSizes.xs),
+
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(left: TSizes.md, right: TSizes.sm + TSizes.xs),
+                child: Icon(Iconsax.search_normal, size: 20, color: TColors.primary),
+              ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+
+              // Sorgu varken temizleme (X) düğmesi çıkar; kutu sorgusuz hâlde
+              // de aynı sağ boşluğu korusun diye yer tutucu bırakılıyor.
+              suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+              suffixIcon: Obx(() {
+                if (storeController.searchQuery.value.isEmpty) {
+                  return const SizedBox(width: TSizes.md);
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(left: TSizes.sm, right: TSizes.sm + TSizes.xs),
+                  child: GestureDetector(
+                    onTap: storeController.clearSearch,
+                    child: const Icon(Iconsax.close_circle, size: 20, color: TColors.darkGrey),
+                  ),
+                );
+              }),
+
+              border: idleBorder,
+              enabledBorder: idleBorder,
+              focusedBorder: idleBorder.copyWith(
+                borderSide: const BorderSide(color: TColors.primary, width: 1.5),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: TSizes.sm),
+        const TStoreFilterBar(),
+      ],
+    );
+  }
+}
+
 /// Kök kategorilerin yatay sekme şeridi.
 ///
 /// Çoklu seçim: birden fazla sekme aynı anda seçilebilir ve sonuç ikisinin
@@ -217,7 +275,14 @@ class _CategoryTabs extends StatelessWidget {
       final roots = categoryController.rootCategories;
       if (categoryController.isLoading.value || roots.isEmpty) return const SizedBox.shrink();
 
-      final selected = storeController.selectedCategoryIds;
+      // 🔴 Seçim burada, `Obx`in gövdesinde KOPYALANARAK okunuyor. Aşağıdaki
+      // `itemBuilder` tembel: `Obx`in build'i bittikten sonra, düzen sırasında
+      // çalışıyor ve GetX o anda dinleyici kaydedemiyor
+      // (`RxSet.value` yalnız `RxInterface.proxy` doluyken abone yazar).
+      // Seçim orada okunduğu için şerit HİÇ yeniden çizilmiyordu: Fores'e
+      // basınca süzgeç uygulanıyor ama çip mavi olmuyor, "tüm kategoriler"
+      // mavi kalıyordu.
+      final selected = storeController.selectedCategoryIds.toSet();
       return SizedBox(
         height: 40,
         child: ListView.separated(
@@ -279,8 +344,9 @@ class _Tab extends StatelessWidget {
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelLarge!.apply(
-                color: selected ? TColors.primary : (dark ? TColors.light : TColors.darkerGrey),
-              ),
+            color: selected ? TColors.primary : (dark ? TColors.light : TColors.darkerGrey),
+            fontWeightDelta: selected ? 1 : 0,
+          ),
         ),
       ),
     );

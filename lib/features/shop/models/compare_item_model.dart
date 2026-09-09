@@ -1,5 +1,7 @@
-/// A single product inside a user's comparison list (from /compare/user/{userId}).
-/// Mirrors the fields the website's compare table reads off each item.
+/// Kullanıcının karşılaştırma listesindeki tek ürün
+/// (`compare/user/{userId}` yanıtı).
+///
+/// Alanlar web'deki karşılaştırma tablosunun okuduklarıyla birebir aynıdır.
 class CompareItemModel {
   final String comparisonItemId;
   final String productId;

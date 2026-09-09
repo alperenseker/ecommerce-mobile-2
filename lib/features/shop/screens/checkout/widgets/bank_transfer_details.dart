@@ -114,7 +114,13 @@ class _TBankTransferDetailsState extends State<TBankTransferDetails> {
     // Tek şirketli ekranda sunucu süzsün (daha küçük yanıt); çok şirketlide
     // tek çağrı + istemcide gruplama (daha az istek).
     final filter = companies.length == 1 ? companies.first.code : null;
-    final result = await ApiBankDetailsRepository().fetchByCompany(erpSource: filter);
+    // Depo GetX'e kayıtlıysa oradan alınır; değilse referanstaki gibi doğrudan
+    // kurulur. Üretimde davranış aynı — kanca, testin ağa çıkmadan sahte
+    // rekvizit verebilmesi için.
+    final repository = Get.isRegistered<ApiBankDetailsRepository>()
+        ? Get.find<ApiBankDetailsRepository>()
+        : ApiBankDetailsRepository();
+    final result = await repository.fetchByCompany(erpSource: filter);
 
     if (!mounted) return;
     setState(() {

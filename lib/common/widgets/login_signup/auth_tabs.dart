@@ -1,11 +1,3 @@
-/// Giriş / Kayıt sekme şeridi (TASARIM.md §7, web `login.html` ile aynı dil).
-///
-/// Web'de bu iki form tek sayfada sekmeyle değişiyor. Mobilde ekranlar
-/// **ayrı kalır** (KURALLAR §3: gezinme referanstaki gibi); sekme yalnız
-/// aynı geçişin görsel karşılığıdır ve `Get.offNamed` ile yığın derinliğini
-/// büyütmeden karşı ekrana geçer — geri tuşu yine çağıran ekrana döner.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,35 +7,43 @@ import '../../../utils/constants/sizes.dart';
 import '../../../utils/constants/text_strings.dart';
 import '../../../utils/helpers/helper_functions.dart';
 
-class TAuthTabs extends StatelessWidget {
-  const TAuthTabs({super.key, required this.isLogin});
+/// Giriş ↔ kayıt arasındaki **sekmeli** geçiş (TASARIM.md §6).
+///
+/// Referansta böyle bir bileşen yok; oradaki geçiş formun altındaki düğmeyle
+/// yapılıyor. Ekranlar yine de **ayrı** kaldı (KURALLAR §3: akış değişmez);
+/// sekme yalnız görünüştür ve `Get.offNamed` kullanır — `toNamed` olsaydı
+/// kullanıcı iki ekran arasında gidip geldikçe yığın büyür, geri tuşu
+/// beklenmedik biçimde eski kopyalara dönerdi.
+enum TAuthTab { login, signup }
 
-  /// Hangi sekme seçili: true → giriş, false → kayıt.
-  final bool isLogin;
+class TAuthTabs extends StatelessWidget {
+  const TAuthTabs({super.key, required this.current});
+
+  final TAuthTab current;
 
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
-    final line = dark ? TColors.darkBorder : TColors.borderSecondary;
-
     return Container(
+      padding: const EdgeInsets.all(TSizes.xs),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: line, width: TSizes.dividerHeight)),
+        color: dark ? TColors.darkSurface : TColors.lightContainer,
+        borderRadius: BorderRadius.circular(TSizes.borderRadiusMd),
       ),
       child: Row(
         children: [
           Expanded(
             child: _Tab(
               label: TTexts.signIn.tr,
-              selected: isLogin,
-              onTap: isLogin ? null : () => Get.offNamed(TRoutes.logIn),
+              selected: current == TAuthTab.login,
+              onTap: () => Get.offNamed(TRoutes.logIn),
             ),
           ),
           Expanded(
             child: _Tab(
               label: TTexts.createAccount.tr,
-              selected: !isLogin,
-              onTap: isLogin ? () => Get.offNamed(TRoutes.signup) : null,
+              selected: current == TAuthTab.signup,
+              onTap: () => Get.offNamed(TRoutes.signup),
             ),
           ),
         ],
@@ -52,30 +52,31 @@ class TAuthTabs extends StatelessWidget {
   }
 }
 
-/// Tek sekme: seçiliyken indigo metin + 2px indigo alt çizgi.
 class _Tab extends StatelessWidget {
-  const _Tab({required this.label, required this.selected, this.onTap});
+  const _Tab({required this.label, required this.selected, required this.onTap});
 
   final String label;
   final bool selected;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     return InkWell(
-      onTap: onTap,
+      // Seçili sekmeye tekrar dokunmak aynı ekranı yeniden kurmasın.
+      onTap: selected ? null : onTap,
+      borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: TSizes.sm + TSizes.xs),
+        height: TSizes.buttonHeight - TSizes.sm,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: selected ? TColors.primary : Colors.transparent, width: 2),
-          ),
+          color: selected ? (dark ? TColors.dark : TColors.white) : Colors.transparent,
+          borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
         ),
         child: Text(
           label,
-          textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                 color: selected ? TColors.primary : TColors.textSecondary,
               ),
         ),

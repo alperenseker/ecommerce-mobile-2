@@ -1,8 +1,6 @@
-/// Adres repository'sinin arayüzü — uygulaması `api_address_repository.dart`.
-library;
-
 import '../../../features/personalization/models/address_model.dart';
 
+/// Adres repository sözleşmesi.
 abstract class AddressRepository {
   Future<List<AddressModel>> fetchUserAddresses(String userId);
   Future<AddressModel> fetchSingleAddress(String addressId);

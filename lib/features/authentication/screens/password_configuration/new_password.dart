@@ -1,10 +1,3 @@
-/// Şifremi unuttum — 3. adım: yeni şifreyi belirle.
-///
-/// Alanların altındaki canlı kural listesi, yazıldıkça her kuralı yeşile
-/// çevirir; kurallar `TValidator.validatePassword` ile **aynı** olmalıdır,
-/// yoksa liste yeşil görünürken form reddedilir.
-library;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,8 +7,14 @@ import '../../../../routes/routes.dart';
 import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/forget_password_controller.dart';
 
+/// Şifremi unuttum — 3. adım: yeni şifreyi belirle.
+///
+/// 🔴 Alanların altındaki canlı kural listesi ile `TValidator.validatePassword`
+/// **aynı dört kuralı** anlatmak zorunda; biri değişirse öteki de değişsin,
+/// yoksa liste yeşile döner ama form reddeder.
 class NewPasswordScreen extends StatelessWidget {
   const NewPasswordScreen({super.key, required this.email});
 
@@ -24,7 +23,9 @@ class NewPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ForgetPasswordController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
         actions: [IconButton(onPressed: () => Get.offAllNamed(TRoutes.logIn), icon: const Icon(CupertinoIcons.clear))],
@@ -37,9 +38,9 @@ class NewPasswordScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(TTexts.newPassword.tr, style: Theme.of(context).textTheme.headlineMedium),
+                Text('New Password'.tr, style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: TSizes.spaceBtwItems),
-                Text(TTexts.newPasswordSubTitle.tr,
+                Text('Create a new password for your account.'.tr,
                     style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -50,7 +51,7 @@ class NewPasswordScreen extends StatelessWidget {
                     obscureText: controller.hidePassword.value,
                     onChanged: (value) => controller.passwordValue.value = value,
                     validator: (value) =>
-                        _passwordRulesMet(value ?? '') ? null : 'Password does not meet the requirements',
+                        _passwordRulesMet(value ?? '') ? null : 'Password does not meet the requirements'.tr,
                     decoration: InputDecoration(
                       labelText: TTexts.newPassword.tr,
                       prefixIcon: const Icon(Iconsax.password_check),
@@ -63,18 +64,18 @@ class NewPasswordScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: TSizes.spaceBtwInputFields),
 
-                /// Confirm password — iki alan eşleşmeli.
+                /// Confirm password — şifre tekrarı eşleşmeli.
                 Obx(
                   () => TextFormField(
                     controller: controller.confirmPassword,
                     obscureText: controller.hidePassword.value,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return TTexts.confirmYourPassword.tr;
-                      if (value != controller.newPassword.text) return TTexts.passwordsDoNotMatch.tr;
+                      if (value == null || value.isEmpty) return 'Confirm your password'.tr;
+                      if (value != controller.newPassword.text) return 'Passwords do not match'.tr;
                       return null;
                     },
                     decoration: InputDecoration(
-                      labelText: TTexts.confirmPassword.tr,
+                      labelText: 'Confirm Password'.tr,
                       prefixIcon: const Icon(Iconsax.password_check),
                     ),
                   ),
@@ -87,10 +88,10 @@ class NewPasswordScreen extends StatelessWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _rule(context, 'At least 6 characters', value.length >= 6),
-                      _rule(context, 'At least one uppercase letter', value.contains(RegExp(r'[A-Z]'))),
-                      _rule(context, 'At least one number', value.contains(RegExp(r'[0-9]'))),
-                      _rule(context, 'At least one special character',
+                      _rule(context, 'At least 6 characters'.tr, value.length >= 6),
+                      _rule(context, 'At least one uppercase letter'.tr, value.contains(RegExp(r'[A-Z]'))),
+                      _rule(context, 'At least one number'.tr, value.contains(RegExp(r'[0-9]'))),
+                      _rule(context, 'At least one special character'.tr,
                           value.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))),
                     ],
                   );
@@ -110,14 +111,14 @@ class NewPasswordScreen extends StatelessWidget {
     );
   }
 
-  /// All four password rules satisfied.
+  /// Dört şifre kuralının hepsi sağlandı mı.
   bool _passwordRulesMet(String v) =>
       v.length >= 6 &&
       v.contains(RegExp(r'[A-Z]')) &&
       v.contains(RegExp(r'[0-9]')) &&
       v.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'));
 
-  /// One checklist row — green tick when [met], otherwise a muted circle.
+  /// Tek kural satırı — sağlandıysa yeşil tik, değilse soluk daire.
   Widget _rule(BuildContext context, String text, bool met) {
     final color = met ? TColors.success : TColors.darkGrey;
     return Padding(

@@ -9,12 +9,6 @@ class TTexts {
   static const String spanish = 'spanish';
   static const String russian = 'russian';
 
-  // FAZ 11 — dil adı sözlüğünde Türkçe ve Kazakça karşılığı yoktu; on dilin
-  // sekizi buradan adlandırılıyordu. (Dil ekranı adları `LanguageController.
-  // allLanguages` içinden alır; bu sabitler `TLocalizationHelper` içindir.)
-  static const String turkish = 'turkish';
-  static const String kazakh = 'kazakh';
-
   //Welcome Screen
   static const String welcomeToStore = "welcomeToStore";
   static const String shopSmartBetter = "shopSmartBetter";
@@ -100,12 +94,9 @@ class TTexts {
   static const String popularCategories = "popularCategories";
   static const String categories = "categories";
   static const String clearFilter = "clearFilter";
-  // FAZ 12 — `clearFilter` bir PARÇA ("… selected · Clear"), tek başına
-  // kullanılamaz. Süzgeç boşken mağaza çipi bu etiketi gösterir.
+  /// `clearFilter` bir PARÇA ("… seçili · Temizle"), tek başına kullanılamaz.
+  /// Süzgeç boşken mağaza çipi bu etiketi gösterir.
   static const String allCategories = "allCategories";
-  // Karşılama ekranının başlığı; referansta ve FAZ 11 sonrasında da
-  // gömülü İngilizce dizeydi, on dilde de İngilizce görünüyordu.
-  static const String welcomeTitle = "welcomeTitle";
   static const String products = "products";
   static const String noDataFound = "noDataFound";
 
@@ -117,6 +108,18 @@ class TTexts {
   static const String promoBanner3Title = "promoBanner3Title";
   static const String promoBanner3Subtitle = "promoBanner3Subtitle";
   static const String shopNow = "shopNow";
+
+  // Ana sayfa kaydırmalı afişi (metinler web `home.slider*` ile birebir).
+  // 🔴 Bunlar METİN DEĞİL çeviri anahtarı; slider listesi `const` kalabilsin
+  // diye `.tr` çizim sırasında uygulanır.
+  static const String sliderSubtitle1 = 'sliderSubtitle1';
+  static const String sliderTitle1 = 'sliderTitle1';
+  static const String sliderSubtitle2 = 'sliderSubtitle2';
+  static const String sliderSubtitle2Accent = 'sliderSubtitle2Accent';
+  static const String sliderTitle2 = 'sliderTitle2';
+  static const String sliderDescription2 = 'sliderDescription2';
+  static const String sliderSubtitle3 = 'sliderSubtitle3';
+  static const String sliderTitle3 = 'sliderTitle3';
 
   // Product Detail - cart
   static const String addToBag = "addToBag";
@@ -146,6 +149,12 @@ class TTexts {
   static const String sortSale = "sortSale";
   /// Ana sayfada her ürün bloğunun altındaki "daha fazla" düğmesi.
   static const String moreProducts = "moreProducts";
+  /// Liste yüklenemediğinde gösterilen yeniden deneme düğmesi.
+  static const String tryAgain = "tryAgain";
+  /// Girişsiz kullanıcı kapısı (boş durum kutusunun başlığı). Sepet/favori/
+  /// karşılaştırma sunucuda kullanıcıya bağlıdır; misafire BOŞ liste değil
+  /// "önce giriş yapın" gösterilir.
+  static const String signInRequired = "signInRequired";
 
   // Store
 
@@ -156,6 +165,13 @@ class TTexts {
   //Wishlist
 
   static const String wishlist = "wishlist";
+
+  /// İstek listesinin kullanıcıya görünen adı: "Beğenilen Ürünler".
+  /// Liste artık alt gezinmede değil profil sekmesinin içinde.
+  static const String myCollection = "myCollection";
+  static const String likedProducts = "likedProducts";
+  static const String likedProductsSubTitle = "likedProductsSubTitle";
+  static const String comparisonSubTitle = "comparisonSubTitle";
   static const String wishlistEmpty = "wishlistEmpty";
   static const String letsAddSome = "letsAddSome";
 
@@ -710,7 +726,9 @@ class TTexts {
   static const String statusReturned = "statusReturned";
   static const String statusRefunded = "statusRefunded";
 
-  // FAZ 05 — ürün detayı ve değerlendirmeler
+  // -- FAZ 05: ürün detayı ve değerlendirmeler.
+  // 🔴 FAZ 11 bunları 10 sözlüğe de eklemeli, yoksa ekranda anahtar adı görünür.
+
   static const String sku = "sku";
   static const String barcode = "barcode";
   static const String vat = "vat";
@@ -724,34 +742,42 @@ class TTexts {
   static const String reviewAlreadyExists = "reviewAlreadyExists";
   static const String reviewFailed = "reviewFailed";
   static const String productNotFound = "productNotFound";
-  static const String pieces = "pieces";
 
-  // ── FAZ 06 — sepet · favori · karşılaştırma · kupon ──
+  // -- FAZ 06: sepet · favori · karşılaştırma · kupon ----------------------
   // Girişsiz kullanıcı kapısı: sepet/favori/karşılaştırma sunucuda kullanıcıya
-  // bağlıdır, misafire BOŞ liste değil "önce giriş yapın" gösterilir.
-  static const String signInRequired = "signInRequired";
+  // bağlıdır, misafire BOŞ liste değil "önce giriş yapın" gösterilir
+  // (`signInRequired` FAZ 03'te tanımlandı).
   static const String cartLoginText = "cartLoginText";
   static const String wishlistLoginText = "wishlistLoginText";
   static const String compareLoginText = "compareLoginText";
-  // Boş durum açıklamaları (TASARIM.md §6: başlık + açıklama + tek düğme)
+
+  /// Boş durum açıklamaları (TASARIM.md §6: başlık + açıklama + tek düğme).
   static const String cartEmptyText = "cartEmptyText";
   static const String wishlistEmptyText = "wishlistEmptyText";
   static const String comparisonEmptyText = "comparisonEmptyText";
   static const String couponEmpty = "couponEmpty";
   static const String couponEmptyText = "couponEmptyText";
-  // Karşılaştırma tablosu satır başlıkları
+
+  /// Karşılaştırma tablosunun satır başlıkları.
   static const String rating = "rating";
   static const String actions = "actions";
   static const String remove = "remove";
-  // Favorilerde toplu işlem
+
+  /// Favorilerde toplu işlem. `addedToCartCount` `trParams` ile `{count}` alır.
   static const String addAllToCart = "addAllToCart";
   static const String noneInStock = "noneInStock";
   static const String addedToCartCount = "addedToCartCount";
-  // Kupon
+
+  /// Kupon ekranı.
   static const String coupon = "coupon";
   static const String couponCode = "couponCode";
-  static const String applyCoupon = "applyCoupon";
   static const String redeemCoupon = "redeemCoupon";
+
+  /// Favori isteği sunucuda başarısız olunca gösterilen uyarılar; ayna geri
+  /// alınırken kullanıcıya sebep söylenmeli, kalp sessizce sönmemeli.
+  static const String wishlistAddFailed = 'wishlistAddFailed';
+  static const String wishlistRemoveFailed = 'wishlistRemoveFailed';
+
 
   // -- FAZ 07: ödeme ekranı ------------------------------------------------
   /// Fatura özeti satırları (referansta İngilizce gömülüydü; FAZ 11 sözlüğe
@@ -789,6 +815,13 @@ class TTexts {
   static const String addNewAddress = "addNewAddress";
   static const String updateAddress = "updateAddress";
   static const String billingAddressLocked = "billingAddressLocked";
+
+  /// Adres silme (FAZ 09'un metinleri; `AddressController` onlarla birlikte
+  /// erken geldiği için burada).
+  static const String deleteAddress = "deleteAddress";
+  static const String deleteAddressMessage = "deleteAddressMessage";
+  static const String addressDeleted = "addressDeleted";
+  static const String addressDeleteFailed = "addressDeleteFailed";
 
 
   // ── FAZ 08 — siparişler, sipariş takibi, iade talepleri ────────────────
@@ -923,6 +956,78 @@ class TTexts {
   static const String startReturnText = "startReturnText";
   static const String selectOrderFromHistory = "selectOrderFromHistory";
 
+
+  // ==========================================================================
+  // FAZ 09 — hesap, adres defteri, ayarlar, dil, bildirimler
+  // 🔴 FAZ 11 bu anahtarların hepsini ON sözlüğe de eklemek zorunda; yoksa o
+  // dilde ekranda ham anahtar görünür (bkz. DURUM.md FAZ 11 notu).
+  // ==========================================================================
+
+  /// Hesap kimliği
+  static const String accountType = "accountType";
+  static const String accountTypeRetail = "accountTypeRetail";
+  static const String accountTypeCompany = "accountTypeCompany";
+  static const String companyName = "companyName";
+  static const String director = "director";
+  static const String iinBin = "iinBin";
+  static const String companyDataFrom1C = "companyDataFrom1C";
+  static const String priceCategory = "priceCategory";
+
+  /// Güvenlik ve şifre
+  static const String security = "security";
+  static const String changePassword = "changePassword";
+  static const String changePasswordHint = "changePasswordHint";
+  static const String currentPassword = "currentPassword";
+  static const String confirmNewPassword = "confirmNewPassword";
+  static const String passwordsDoNotMatch = "passwordsDoNotMatch";
+  static const String passwordChanged = "passwordChanged";
+  static const String changeName = "changeName";
+  static const String changeNameHint = "changeNameHint";
+  static const String reAuthenticateUser = "reAuthenticateUser";
+  static const String verify = "verify";
+
+  /// Kredi limiti
+  static const String creditTotal = "creditTotal";
+  static const String creditAvailableShare = "creditAvailableShare";
+
+  /// Adres defteri
+  static const String addresses = "addresses";
+  static const String addressBookHint = "addressBookHint";
+  static const String savedAddresses = "savedAddresses";
+  static const String noSavedAddresses = "noSavedAddresses";
+  static const String editAddress = "editAddress";
+  static const String setAsDefault = "setAsDefault";
+  static const String defaultAddress = "defaultAddress";
+  static const String companyBillingLocked = "companyBillingLocked";
+  static const String addressLabelName = "addressLabelName";
+  static const String addressLabelCompany = "addressLabelCompany";
+  static const String addressLabelDirector = "addressLabelDirector";
+  static const String addressLabelCity = "addressLabelCity";
+  static const String addressLabelCountry = "addressLabelCountry";
+  static const String addressLabelPostcode = "addressLabelPostcode";
+  static const String addressLabelPhone = "addressLabelPhone";
+  static const String addressLabelAddress = "addressLabelAddress";
+  static const String addressLabelAddress2 = "addressLabelAddress2";
+
+  /// Ayarlar
+  static const String comingSoon = "comingSoon";
+  static const String guestUser = "guestUser";
+  static const String guestSignInPrompt = "guestSignInPrompt";
+
+  /// Bildirimler
+  static const String notification = "notification";
+  static const String noNotifications = "noNotifications";
+  static const String noNotificationsHint = "noNotificationsHint";
+  static const String notificationRedirect = "notificationRedirect";
+  static const String notificationTitleLabel = "notificationTitleLabel";
+  static const String notificationMessageLabel = "notificationMessageLabel";
+
+  /// Dil
+  static const String selectLanguage = "selectLanguage";
+  static const String chooseYourLanguage = "chooseYourLanguage";
+  static const String allLanguages = "allLanguages";
+  static const String defaultLabel = "defaultLabel";
+
   //Format Exception
 
   static const formatInvalidEmail = 'formatInvalidEmail';
@@ -940,80 +1045,9 @@ class TTexts {
 
 
 
-  /// ─────────────────────────────────────────────────────────────
-  /// FAZ 09 — hesap, adres defteri, ayarlar, dil, bildirimler
-  /// Referans ekranlarda bu metinlerin çoğu İngilizce gömülüydü;
-  /// anahtara çevrildi. FAZ 11 sözlüklere bunları da eklemeli.
-  /// ─────────────────────────────────────────────────────────────
-
-  /// Profil — hesap kimliği
-  static const String accountType = "accountType";
-  static const String accountTypeRetail = "accountTypeRetail";
-  static const String accountTypeCompany = "accountTypeCompany";
-  static const String priceCategory = "priceCategory";
-  static const String companyName = "companyName";
-  static const String director = "director";
-  static const String iinBin = "iinBin";
-  static const String companyDataFrom1C = "companyDataFrom1C";
-  // Not: `company` (satır 683) ve `newPassword` (satır 501) zaten var,
-  // burada yeniden tanımlanmıyor.
-
-  /// Profil — güvenlik ve ad/şifre değiştirme
-  static const String security = "security";
-  static const String changePassword = "changePassword";
-  static const String changePasswordSubTitle = "changePasswordSubTitle";
-  static const String currentPassword = "currentPassword";
-  static const String confirmNewPassword = "confirmNewPassword";
-  static const String confirmPassword = "confirmPassword";
-  static const String passwordsDoNotMatch = "passwordsDoNotMatch";
-  static const String passwordChanged = "passwordChanged";
-  static const String changeName = "changeName";
-  static const String changeNameSubTitle = "changeNameSubTitle";
-  static const String reAuthenticateUser = "reAuthenticateUser";
-  static const String verify = "verify";
-
-  /// Profil — kredi limiti bölümü
-  static const String creditTotal = "creditTotal";
-  static const String creditAvailableShare = "creditAvailableShare";
-
-  /// Adres defteri
-  static const String addresses = "addresses";
-  static const String addressesSubTitle = "addressesSubTitle";
-  static const String savedAddresses = "savedAddresses";
-  static const String noAddressYet = "noAddressYet";
-  static const String noAddressYetMessage = "noAddressYetMessage";
-  static const String editAddress = "editAddress";
-  static const String deleteAddress = "deleteAddress";
-  static const String deleteAddressMessage = "deleteAddressMessage";
-  static const String addressDeleted = "addressDeleted";
-  static const String addressDeleteFailed = "addressDeleteFailed";
-  static const String setAsDefault = "setAsDefault";
-  static const String defaultAddress = "defaultAddress";
-  static const String companyBillingLocked = "companyBillingLocked";
-
-  /// Ayarlar ekranı
-  static const String guestUser = "guestUser";
-  static const String guestSignInPrompt = "guestSignInPrompt";
-
-  /// Bildirimler
-  static const String notification = "notification";
-  static const String noNotifications = "noNotifications";
-  static const String notificationTitleLabel = "notificationTitleLabel";
-  static const String notificationMessageLabel = "notificationMessageLabel";
-  static const String notificationRedirect = "notificationRedirect";
-
-  /// Dil ekranı
-  static const String defaultLabel = "defaultLabel";
-  static const String selectLanguage = "selectLanguage";
-  static const String chooseYourLanguage = "chooseYourLanguage";
-  static const String allLanguages = "allLanguages";
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // FAZ 10 — destek sohbeti
-  // 🔴 FAZ 11 bu anahtarları sözlüklere de eklemeli; yoksa ekranda anahtar
-  // adı görünür. `chat`, `chatSubTitle`, `typing`, `ohSnap`, `unableFindChat`,
-  // `unableFetchMessage`, `unableSendMessage` zaten yukarıda tanımlı.
-  // ─────────────────────────────────────────────────────────────────────────
+  // ---- FAZ 10 — Destek sohbeti ----
+  // Bu blok FAZ 11'de 10 dilin sözlüğüne de eklenmelidir; eklenmezse ekranda
+  // çeviri yerine anahtarın kendisi ("supportChat") görünür.
   static const String supportChat = "supportChat";
   static const String supportTeam = "supportTeam";
   static const String supportOnline = "supportOnline";
@@ -1026,33 +1060,37 @@ class TTexts {
   static const String noRecentMessage = "noRecentMessage";
   static const String imageMessage = "imageMessage";
   static const String audioMessage = "audioMessage";
-  static const String attachImage = "attachImage";
-  static const String attachImageHint = "attachImageHint";
-  static const String attachmentFailed = "attachmentFailed";
   static const String chatLoadFailed = "chatLoadFailed";
-  static const String tryAgain = "tryAgain";
   static const String send = "send";
 
-  // ─── FAZ 11 — sözlüğe bağlanabilmesi için anahtarlanan gömülü metinler ───
-  // Bu metinler kodda İngilizce sabit olarak duruyordu; dil değiştirildiğinde
-  // ekranda İngilizce kalıyorlardı.
-  static const String warning = 'warning';
-  static const String userFetchFailed = 'userFetchFailed';
-  static const String dataNotSaved = 'dataNotSaved';
-  static const String dataNotSavedMessage = 'dataNotSavedMessage';
-  static const String wishlistAddFailed = 'wishlistAddFailed';
-  static const String wishlistRemoveFailed = 'wishlistRemoveFailed';
-  static const String passwordResetDone = 'passwordResetDone';
-  static const String newPasswordSubTitle = 'newPasswordSubTitle';
-  static const String confirmYourPassword = 'confirmYourPassword';
+  // ---- FAZ 11 — Yerelleştirme sırasında anahtarlanan gömülü metinler ----
+  // Bu sabitler referansta YOK; ekranda düz İngilizce yazan yerler için
+  // açıldı (fazın "hard-coded metin bırakma" kabul kriteri). Hepsi on dilin
+  // sözlüğünde de var.
+  static const String warning = "warning";
+  static const String userFetchFailed = "userFetchFailed";
+  static const String dataNotSaved = "dataNotSaved";
+  static const String dataNotSavedMessage = "dataNotSavedMessage";
+  static const String passwordResetDone = "passwordResetDone";
 
-  // Ana sayfa kaydırmalı afişi (metinler web `home.slider*` ile birebir).
-  static const String sliderSubtitle1 = 'sliderSubtitle1';
-  static const String sliderTitle1 = 'sliderTitle1';
-  static const String sliderSubtitle2 = 'sliderSubtitle2';
-  static const String sliderSubtitle2Accent = 'sliderSubtitle2Accent';
-  static const String sliderTitle2 = 'sliderTitle2';
-  static const String sliderDescription2 = 'sliderDescription2';
-  static const String sliderSubtitle3 = 'sliderSubtitle3';
-  static const String sliderTitle3 = 'sliderTitle3';
+  // Dil adları: referans sekiz dili sayıyordu, Kazakça ile Türkçe eklendi
+  // (`localization_helper.dart` bu iki dalı da tanıyor).
+  static const String turkish = "turkish";
+  static const String kazakh = "kazakh";
+
+  // Form doğrulayıcıları (`utils/validators/validation.dart`). Referansta düz
+  // İngilizce metin döndürüyorlardı; hata balonu kullanıcıya görünen metin
+  // olduğu için anahtarlandı.
+  static const String isRequired = "isRequired";
+  static const String usernameRequired = "usernameRequired";
+  static const String usernameInvalid = "usernameInvalid";
+  static const String emailRequired = "emailRequired";
+  static const String emailInvalid = "emailInvalid";
+  static const String passwordRequired = "passwordRequired";
+  static const String passwordMinLength = "passwordMinLength";
+  static const String passwordUppercase = "passwordUppercase";
+  static const String passwordNumber = "passwordNumber";
+  static const String passwordSpecialChar = "passwordSpecialChar";
+  static const String phoneRequired = "phoneRequired";
+
 }

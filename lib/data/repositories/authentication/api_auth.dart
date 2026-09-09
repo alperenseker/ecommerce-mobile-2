@@ -1,22 +1,17 @@
-/// Kimlik uçlarının ham `Dio` sarmalayıcısı (`Auth/...`, `otp/...`,
-/// `company/{iin}`).
-///
-/// Hepsi anonimdir; bu yüzden paylaşılan istemci yerine kendi `Dio`'sunu
-/// kullanır (auth interceptor devre dışı, zaman aşımı daha geniş).
-library;
-
 import 'package:dio/dio.dart';
 
 import '../../../utils/http/dio_client.dart';
 
+/// Kimlik uçlarının **dio** tabanlı istemcisi (güncel olan).
+///
+/// ⚠️ Aynı adda (`ApiAuth`) ikinci bir sınıf `api_authentication_repository.dart`
+/// içinde de var; ikisini aynı dosyaya import etme.
 class ApiAuth {
-  // Taban adres tek kaynaktan (`THttpClient.baseUrl`) okunur; sunucu adresi
-  // değişirse tek dosya güncellenir.
-  static const String _baseUrl = THttpClient.baseUrl;
+  // Taban adres tek yerde (`THttpClient`) tanımlı olmalı; burada ikinci bir
+  // kopya tutmak sunucu taşındığında birini güncellemeyi unutturuyordu.
+  // Uç adları ve gövde alanları değişmedi.
+  static final String _baseUrl = THttpClient.baseUrl;
 
-  // Kimlik uçları paylaşılan istemciyi KULLANMAZ: hepsi anonimdir, üstelik
-  // giriş/kayıt sunucu tarafında daha yavaştır — bu yüzden ayrı `Dio` ve
-  // 30 sn'lik daha geniş zaman aşımı. Auth interceptor'ı da devrede olmaz.
   static final Dio _dio = Dio(BaseOptions(
     baseUrl: _baseUrl,
     contentType: 'application/json',

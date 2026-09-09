@@ -283,7 +283,15 @@ class _CreateReturnRequestScreenState extends State<CreateReturnRequestScreen> {
                 ),
               ),
               const SizedBox(width: TSizes.sm),
+              // 🔴 Düğme teması `minimumSize: Size(double.infinity, …)` veriyor;
+              // `Row` çocuğuna sonsuz genişlik verilemediği için yerel bir
+              // `minimumSize` geçilmezse çizimde patlıyor.
               OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: TSizes.md),
+                  minimumSize: const Size(0, TSizes.inputFieldHeight),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 onPressed: () {
                   controller.addPhotoUrl(_photoUrlController.text);
                   _photoUrlController.clear();

@@ -1,11 +1,9 @@
-/// Tek onboarding sayfası: görsel + başlık + açıklama.
-library;
-
 import 'package:flutter/material.dart';
 
 import '../../../../../utils/constants/sizes.dart';
 import '../../../../../utils/helpers/helper_functions.dart';
 
+/// Tek bir tanıtım sayfası (görsel + başlık + açıklama).
 class OnBoardingPage extends StatelessWidget {
   /// Widget for displaying content on an onboarding page.
   const OnBoardingPage({

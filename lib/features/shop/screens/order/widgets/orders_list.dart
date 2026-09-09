@@ -34,6 +34,7 @@ import '../../../models/order_group_model.dart';
 import '../../../models/order_model.dart';
 import 'order_badges.dart';
 import 'order_payment_gate.dart';
+import '../../../../../common/widgets/loaders/delayed_loader.dart';
 
 /// Bir sayfada kaç **alışveriş** gösterilir (web `PER_PAGE` ile aynı).
 const int _kGroupsPerPage = 10;
@@ -77,7 +78,7 @@ class _TOrderListItemsState extends State<TOrderListItems> {
       future: _future,
       builder: (_, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: TColors.primary));
+          return const TDelayedLoader();
         }
 
         final groups = snapshot.data ?? const <OrderGroupModel>[];
@@ -122,16 +123,30 @@ class _TOrderListItemsState extends State<TOrderListItems> {
   }
 }
 
-/// Bir alışveriş: grup başlığı + şirket başına sipariş satırı.
-class _PurchaseCard extends StatelessWidget {
+/// Bir alışveriş: grup başlığı + (açılınca) şirket başına sipariş satırı.
+///
+/// 🔴 Şirket siparişleri ilk açılışta **KAPALI**. Eskiden her alışverişin
+/// bütün satırları açıktı: iki-üç şirkete bölünmüş birkaç alışveriş listeyi
+/// metrelerce uzatıyor, kullanıcı kendi sipariş geçmişini kaydırarak
+/// tarayamıyordu. Kart artık özetini gösteriyor (numara · tarih · tutar ·
+/// ödeme durumu), ayrıntı isteyen aşağı açıyor.
+class _PurchaseCard extends StatefulWidget {
   const _PurchaseCard({required this.group, required this.controller});
 
   final OrderGroupModel group;
   final OrderController controller;
 
   @override
+  State<_PurchaseCard> createState() => _PurchaseCardState();
+}
+
+class _PurchaseCardState extends State<_PurchaseCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
+    final group = widget.group;
 
     return TRoundedContainer(
       showBorder: true,
@@ -141,14 +156,41 @@ class _PurchaseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PurchaseHeader(group: group, controller: controller),
-          for (var i = 0; i < group.orders.length; i++)
-            _OrderRow(
-              order: group.orders[i],
-              siblings: group.orders.length,
-              controller: controller,
-              isLast: i == group.orders.length - 1,
+          _PurchaseHeader(group: group, controller: widget.controller),
+
+          /// -- Aç/kapa şeridi
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: TSizes.md,
+                vertical: TSizes.sm + 2,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      TTexts.ordersInPurchase.trParams({'count': '${group.orders.length}'}),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  Icon(
+                    _expanded ? Iconsax.arrow_up_2 : Iconsax.arrow_down_1,
+                    size: TSizes.iconSm,
+                    color: TColors.primary,
+                  ),
+                ],
+              ),
             ),
+          ),
+
+          if (_expanded)
+            for (var i = 0; i < group.orders.length; i++)
+              _OrderRow(
+                order: group.orders[i],
+                siblings: group.orders.length,
+                controller: widget.controller,
+              ),
         ],
       ),
     );
@@ -206,16 +248,6 @@ class _PurchaseHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (group.isSplit) ...[
-                const SizedBox(width: TSizes.sm),
-                Flexible(
-                  child: Text(
-                    TTexts.ordersInPurchase.trParams({'count': '${group.orderCount}'}),
-                    style: theme.textTheme.labelLarge?.copyWith(color: TColors.textSecondary),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
             ],
           ),
           const SizedBox(height: TSizes.sm),
@@ -268,17 +300,11 @@ class _PurchaseHeader extends StatelessWidget {
 
 /// Tek bir şirket siparişi: şirket rozeti · numara · durum · tutar · kalemler.
 class _OrderRow extends StatefulWidget {
-  const _OrderRow({
-    required this.order,
-    required this.siblings,
-    required this.controller,
-    required this.isLast,
-  });
+  const _OrderRow({required this.order, required this.siblings, required this.controller});
 
   final OrderModel order;
   final int siblings;
   final OrderController controller;
-  final bool isLast;
 
   @override
   State<_OrderRow> createState() => _OrderRowState();
@@ -290,7 +316,10 @@ class _OrderRowState extends State<_OrderRow> {
   void _toggle() {
     setState(() => _expanded = !_expanded);
     // Kalemler yalnız ilk açılışta çekilir; önbellekte varsa istek atılmaz.
-    if (_expanded) widget.controller.loadOrderItems(widget.order.id);
+    // Grup ucu kalemleri zaten gönderdiyse ağa hiç çıkılmaz.
+    if (_expanded) {
+      widget.controller.loadOrderItems(widget.order.id, known: widget.order.products);
+    }
   }
 
   @override
@@ -299,10 +328,12 @@ class _OrderRowState extends State<_OrderRow> {
     final order = widget.order;
 
     return Container(
-      decoration: BoxDecoration(
-        border: widget.isLast
-            ? null
-            : const Border(bottom: BorderSide(color: TColors.borderSecondary, width: TSizes.dividerHeight)),
+      decoration: const BoxDecoration(
+        // Açılan her satır üstündekinden çizgiyle ayrılır; kapalı kartta
+        // hiç çizilmediği için alt çizgi yerine ÜST çizgi kullanılıyor.
+        border: Border(
+          top: BorderSide(color: TColors.borderSecondary, width: TSizes.dividerHeight),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,8 +502,10 @@ class _Pager extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔴 Alt pay: sayfa numaraları ekranın dibine yapışıyordu, son sayfaya
+    // basmak için parmağı kenara dayamak gerekiyordu.
     return Padding(
-      padding: const EdgeInsets.only(top: TSizes.sm),
+      padding: const EdgeInsets.only(top: TSizes.md, bottom: TSizes.spaceBtwSections),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: TSizes.sm,

@@ -1,11 +1,3 @@
-/// Genel ayarlar (`settings`) ve üç genel anahtar (`settings/public`).
-///
-/// 🔴 `settings/public` **anonim** uçtur ve `skip_auth: true` ile çağrılır;
-/// `settings` ise yetki ister. Hata durumunda "bugünkü davranışa düşme"
-/// (kayıt AÇIK, mod `gateway`) kuralı burada değil, `PublicSettingsController`
-/// içinde tek yerde uygulanır — sonuç diske **yazılmaz**.
-library;
-
 import 'package:dio/dio.dart';
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
@@ -13,6 +5,7 @@ import '../../../features/personalization/models/public_settings_model.dart';
 import '../../../features/personalization/models/setting_model.dart';
 import 'setting_repository.dart';
 
+/// Genel ayar uçları (`settings`, `settings/public`).
 class ApiSettingsRepository extends TApiRepositoryController<SettingsModel>
     implements SettingsRepository {
 

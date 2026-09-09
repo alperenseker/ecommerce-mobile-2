@@ -2,7 +2,7 @@ name: tstore_ecommerce_app
 description: "A new Flutter project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.0.1+5
+version: 1.0.0+1
 
 environment:
   sdk: ^3.7.0
@@ -77,12 +77,12 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
 
 flutter_native_splash:
-  color: "#4A57E8"
+  color: "#FFFFFF"
   image: assets/icon/splash_icon.png
 
   android_12:
-    color: "#4A57E8"
-    icon_background_color: "#4A57E8"
+    color: "#FFFFFF"
+    icon_background_color: "#FFFFFF"
     image: assets/icon/splash_icon.png
   
 # The following section is specific to Flutter packages.

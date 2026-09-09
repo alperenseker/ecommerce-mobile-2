@@ -4,7 +4,7 @@
 /// Görünüm dikey kartla aynı dili konuşur (TASARIM.md §6): beyaz, 12px köşe,
 /// 1px çerçeve, gölgesiz; görsel açık gri altlıkta.
 ///
-/// Karta dokunmak ürün detayını açar (FAZ 05'te bağlandı).
+/// Karta dokunmak ürün detayını (`ProductDetailScreen`) açar.
 library;
 
 import 'package:flutter/material.dart';

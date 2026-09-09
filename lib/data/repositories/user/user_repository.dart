@@ -1,9 +1,7 @@
-/// Kullanıcı repository'sinin arayüzü.
-library;
-
 import '../../../features/personalization/models/user_model.dart';
 import '../../../features/shop/models/order_model.dart';
 
+/// Kullanıcı repository sözleşmesi.
 abstract class UserRepository {
   Future<List<UserModel>> fetchAllItems();
   Future<UserModel> fetchSingleItem(String id);

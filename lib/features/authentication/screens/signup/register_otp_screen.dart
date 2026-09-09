@@ -1,10 +1,3 @@
-/// Kayıt akışının e-posta OTP ekranı.
-///
-/// Kod buraya gelmeden ÖNCE çağıran tarafından gönderilir. Doğrulama
-/// başarılıysa ekran `true` ile kapanır; aksi hâlde kullanıcı yeniden dener
-/// ya da **5 dakikalık** süre dolunca kodu tekrar ister (web ile aynı süre).
-library;
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -18,6 +11,12 @@ import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/helpers/helper_functions.dart';
 
+/// Kayıt akışının e-posta OTP ekranı.
+///
+/// Kodu buraya gelmeden önce çağıran gönderiyor. Doğrulama başarılıysa ekran
+/// `true` ile kapanıyor; aksi hâlde kullanıcı tekrar deneyebiliyor ya da
+/// **5 dakikalık** süre dolduğunda kodu yeniden isteyebiliyor (web istemcisiyle
+/// aynı süre).
 class RegisterOtpScreen extends StatefulWidget {
   const RegisterOtpScreen({super.key, required this.email});
 
@@ -69,11 +68,12 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 
+  /// Süre dolduğunda "tekrar gönder" etkinleşir.
   bool get _expired => _secondsLeft <= 0;
 
   Future<void> _verify() async {
     if (_code.length < 6) {
-      setState(() => _error = 'Please enter the 6-digit code.');
+      setState(() => _error = 'Please enter the 6-digit code.'.tr);
       return;
     }
     setState(() {
@@ -92,7 +92,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
         _verifying = false;
         _error = (res['message']?.toString().isNotEmpty == true)
             ? res['message'].toString()
-            : 'Wrong code. Please try again.';
+            : 'Wrong code. Please try again.'.tr;
       });
     }
   }
@@ -112,7 +112,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
     } else {
       setState(() => _error = (res['message']?.toString().isNotEmpty == true)
           ? res['message'].toString()
-          : 'Could not resend the code.');
+          : 'Could not resend the code.'.tr);
     }
   }
 
@@ -121,13 +121,14 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
     final dark = THelperFunctions.isDarkMode(context);
     return SafeArea(
       child: Scaffold(
+        backgroundColor: dark ? TColors.dark : TColors.white,
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace, vertical: TSizes.defaultSpace),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// Back button
+                /// Back button — geri dönüş kaydı iptal eder, bu yüzden `false`.
                 TRoundedContainer(
                   padding: EdgeInsets.zero,
                   radius: TSizes.borderRadiusMd,
@@ -157,7 +158,8 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
 
                 const SizedBox(height: TSizes.spaceBtwSections * 2),
 
-                /// OTP field — otomatik ilerleme, geri silme, yapıştırma.
+                /// OTP field — otomatik ilerleme, geri silme ve yapıştırma
+                /// destekli 6 haneli alan.
                 TOtpCodeField(
                   length: 6,
                   hasError: _error != null,
@@ -177,9 +179,11 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
                   ),
                 ),
 
-                /// Hata — metin yoksa kutu hiç çizilmez.
-                const SizedBox(height: TSizes.spaceBtwItems),
-                TAuthNotice(message: _error, tone: TAuthNoticeTone.error),
+                /// Hata kutusu — metin boşsa hiç çizilmiyor.
+                if (_error != null) ...[
+                  const SizedBox(height: TSizes.spaceBtwItems),
+                  TAuthNotice(text: _error, type: TAuthNoticeType.error),
+                ],
 
                 const SizedBox(height: TSizes.spaceBtwSections * 2),
 
@@ -194,7 +198,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
 
                 const SizedBox(height: TSizes.spaceBtwItems),
 
-                /// Resend — yalnız süre dolunca etkinleşir.
+                /// Resend — yalnız süre dolunca etkin.
                 Center(
                   child: TextButton(
                     onPressed: (_expired && !_resending) ? _resend : null,

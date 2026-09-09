@@ -1,23 +1,25 @@
-/// Şifremi unuttum — 1. adım: e-posta adresini al ve kodu gönder.
-library;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../../../utils/validators/validation.dart';
 import '../../controllers/forget_password_controller.dart';
 
+/// Şifremi unuttum — 1. adım: e-posta adresini al ve kodu gönder.
 class ForgetPasswordScreen extends StatelessWidget {
   const ForgetPasswordScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ForgetPasswordController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       /// Custom Appbar
       appBar: AppBar(
         automaticallyImplyLeading: false,

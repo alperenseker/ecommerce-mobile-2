@@ -1,6 +1,3 @@
-/// Ülke kodu seçici + telefon numarası alanı.
-library;
-
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,6 +9,7 @@ import '../../../../../utils/helpers/helper_functions.dart';
 import '../../../../../utils/validators/validation.dart';
 import '../../../controllers/phone_number_controller.dart';
 
+/// Ülke kodu seçici + telefon numarası alanı.
 class TPhoneNumberField extends StatelessWidget {
   const TPhoneNumberField({
     super.key,
@@ -31,7 +29,6 @@ class TPhoneNumberField extends StatelessWidget {
         controller: controller.phone,
         keyboardType: TextInputType.phone,
         decoration: InputDecoration(
-          fillColor: isDark ? TColors.darkSurface : TColors.white,
           prefixIcon: CountryCodePicker(
             alignLeft: false,
             hideMainText: true,
@@ -44,7 +41,7 @@ class TPhoneNumberField extends StatelessWidget {
             favorite: const ['+92','+44'],
             onChanged: (value) => controller.selectedCountryCode.value = value.dialCode!,
             searchDecoration: InputDecoration(fillColor: isDark ? TColors.darkContainer : TColors.lightContainer),
-            dialogBackgroundColor: isDark ? TColors.darkSurface : TColors.white,
+            dialogBackgroundColor: isDark ? TColors.dark : TColors.white,
           ),
           hintText: TTexts.phoneNo.tr,
           errorStyle: const TextStyle(color: TColors.error),

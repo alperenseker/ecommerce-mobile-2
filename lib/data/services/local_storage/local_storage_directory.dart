@@ -1,8 +1,3 @@
-/// Uzak görselleri cihazın belge klasörüne indirip önbellekleyen servis.
-///
-/// (Şu an hiçbir ekran kullanmıyor; referansta da böyle duruyor.)
-library;
-
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -10,6 +5,10 @@ import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+/// `GetStorage` üzerine kullanıcı başına ayrılmış yerel depo servisi.
+///
+/// Anahtar adları **değişmez** (KURALLAR §2): cihazda duran eski kayıtlar bu
+/// adlarla yazıldı, ad değişirse kullanıcı sepetini/favorisini kaybeder.
 class LocalStorageService extends GetxService {
   // Singleton pattern to ensure only one instance is used
   static final LocalStorageService _instance = LocalStorageService._internal();

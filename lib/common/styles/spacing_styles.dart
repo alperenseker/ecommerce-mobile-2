@@ -5,6 +5,11 @@ import 'package:get/get_core/src/get_main.dart';
 import '../../utils/constants/sizes.dart';
 import '../../utils/helpers/helper_functions.dart';
 
+/// Ekranların tekrar eden kenar boşlukları.
+///
+/// Aynı `EdgeInsets` her ekranda elle yazılmasın diye toplandı; çentikli
+/// cihazlarda üst boşluk `viewPadding.top`'tan okunuyor, sabit değer verilirse
+/// içerik çentiğin altında kalıyor.
 class TSpacingStyle {
   static const EdgeInsetsGeometry paddingWithAppBarHeight = EdgeInsets.only(
     top: TSizes.appBarHeight,

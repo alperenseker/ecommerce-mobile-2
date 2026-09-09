@@ -1,8 +1,8 @@
-/// Şifre değiştirme ekranının controller'ı.
+/// Şifre değiştirme ekranının denetleyicisi.
 ///
-/// Mevcut şifreyi doğrulayıp yenisini `auth/change-password` ucuna yazar
-/// (`AuthenticationRepository.changePassword`). Doğrulama kuralları web ile
-/// aynı: üç alan da dolu, yeni şifre en az 6 karakter, tekrar alanı eşleşiyor.
+/// Mevcut şifreyi doğrulatıp yenisini `POST auth/change-password` ucuna
+/// yazdırır. Doğrulamayı **sunucu** yapıyor; istemci yalnız formu ve en az
+/// 6 karakter kuralını (bkz. `TValidator.validatePassword`) kontrol eder.
 library;
 
 import 'package:flutter/material.dart';
@@ -22,8 +22,6 @@ class ChangePasswordController extends GetxController {
   final newPassword = TextEditingController();
   final confirmPassword = TextEditingController();
 
-  // Üç alanın gizliliği ayrı tutuluyor: kullanıcı yalnız yazdığı alanı
-  // açıp kontrol etmek istiyor, hepsini birden değil.
   final hideCurrent = true.obs;
   final hideNew = true.obs;
   final hideConfirm = true.obs;
@@ -54,8 +52,6 @@ class ChangePasswordController extends GetxController {
 
       TLoaders.successSnackBar(title: TTexts.congratulation.tr, message: TTexts.passwordChanged.tr);
 
-      // Ekranda kalan şifre alanları temizlenir; geri dönüldüğünde eski
-      // değerler formda durmasın.
       currentPassword.clear();
       newPassword.clear();
       confirmPassword.clear();

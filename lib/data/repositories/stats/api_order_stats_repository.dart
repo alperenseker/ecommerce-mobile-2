@@ -1,6 +1,3 @@
-/// Sipariş istatistikleri (`order-stats`) — hesap ekranındaki sayaçlar.
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +5,7 @@ import '../../../features/shop/models/order_stats_model.dart';
 import '../../../features/shop/models/order_stats_by_status_model.dart';
 import 'order_stats_repository.dart';
 
+/// Sipariş istatistiği uçları (`order-stats`).
 class ApiOrderStatsRepository extends TApiRepositoryController<OrderStatsModel>
     implements OrderStatsRepository {
 

@@ -1,13 +1,14 @@
-/// Sohbetin alt yazı çubuğu: ek düğmesi + metin alanı + gönder düğmesi.
+/// Sohbetin yazı çubuğu: metin alanı ve gönder düğmesi.
 ///
-/// TASARIM.md §6: form alanı 8px köşeli, `borderPrimary` çerçeveli, odakta
-/// indigo; gönder düğmesi dolu indigo.
+/// `flutter_chat_ui` paketinin kendi girişi kullanılmıyor; TASARIM.md'deki
+/// form alanı dili (48px yükseklik, 8px köşe, `borderPrimary` çerçeve, odakta
+/// indigo) paketin varsayılanıyla tutmuyordu.
 ///
-/// ⚠️ **Dosya seçici yok.** Projede `image_picker`/`file_picker` bağımlılığı
-/// yok ve KURALLAR §6 yeni paket eklemeyi yasaklıyor (FAZ 08'in iade
-/// görselleriyle aynı durum). Ek, görsel **adresi** olarak gönderiliyor;
-/// yükleme ucunu kullanan `ChatController.sendAttachment` hazır — paket izni
-/// verilirse yalnız bu dosyadaki [_pickAttachment] değişir.
+/// 🔴 **Resim/dosya gönderme YOK** (kullanıcının 2026-09-09 kararı). Sunucuda
+/// `chat/{chatId}/upload` ucu zaten yok (geçerli jetonla bile 404), yani
+/// ataç düğmesi hiçbir zaman çalışan bir yola çıkmıyordu. Geçmişte kalmış
+/// resim mesajlarının **çizimi** duruyor (bkz. `chat_screen.dart`), yalnız
+/// gönderme yolu kaldırıldı.
 library;
 
 import 'package:flutter/material.dart';
@@ -21,161 +22,104 @@ import '../../../../../utils/helpers/helper_functions.dart';
 import '../../../controllers/chat_controller.dart';
 
 class TChatInputBar extends StatefulWidget {
-  const TChatInputBar({super.key});
+  const TChatInputBar({super.key, required this.controller});
+
+  final ChatController controller;
 
   @override
   State<TChatInputBar> createState() => _TChatInputBarState();
 }
 
 class _TChatInputBarState extends State<TChatInputBar> {
-  final _textController = TextEditingController();
-  final _controller = ChatController.instance;
+  final TextEditingController _textController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
     _textController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   void _send() {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+    widget.controller.sendTextMessage(text);
+    widget.controller.stopTyping();
     _textController.clear();
-    _controller.isEditing.value = false;
-    _controller.sendTextMessage(text);
-    _controller.stopTyping();
-  }
-
-  /// Görsel adresi soran küçük diyalog. Dosya seçici gelene kadarki yol.
-  Future<void> _pickAttachment() async {
-    final urlController = TextEditingController();
-    final url = await Get.dialog<String>(
-      AlertDialog(
-        title: Text(TTexts.attachImage.tr),
-        content: TextField(
-          controller: urlController,
-          autofocus: true,
-          keyboardType: TextInputType.url,
-          decoration: InputDecoration(hintText: TTexts.attachImageHint.tr),
-          onSubmitted: (value) => Get.back(result: value),
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: Text(TTexts.cancel.tr)),
-          TextButton(
-            onPressed: () => Get.back(result: urlController.text),
-            child: Text(TTexts.send.tr),
-          ),
-        ],
-      ),
-    );
-    urlController.dispose();
-
-    final address = (url ?? '').trim();
-    if (address.isEmpty) return;
-    await _controller.sendImageMessage(url: address);
+    widget.controller.isEditing.value = false;
   }
 
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
-    final barColor = dark ? TColors.darkSurface : TColors.white;
-    final fieldColor = dark ? TColors.darkBackground : TColors.white;
 
     return SafeArea(
       top: false,
       child: Container(
         decoration: BoxDecoration(
-          color: barColor,
-          // Ayrım çizgiyle (TASARIM.md §5) — yazı çubuğu listeden ayrılsın.
+          color: dark ? TColors.dark : TColors.white,
+          // TASARIM.md §5: sayfa akışında gölge yok, ayrım 1px çizgi.
           border: Border(
             top: BorderSide(
-              color: dark ? TColors.darkBorder : TColors.borderSecondary,
-              width: TSizes.dividerHeight,
+              color: dark ? TColors.darkerGrey : TColors.borderSecondary,
+              width: 1,
             ),
           ),
         ),
-        padding: const EdgeInsets.fromLTRB(TSizes.sm, TSizes.sm, TSizes.sm, TSizes.sm),
+        padding: const EdgeInsets.fromLTRB(
+          TSizes.sm,
+          TSizes.sm,
+          TSizes.sm,
+          TSizes.sm,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Obx(
-              () => IconButton(
-                onPressed: _controller.isUploading.value ? null : _pickAttachment,
-                tooltip: TTexts.attachImage.tr,
-                icon: _controller.isUploading.value
-                    ? const SizedBox(
-                        width: TSizes.iconSm,
-                        height: TSizes.iconSm,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Iconsax.paperclip, color: TColors.darkGrey),
-              ),
-            ),
+            const SizedBox(width: TSizes.sm),
             Expanded(
-              child: Container(
-                constraints: const BoxConstraints(minHeight: TSizes.buttonHeight),
-                decoration: BoxDecoration(
-                  color: fieldColor,
-                  borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-                  border: Border.all(
-                    color: dark ? TColors.darkBorder : TColors.borderPrimary,
-                    width: TSizes.dividerHeight,
+              child: TextField(
+                controller: _textController,
+                focusNode: _focusNode,
+                minLines: 1,
+                maxLines: 5,
+                textInputAction: TextInputAction.send,
+                style: Theme.of(context).textTheme.bodyLarge,
+                decoration: InputDecoration(
+                  hintText: TTexts.chatInputHint.tr,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: TSizes.md,
+                    vertical: 12,
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: TSizes.md),
-                child: TextField(
-                  controller: _textController,
-                  minLines: 1,
-                  maxLines: 5,
-                  textInputAction: TextInputAction.send,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  decoration: InputDecoration(
-                    isCollapsed: true,
-                    // Genel form temasının dolgulu kutusu burada iki çerçeve
-                    // gibi görünüyordu; kapatıldı.
-                    filled: false,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                    hintText: TTexts.chatInputHint.tr,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                  ),
-                  onChanged: (value) {
-                    _controller.isEditing.value = value.trim().isNotEmpty;
-                    value.trim().isEmpty
-                        ? _controller.stopTyping()
-                        : _controller.onUserTyping();
-                  },
-                  onSubmitted: (_) => _send(),
-                ),
+                onChanged: (value) {
+                  widget.controller.isEditing.value = value.trim().isNotEmpty;
+                  value.trim().isEmpty
+                      ? widget.controller.stopTyping()
+                      : widget.controller.onUserTyping();
+                },
+                onSubmitted: (_) => _send(),
               ),
             ),
             const SizedBox(width: TSizes.sm),
-            Obx(
-              () => GestureDetector(
-                onTap: _controller.isEditing.value ? _send : null,
-                child: Container(
-                  width: TSizes.buttonHeight,
-                  height: TSizes.buttonHeight,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    // Boş alanda düğme sönük: dokunmanın bir işe yaramadığı
-                    // belli olsun.
-                    color: _controller.isEditing.value
-                        ? TColors.primary
-                        : TColors.buttonDisabled,
-                    borderRadius: BorderRadius.circular(TSizes.buttonRadius),
-                  ),
-                  child: Icon(
-                    Iconsax.send_1,
-                    size: TSizes.iconMd - 4,
-                    color: _controller.isEditing.value
-                        ? TColors.white
-                        : TColors.darkGrey,
+            Obx(() {
+              final active = widget.controller.isEditing.value &&
+                  !widget.controller.isSending.value;
+              return SizedBox(
+                width: TSizes.buttonHeight,
+                height: TSizes.buttonHeight,
+                child: Material(
+                  color: active ? TColors.primary : TColors.buttonDisabled,
+                  borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
+                    onTap: active ? _send : null,
+                    child: const Icon(Iconsax.send_1, color: TColors.white),
                   ),
                 ),
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ),

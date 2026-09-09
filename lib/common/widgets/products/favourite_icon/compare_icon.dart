@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:get/get.dart';
 
 import '../../../../data/repositories/authentication/authentication_repository.dart';
@@ -43,7 +44,7 @@ class TCompareIcon extends StatelessWidget {
         height: height,
         size: size,
         showBorder: true,
-        icon: Icons.balance,
+        icon: Iconsax.arrow_swap_horizontal,
         color: controller.isInCompare(productModel.id) ? TColors.primary : null,
         onPressed: () => _toggle(controller),
       ),

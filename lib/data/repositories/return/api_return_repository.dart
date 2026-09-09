@@ -1,13 +1,12 @@
-/// İade talebi uçları.
-library;
-
 import 'package:get/get.dart';
 
 import '../../../features/shop/models/return_request_model.dart';
 import '../../../utils/constants/enums.dart';
 
-/// TODO: backend'de /return-requests endpoint'i yok. Eklenince dio ile bu
-/// metodları gerçek isteklere bağlayın (bkz. ApiCategoryRepository deseni).
+/// İade repository'si.
+///
+/// TODO: sunucuda `/return-requests` ucu yok (canlıda **404**). Eklenince bu
+/// metotlar `dio` ile gerçek isteklere bağlanmalı.
 class ApiReturnRepository extends GetxController {
   static ApiReturnRepository get instance => Get.isRegistered<ApiReturnRepository>() ? Get.find() : Get.put(ApiReturnRepository());
 

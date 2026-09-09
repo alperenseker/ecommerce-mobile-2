@@ -1,10 +1,3 @@
-/// "Şifremi unuttum" akışının controller'ı — üç adım:
-/// e-posta → e-postaya gelen kod → yeni şifre.
-///
-/// Her adım kendi form anahtarını taşır; adımlar arasında geri dönülünce
-/// eski şifre girdileri temizlenir.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +11,10 @@ import '../screens/login/login.dart';
 import '../screens/password_configuration/new_password.dart';
 import '../screens/password_configuration/reset_password.dart';
 
+/// "Şifremi unuttum" akışının üç adımını tek denetleyici yürütür:
+/// e-posta → kod → yeni şifre. Adımlar ayrı ekran olduğu için form anahtarları
+/// da ayrı; aynı denetleyici `Get.put` ile üçünde de bulunuyor, böylece
+/// e-posta ve kod adımlar arasında kaybolmuyor.
 class ForgetPasswordController extends GetxController {
   static ForgetPasswordController get instance => Get.find();
 
@@ -35,8 +32,9 @@ class ForgetPasswordController extends GetxController {
   final hidePassword = true.obs;
   GlobalKey<FormState> resetPasswordFormKey = GlobalKey<FormState>();
 
-  /// Yeni şifre alanının canlı kopyası: kural listesi her kuralı yazıldıkça
-  /// yeşile çevirebilsin diye ayrı tutuluyor.
+  /// Yeni şifre alanının canlı kopyası: kural listesi her tuşta yeşile
+  /// dönebilsin diye ayrı bir gözlenebilir tutuluyor (TextEditingController
+  /// `Obx`'i tetiklemiyor).
   final RxString passwordValue = ''.obs;
 
   /// Send Reset Password EMail
@@ -71,7 +69,7 @@ class ForgetPasswordController extends GetxController {
     }
   }
 
-  /// 1. adım — e-postaya gelen kodu doğrula. Başarılıysa yeni şifre ekranına geç.
+  /// 1. adım — e-postayla gelen kodu doğrula, sonra yeni şifre ekranına geç.
   Future<void> verifyOtp(String email) async {
     try {
       TFullScreenLoader.openLoadingDialog(TTexts.processingRequest.tr, TImages.docerAnimation);
@@ -90,7 +88,8 @@ class ForgetPasswordController extends GetxController {
       await AuthenticationRepository.instance.verifyForgotPasswordOtp(email, otpCode.text.trim());
 
       TFullScreenLoader.stopLoading();
-      // Sonraki adımı göstermeden önce eski şifre girdileri temizlenir.
+      // Önceki denemeden kalan şifre metni temizlenmezse sonraki adım dolu
+      // açılıyor.
       newPassword.clear();
       confirmPassword.clear();
       passwordValue.value = '';

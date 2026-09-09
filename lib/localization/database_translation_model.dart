@@ -1,13 +1,11 @@
-/// Sunucudan **çok dilli JSON** olarak gelen tek bir metnin modeli.
+/// Sunucudan **çok dilli JSON** olarak gelen alanların çözücüsü.
 ///
-/// Bazı alanlar (kategori/ürün adı gibi) veritabanında
-/// `[{"language":"ru","translation":"…"}, …]` biçiminde saklanıyor.
-/// [DatabaseTranslationModel.translate] bu dizinin içinden **o anki dile**
-/// uyanı seçer; sözlük dosyalarıyla (`Languages/`) ilgisi yoktur — onlar
-/// uygulamanın kendi metinleri içindir.
+/// Sözlük dosyalarıyla (`Languages/*.dart`) ilgisi yoktur: bu model
+/// `[{"language":"ru","translation":"..."}]` biçimindeki bir alandan
+/// kullanıcının diline uyan kaydı seçer.
 ///
-/// KURALLAR §4 gereği referanstan taşındı; referansta da hiçbir yerden
-/// çağrılmıyor.
+/// Referanstan tek fark: referans `Get.locale!` yazıyordu ve yerel ayar
+/// kurulmadan çağrılırsa çöküyordu; artık İngilizceye düşüyor.
 library;
 
 import 'dart:convert';
@@ -20,37 +18,31 @@ class DatabaseTranslationModel {
 
   DatabaseTranslationModel({required this.language, required this.translation});
 
-  Map<String, dynamic> toJson() {
+  toJson() {
     return {
       'language': language,
       'translation': translation,
     };
   }
 
-  /// Dizinin içinden o anki dilin kaydını çıkarır.
-  ///
-  /// Eşleşme yoksa `translation` yerine `name` alanına düşülür (sunucu bazı
-  /// kayıtlarda çeviri yerine ham adı yazıyor); o da yoksa boş metin döner —
-  /// ekranda ham JSON görünmesin.
   factory DatabaseTranslationModel.translate(String encodedJson) {
-    if (encodedJson.isEmpty) return DatabaseTranslationModel(language: '', translation: '');
+    if (encodedJson.isEmpty) return DatabaseTranslationModel(language: "", translation: "");
 
-    final List<dynamic> list = json.decode(encodedJson);
+    List<dynamic> list = json.decode(encodedJson);
     Map<String, dynamic> data = {};
 
-    // 🔴 `Get.locale` null olabilir (çeviri katmanı kurulmadan çağrılırsa);
-    // referanstaki `Get.locale!` bu durumda çöküyordu.
-    final languageCode = Get.locale?.languageCode.toLowerCase() ?? 'en';
+    // Yerel ayar henüz kurulmamış olabilir (açılışın ilk karesi) — yedek 'en'.
+    final currentLanguage = (Get.locale?.languageCode ?? 'en').toLowerCase();
 
     for (var element in list) {
-      if (element['language'].toString().toLowerCase() == languageCode) {
+      if (element['language'].toString().toLowerCase() == currentLanguage) {
         data = element;
         break;
       }
     }
     return DatabaseTranslationModel(
-      language: data['language'] ?? '',
-      translation: data['translation'] ?? data['name'] ?? '',
+      language: data['language'] ?? "",
+      translation: data['translation'] ?? data['name'] ?? "",
     );
   }
 }

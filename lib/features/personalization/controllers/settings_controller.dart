@@ -1,8 +1,3 @@
-/// Yönetici tarafından belirlenen genel mağaza ayarları (puan katsayıları,
-/// kargo, para birimi …). Yetki ister; `settings/public` ile karıştırma —
-/// o anonimdir ve yalnız üç anahtarı taşır ([PublicSettingsController]).
-library;
-
 import 'package:get/get.dart';
 
 import '../../../data/repositories/settings/api_settings_repository.dart';
@@ -10,6 +5,9 @@ import '../../../utils/constants/text_strings.dart';
 import '../../../utils/popups/loaders.dart';
 import '../models/setting_model.dart';
 
+/// Yöneticinin tanımladığı genel mağaza ayarları (puan katsayıları, kargo,
+/// vergi …). `UserController` puan hesabı için buna bağımlı olduğu için
+/// kimlik fazında geldi.
 class SettingsController extends GetxController {
   static SettingsController get instance => Get.find();
 

@@ -1,7 +1,3 @@
-/// Şartlar ve gizlilik onay kutusu. Kayıt için **zorunlu**: işaretlenmeden
-/// `SignupController.signup()` akışı başlamaz.
-library;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,6 +9,8 @@ import '../../../../../utils/device/device_utility.dart';
 import '../../../../../utils/helpers/helper_functions.dart';
 import '../../../controllers/signup_controller.dart';
 
+/// Şartlar/gizlilik onay kutusu. İşaretlenmeden kayıt gönderilmiyor
+/// (kontrol `SignupController.signup` içinde).
 class TTermsAndConditionCheckbox extends StatelessWidget {
   const TTermsAndConditionCheckbox({
     super.key,

@@ -2,16 +2,15 @@
 ///
 /// TASARIM.md §7: referanstaki koyu kavisli turuncu başlık kalktı; artık
 /// **beyaz sade** başlık var. Solda kategori menüsünü (drawer) açan düğme ve
-/// marka logosu, sağda bildirim ile profil avatarı.
+/// marka logosu, sağda destek · bildirim · profil üçlüsü (`TAppBarActions`).
 library;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 
 import '../../../../../common/widgets/appbar/appbar.dart';
-import '../../../../../common/widgets/appbar/profile_action_icon.dart';
-import '../../../../../routes/routes.dart';
+import '../../../../../home_menu.dart';
+import '../../../../../common/widgets/appbar/appbar_actions.dart';
 import '../../../../../utils/constants/colors.dart';
 import '../../../../../utils/constants/image_strings.dart';
 import '../../../../../utils/constants/sizes.dart';
@@ -40,7 +39,7 @@ class THomeAppBar extends StatelessWidget {
             child: IconButton(
               icon: const Icon(Icons.menu, color: TColors.iconPrimaryLight),
               tooltip: TTexts.categories.tr,
-              onPressed: () => Scaffold.of(context).openDrawer(),
+              onPressed: AppScreenController.instance.openMenu,
             ),
           ),
           Flexible(
@@ -53,22 +52,8 @@ class THomeAppBar extends StatelessWidget {
           ),
         ],
       ),
-      actions: [
-        // FAZ 10 — destek sohbetinin ANA MENÜ girişi. Web'de her sayfanın sağ
-        // altında duran destek düğmesinin karşılığı; mobilde yüzen düğme
-        // ürün ızgarasını ve alt gezinmeyi örttüğü için başlığa alındı.
-        // Girişsiz kullanıcı da açabilir: ekran içinde giriş bağlantısı var.
-        IconButton(
-          icon: const Icon(Iconsax.headphone, color: TColors.iconPrimaryLight),
-          tooltip: TTexts.liveSupport.tr,
-          onPressed: () => Get.toNamed(TRoutes.chat),
-        ),
-        IconButton(
-          icon: const Icon(Iconsax.notification, color: TColors.iconPrimaryLight),
-          onPressed: () => Get.toNamed(TRoutes.notification),
-        ),
-        const TProfileActionIcon(),
-      ],
+      // Destek · bildirim · profil üçlüsü bütün sekmelerde ortak.
+      actions: const [TAppBarActions()],
       showActions: true,
       showSkipButton: false,
     );

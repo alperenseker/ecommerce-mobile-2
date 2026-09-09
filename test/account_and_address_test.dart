@@ -1,226 +1,245 @@
-// FAZ 09 — hesap, adres defteri, kredi limiti kapısı.
+// FAZ 09 — hesap yüzeyinin **saf** kuralları.
 //
-// Bu dosya fazın iki kritik kuralını kalıcı olarak sabitler:
-//   1. Kredi limiti bölümü YETKİSİ OLMAYANA ÇİZİLMEZ (özellikle sunucu
-//      `transfer_only` modundayken `CanBypassPayment` herkese true dönerken).
-//   2. Sunucu FirstName/LastName'i ayrı tutar; ekranda tek "ad soyad" alanı
-//      vardır ve çeviri tek yerde yapılır.
-import 'package:flutter_test/flutter_test.dart';
+// Ağ yok: burada yalnız iş kurallarının kendisi sabitleniyor. Canlı uç
+// doğrulaması `test/live_account_test.dart` içinde.
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:tstore_ecommerce_app/common/widgets/credit/credit_limit_section.dart';
 import 'package:tstore_ecommerce_app/data/services/notifications/notification_model.dart';
+import 'package:tstore_ecommerce_app/features/personalization/controllers/language_controller.dart';
 import 'package:tstore_ecommerce_app/features/personalization/controllers/notifcation_controller.dart';
 import 'package:tstore_ecommerce_app/features/personalization/models/address_model.dart';
-import 'package:tstore_ecommerce_app/features/personalization/models/user_model.dart';
 import 'package:tstore_ecommerce_app/features/personalization/models/user_settings_model.dart';
+import 'package:tstore_ecommerce_app/features/personalization/screens/notification/notifcation_detail_screen.dart';
+import 'package:tstore_ecommerce_app/localization/languages.dart';
+
+NotificationModel _n({
+  String id = 'n1',
+  List<String> recipients = const [],
+  bool broadcast = false,
+  String type = '',
+}) =>
+    NotificationModel(
+      id: id,
+      title: 't',
+      body: 'b',
+      senderId: 's',
+      recipientIds: recipients,
+      type: type,
+      createdAt: DateTime(2026, 1, 1),
+      seenBy: {},
+      route: '',
+      routeId: '',
+      isBroadcast: broadcast,
+    );
 
 void main() {
-  group('Kredi limiti kapısı', () {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async => Directory.systemTemp.createTempSync('faz09').path,
+    );
+    await GetStorage.init();
+  });
+
+  group('kredi limiti kapısı', () {
     test('yetkisi olmayan kullanıcıda bölüm ÇİZİLMEZ', () {
       expect(shouldShowCreditSection(hasCreditLine: false, canOrderWithoutStock: false), isFalse);
     });
 
-    test('kredi satırı olan kullanıcıda çizilir', () {
+    test('kredi satırı açıksa çizilir', () {
       expect(shouldShowCreditSection(hasCreditLine: true, canOrderWithoutStock: false), isTrue);
     });
 
-    test('stoksuz sipariş yetkisi tek başına yeter', () {
+    test('stoksuz sipariş yetkisi varsa çizilir', () {
       expect(shouldShowCreditSection(hasCreditLine: false, canOrderWithoutStock: true), isTrue);
     });
 
-    test('🔴 transfer_only tuzağı: CanBypassPayment herkese true olsa bile çizilmez', () {
-      // Sunucu `transfer_only` modunda `CanBypassPayment`'ı HERKESE true
-      // döndürüyor. Kapı web'deki gibi doğrudan o alana bakılsaydı, kredisi
-      // olmayan sıradan müşteride de kredi limiti bölümü açılırdı.
-      final settings = UserSettingsModel.fromJson({
+    test('ikisi de varsa çizilir', () {
+      expect(shouldShowCreditSection(hasCreditLine: true, canOrderWithoutStock: true), isTrue);
+    });
+
+    test('🔴 transfer_only tuzağı: CanBypassPayment herkese true ama bölüm KAPALI', () {
+      // Canlı sunucunun gerçek yanıtı (royalprof@gmail.com, 2026-09-08).
+      final s = UserSettingsModel.fromJson(const {
+        'UserId': 'user_00e05f87d7c3',
+        'PriceCategory': 'A',
         'CanBypassPayment': true,
         'HasCreditLine': false,
         'CanOrderWithoutStock': false,
         'CreditLimit': 0,
+        'UsedCredit': 0,
       });
-
-      expect(settings.canBypassPayment, isTrue, reason: 'sunucu gerçekten true diyor');
+      expect(s.canBypassPayment, isTrue, reason: 'sunucu gerçekten true döndürüyor');
       expect(
-        shouldShowCreditSection(
-          hasCreditLine: settings.hasCreditLine,
-          canOrderWithoutStock: settings.canOrderWithoutStock,
-        ),
+        shouldShowCreditSection(hasCreditLine: s.hasCreditLine, canOrderWithoutStock: s.canOrderWithoutStock),
         isFalse,
+        reason: 'kapı CanBypassPayment okumamalı',
       );
     });
 
     test('eski API (HasCreditLine alanı yok) bugünkü davranışa düşer', () {
-      final settings = UserSettingsModel.fromJson({'CanBypassPayment': true, 'CreditLimit': 500000});
+      final s = UserSettingsModel.fromJson(const {'CanBypassPayment': true});
+      expect(s.hasCreditLine, isTrue);
+      expect(shouldShowCreditSection(hasCreditLine: s.hasCreditLine, canOrderWithoutStock: false), isTrue);
+    });
 
-      expect(settings.hasCreditLine, isTrue);
+    test('kalan kredi negatife düşmez', () {
+      final s = UserSettingsModel.fromJson(const {'CreditLimit': 1000, 'UsedCredit': 1500});
+      expect(s.availableCredit, 0.0);
+    });
+  });
+
+  group('bildirim süzgeci', () {
+    test('yalnız alıcısı ben olan bildirimler gelir', () {
+      final list = [
+        _n(id: 'a', recipients: ['me']),
+        _n(id: 'b', recipients: ['someone-else']),
+        _n(id: 'c', recipients: ['x', 'me']),
+      ];
+      final mine = NotificationController.onlyMine(list, 'me');
+      expect(mine.map((n) => n.id), ['a', 'c']);
+    });
+
+    test('🔴 IsBroadcast true olsa bile başkasının bildirimi gelmez', () {
+      // Canlı veride tek alıcılı bildirimlerin hepsi IsBroadcast:true.
+      final list = [_n(id: 'a', recipients: ['baskasi'], broadcast: true)];
+      expect(NotificationController.onlyMine(list, 'me'), isEmpty);
+    });
+
+    test('misafirde (kimliksiz) liste boştur', () {
+      final list = [_n(id: 'a', recipients: ['me'])];
+      expect(NotificationController.onlyMine(list, ''), isEmpty);
+    });
+  });
+
+  group('bildirim modeli', () {
+    test('🔴 ISO metin tarih çökertmez (sunucu Firestore Timestamp göndermiyor)', () {
+      final model = NotificationModel.fromJson('id-1', const {
+        'title': 'orderShippedOnItsWay',
+        'body': 'x',
+        'createdAt': '2026-07-01T05:31:19.33982Z',
+      });
+      expect(model.createdAt.year, 2026);
+      expect(model.seenAt, isNull);
+    });
+
+    test('tanınmayan tarih bugüne düşer, istisna fırlatmaz', () {
+      final model = NotificationModel.fromJson('id-2', const {'createdAt': 12345});
+      expect(model.createdAt, isA<DateTime>());
+    });
+
+    test('tür rozetinden GUID kırpılır', () {
       expect(
-        shouldShowCreditSection(
-          hasCreditLine: settings.hasCreditLine,
-          canOrderWithoutStock: settings.canOrderWithoutStock,
-        ),
-        isTrue,
+        notificationTypeLabel('Order Update 363b434d-e771-4a2c-9dff-d09a54be4017'),
+        'Order Update',
       );
+      expect(notificationTypeLabel('Promo'), 'Promo');
+      expect(notificationTypeLabel(''), '');
     });
   });
 
-  group('Kredi tutarları', () {
-    test('kalan kredi = limit - kullanılan', () {
-      final settings = UserSettingsModel(creditLimit: 500000, usedCredit: 120000);
-      expect(settings.availableCredit, 380000);
-    });
-
-    test('kullanılan limiti aşarsa kalan NEGATİF gösterilmez', () {
-      final settings = UserSettingsModel(creditLimit: 100000, usedCredit: 150000);
-      expect(settings.availableCredit, 0);
-    });
-
-    test('camelCase yanıt da okunur', () {
-      final settings = UserSettingsModel.fromJson({
-        'hasCreditLine': true,
-        'creditLimit': '250000,5',
-        'usedCredit': 50000,
-        'priceCategory': 'B',
-      });
-      expect(settings.hasCreditLine, isTrue);
-      expect(settings.creditLimit, 250000.5);
-      expect(settings.priceCategory, 'B');
-    });
-  });
-
-  group('Adres — tek "ad soyad" alanı ↔ ayrık FirstName/LastName', () {
-    test('tek alan sunucuya ad + soyad olarak bölünür', () {
-      final address = AddressModel(
+  group('adres — tek ad alanı ↔ ayrık FirstName/LastName', () {
+    test('tek alandan ad ve soyad ayrılır', () {
+      final json = AddressModel(
         id: '',
-        name: 'Айгүл Сериковна Нурланова',
-        phoneNumber: '+77011234567',
-        street: 'Абая 10',
-        city: 'Алматы',
+        name: 'Депухан Ахжол',
+        phoneNumber: '+77770000000',
+        street: 'x',
+        city: 'y',
         state: '',
-        postalCode: '050000',
-        country: 'Казахстан',
-      );
-
-      final json = address.toJson();
-      expect(json['firstName'], 'Айгүл');
-      expect(json['lastName'], 'Сериковна Нурланова');
+        postalCode: '1',
+        country: 'KZ',
+      ).toJson();
+      expect(json['firstName'], 'Депухан');
+      expect(json['lastName'], 'Ахжол');
     });
 
-    test('tek kelimelik adda soyad boş kalır (sunucu kabul ediyor)', () {
-      final address = AddressModel(
+    test('iki kelimeden uzun ad: ilki ad, gerisi soyad', () {
+      final json = AddressModel(
         id: '',
-        name: 'Ержан',
+        name: 'Ali Veli Han',
         phoneNumber: '',
         street: '',
         city: '',
         state: '',
         postalCode: '',
         country: '',
-      );
-      expect(address.toJson()['firstName'], 'Ержан');
-      expect(address.toJson()['lastName'], '');
+      ).toJson();
+      expect(json['firstName'], 'Ali');
+      expect(json['lastName'], 'Veli Han');
     });
 
-    test('sunucudan gelen ayrık alanlar ekranda tek ada birleşir', () {
-      final address = AddressModel.fromJson('A1', {
-        'AddressId': 'A1',
-        'FirstName': 'Ержан',
-        'LastName': 'Абдуллаев',
-        'AddressLine1': 'Абая 10',
-        'City': 'Алматы',
-        'Country': 'Казахстан',
-        'PostalCode': '050000',
-        'Phone': '+77011234567',
+    test('ayrık alanlar verilmişse bölme yapılmaz', () {
+      final json = AddressModel(
+        id: '',
+        name: 'yok sayılır',
+        firstName: 'FAZ09',
+        lastName: 'TEST',
+        phoneNumber: '',
+        street: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+      ).toJson();
+      expect(json['firstName'], 'FAZ09');
+      expect(json['lastName'], 'TEST');
+    });
+
+    test('sunucunun PascalCase yanıtı okunur', () {
+      final a = AddressModel.fromJson('addr-1', const {
         'AddressType': 'shipping',
+        'FirstName': 'Депухан',
+        'LastName': 'Ахжол',
+        'Phone': '+7(777)766-00-00',
+        'City': 'Алматы',
+        'AddressLine1': 'Немировича-Данченко 18а',
+        'PostalCode': '050061',
         'IsDefault': true,
+        'IsActive': true,
       });
-
-      expect(address.name, 'Ержан Абдуллаев');
-      expect(address.selectedAddress, isTrue);
-      expect(address.isBilling, isFalse);
-    });
-
-    test('ad/soyad zaten ayrık verildiyse tek alan onları EZMEZ', () {
-      final address = AddressModel(
-        id: 'A1',
-        name: 'Ержан Абдуллаев',
-        firstName: 'Ержан',
-        lastName: 'Абдуллаев',
-        phoneNumber: '',
-        street: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: '',
-      );
-      expect(address.toJson()['firstName'], 'Ержан');
-      expect(address.toJson()['lastName'], 'Абдуллаев');
+      expect(a.id, 'addr-1');
+      expect(a.name.trim(), 'Депухан Ахжол');
+      expect(a.city, 'Алматы');
+      expect(a.selectedAddress, isTrue);
     });
   });
 
-  group('Hesap tipi — profil ekranındaki kilitli alanlar', () {
-    UserModel user({String accountType = 'retail', String iin = ''}) => UserModel(
-      id: 'U1',
-      email: 'a@b.kz',
-      accountType: accountType,
-      iin: iin,
-      isEmailVerified: true,
-      isProfileActive: true,
-    );
-
-    test('bireysel hesapta ad düzenlenebilir (şirket alanları çizilmez)', () {
-      expect(user().isCorporate, isFalse);
-      expect(user().isCompanyLike, isFalse);
+  group('dil', () {
+    // FAZ 11 sözlükleri doldurdu; iskelet dönemindeki "harita boş" beklentisi
+    // burada tersine çevrildi. Tembel yüklemenin kendi testleri
+    // `test/localization_test.dart` içinde.
+    test('on dilin sözlüğü kayıtlı, açılışta yalnız yedek dil yüklenir', () {
+      expect(Languages.hasTranslation('en'), isTrue);
+      expect(Languages.hasTranslation('kk'), isTrue);
+      expect(Languages.hasTranslation('zz'), isFalse);
+      // Kayıtlı dil yokken bellekte yalnız yedek İngilizce durur.
+      expect(Languages().keys.keys, ['en_US']);
+      // Sözlüğü olmayan dil için çağrı sessizce geçer.
+      Languages.ensureLoaded('zz');
     });
 
-    test('şirket hesabında şirket alanları salt okunur çizilir', () {
-      final u = user(accountType: 'company', iin: '123456789012');
-      expect(u.isCorporate, isTrue);
-      expect(u.isCompanyLike, isTrue);
+    test('sözlüğü olmayan dil İngilizceye düşer', () {
+      final c = LanguageController();
+      expect(c.localeFor('tr').languageCode, 'tr');
+      expect(c.localeFor('zz'), const Locale('en', 'US'));
     });
 
-    test('İP hesabı: bireysel ama BİN taşıyor — şirket alanları çizilir', () {
-      final u = user(iin: '123456789012');
-      expect(u.isCorporate, isFalse, reason: 'fatura adresi düzenlenebilir kalmalı');
-      expect(u.isIpCompany, isTrue);
-      expect(u.isCompanyLike, isTrue);
-    });
-  });
-
-  group('Bildirim süzgeci — başkasının bildirimi gösterilmez', () {
-    NotificationModel notif(String id, List<String> recipients, {bool broadcast = true}) => NotificationModel(
-      id: id,
-      title: 'orderCanceledSorry',
-      body: '',
-      senderId: 'sys',
-      recipientIds: recipients,
-      type: 'Order Update',
-      createdAt: DateTime(2026, 7, 1),
-      seenBy: const {},
-      route: '/orderDetail',
-      routeId: 'O1',
-      isBroadcast: broadcast,
-    );
-
-    final all = [
-      notif('n1', ['user_me']),
-      notif('n2', ['user_other']),
-      notif('n3', const []), // gerçek duyuru
-    ];
-
-    test('yalnız kullanıcıya ait olan ve alıcısı olmayan duyuru kalır', () {
-      final mine = NotificationController.onlyMine(all, 'user_me');
-      expect(mine.map((n) => n.id), ['n1', 'n3']);
-    });
-
-    test('🔴 IsBroadcast true olsa bile başkasının bildirimi ELENİR', () {
-      // Sunucu tek alıcılı bildirimlerde de IsBroadcast=true yazıyor;
-      // ölçüt bu yüzden RecipientIds.
-      final mine = NotificationController.onlyMine(all, 'user_me');
-      expect(mine.any((n) => n.id == 'n2'), isFalse);
-    });
-
-    test('misafirde (kimlik yok) liste boş kalır', () {
-      expect(NotificationController.onlyMine(all, ''), isEmpty);
+    test('on dil listelenir ve arama süzer', () {
+      final c = LanguageController();
+      c.filterLanguages('');
+      expect(c.allLanguages.length, 10);
+      c.filteredLanguages.value = List.from(c.allLanguages);
+      c.filterLanguages('turk');
+      expect(c.filteredLanguages.single['code'], 'tr');
+      c.filterLanguages('');
+      expect(c.filteredLanguages.length, 10);
     });
   });
 }

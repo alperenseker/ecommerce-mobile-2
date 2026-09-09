@@ -1,15 +1,3 @@
-/// Oturumdaki kullanıcının bellekteki hâli ve profil işlemleri.
-///
-/// Kullanıcı kaydı iki kaynaktan gelebilir: girişte `GetStorage`'a yazılan
-/// `userData` (hızlı yol) ya da `users/{id}` ucu. Depodaki veri varsa ondan
-/// okunur; yoksa uçtan çekilip depoya yazılır.
-///
-/// ⚠️ Aşağıdaki metotların her birinde `isCustomAuthUser` dalından sonra bir
-/// de "eski yol" (Firebase) kodu duruyor. Bu proje Firebase kullanmıyor
-/// (KURALLAR §6), o dallara hiç girilmiyor; referansla dosya eşitliği bozulmasın
-/// diye silinmedi.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
@@ -27,7 +15,16 @@ import '../../../utils/popups/loaders.dart';
 import '../models/user_model.dart';
 import 'settings_controller.dart';
 
-/// Controller to manage user-related functionality.
+/// Giriş yapan kullanıcının bellekteki kaydı ve profil işlemleri.
+///
+/// İki kaynak var ve sırası önemli: özel API ile giriş yapıldığında kullanıcı
+/// bilgisi girişte `GetStorage`'a yazılan `userData`'dan okunur; orada yoksa
+/// `users/{id}` ucundan çekilip tekrar oraya yazılır. Böylece uygulama her
+/// açılışta ağ beklemeden profili gösterebiliyor.
+///
+/// ⚠️ Dosyadaki "Firebase kullanıcısı için orijinal kod" dalları referanstan
+/// olduğu gibi duruyor; bu proje Firebase kullanmıyor, o dallar hiç
+/// çalışmıyor (KURALLAR §2: sebebini bilmediğin kodu silme).
 class UserController extends GetxController {
   static UserController get instance => Get.find();
 
@@ -56,10 +53,10 @@ class UserController extends GetxController {
       // Custom API kullanıcısı kontrolü
       if (authRepo.isCustomAuthUser.value) {
         profileLoading.value = true;
-
+        
         // Storage'dan user verilerini oku
         final userData = authRepo.deviceStorage.read('userData');
-
+        
         if (userData != null) {
           // Storage'daki veriyi UserModel'e çevir
           user.value = UserModel(
@@ -72,7 +69,6 @@ class UserController extends GetxController {
             profilePicture: userData['profileImage'] ?? '',
             isEmailVerified: userData['isEmailVerified'] ?? false,
             isProfileActive: true,
-            // Sunucu alan adını iki yazımla da döndürebiliyor.
             accountType: (userData['accountType'] ?? userData['accounttype'] ?? 'retail').toString(),
             iin: (userData['iin'] ?? '').toString(),
             createdAt: DateTime.now(),
@@ -91,12 +87,12 @@ class UserController extends GetxController {
             user.value = UserModel.empty();
           }
         }
-
+        
         profileLoading.value = false;
         return;
       }
 
-      // Eski (Firebase) yol — bu projede kullanılmıyor.
+      // Firebase kullanıcısı için orijinal kod
       if (fetchLatestRecord) {
         profileLoading.value = true;
         final user = await userRepository.fetchSingleItem(AuthenticationRepository.instance.getUserID);
@@ -161,7 +157,7 @@ class UserController extends GetxController {
         return;
       }
 
-      // Eski (Firebase) yol — bu projede kullanılmıyor.
+      // Firebase kullanıcısı için orijinal kod
       // Ensure we have fetched the user record before updating
       await fetchUserRecord();
       // Create a map to store the fields we want to update (e.g., token)
@@ -185,14 +181,16 @@ class UserController extends GetxController {
 
       // Custom API kullanıcısı kontrolü
       if (authRepo.isCustomAuthUser.value) {
-        // Custom API için pin güncellemesi
+        // 🔴 PIN yalnız istemcide tutuluyor: sunucuda karşılığı yok, bu yüzden
+        // uygulama silinince/kurulunca kayboluyor. PIN'e güvenen bir güvenlik
+        // kararı verme.
         // TODO: API'nizde pin güncelleme endpoint'i varsa burada çağırın
         user.value.pin = pin;
         user.refresh();
         return;
       }
 
-      // Eski (Firebase) yol — bu projede kullanılmıyor.
+      // Firebase kullanıcısı için orijinal kod
       // Ensure we have fetched the user record before updating
       await fetchUserRecord();
       // Create a map to store the fields we want to update (e.g., token)
@@ -221,7 +219,7 @@ class UserController extends GetxController {
       if (authRepo.isCustomAuthUser.value) {
         // Custom API için order güncellemesi
         // TODO: API'nizde order update endpoint'i varsa burada çağırın
-
+        
         // Local olarak güncelle
         int currentPoints = user.value.points;
         currentPoints = isUsingPoints ? 0 : currentPoints;
@@ -239,7 +237,7 @@ class UserController extends GetxController {
         return;
       }
 
-      // Eski (Firebase) yol — bu projede kullanılmıyor.
+      // Firebase kullanıcısı için orijinal kod
       // 1️⃣ Refresh user from Firestore to get the latest values.
       await fetchUserRecord(fetchLatestRecord: true);
 
@@ -285,7 +283,7 @@ class UserController extends GetxController {
       if (authRepo.isCustomAuthUser.value) {
         // Custom API için points güncellemesi
         // TODO: API'nizde points update endpoint'i varsa burada çağırın
-
+        
         int points = user.value.points;
         points = points + settingController.settings.value.pointsPerReview.round();
         user.value.points = points;
@@ -293,7 +291,7 @@ class UserController extends GetxController {
         return;
       }
 
-      // Eski (Firebase) yol — bu projede kullanılmıyor.
+      // Firebase kullanıcısı için orijinal kod
       // Ensure we have fetched the user record before updating
       await fetchUserRecord();
 
@@ -321,7 +319,7 @@ class UserController extends GetxController {
       if (authRepo.isCustomAuthUser.value) {
         // Custom API için points güncellemesi
         // TODO: API'nizde points update endpoint'i varsa burada çağırın
-
+        
         int points = user.value.points;
         points = points + settingController.settings.value.pointsPerRating.round();
         user.value.points = points;
@@ -329,7 +327,7 @@ class UserController extends GetxController {
         return;
       }
 
-      // Eski (Firebase) yol — bu projede kullanılmıyor.
+      // Firebase kullanıcısı için orijinal kod
       // Ensure we have fetched the user record before updating
       await fetchUserRecord();
 

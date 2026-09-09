@@ -81,12 +81,15 @@ class BannerController extends GetxController {
         Get.toNamed(TRoutes.homeMenu);
         break;
       case BannerTargetType.settingScreen:
+        // Profil artık 4. sekme (ana sayfa · mağaza · destek · profil).
         AppScreenController.instance.selectedMenu.value = 3;
         Get.toNamed(TRoutes.homeMenu);
         break;
       case BannerTargetType.favouriteScreen:
-        AppScreenController.instance.selectedMenu.value = 2;
-        Get.toNamed(TRoutes.homeMenu);
+        // 🔴 Beğenilenler ARTIK SEKME DEĞİL: alt gezinmeden kaldırılıp profil
+        // sekmesinin içine alındı. Sekme indeksi vermek başka bir ekranı
+        // açardı; kendi rotasına gidiliyor.
+        Get.toNamed(TRoutes.favourites);
         break;
       case BannerTargetType.cart:
         Get.toNamed(TRoutes.cart);

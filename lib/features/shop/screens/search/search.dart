@@ -15,6 +15,7 @@ import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
 import '../../controllers/search_controller.dart';
+import '../../../../common/widgets/loaders/delayed_loader.dart';
 
 class SearchScreen extends StatelessWidget {
   SearchScreen({super.key});
@@ -67,7 +68,7 @@ class SearchScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return const TDelayedLoader();
               }
 
               // Yeterli sorgu yoksa arama yapılmaz; sade bir yönlendirme çizilir.

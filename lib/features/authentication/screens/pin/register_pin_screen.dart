@@ -1,23 +1,28 @@
-/// PIN kurma ekranı (4 hane).
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../common/widgets/login_signup/otp_code_field.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/image_strings.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/pin_controller.dart';
 
+/// 4 haneli PIN kurma ekranı.
+///
+/// ⚠️ PIN sunucuya yazılmıyor, yalnız bellekteki kullanıcı kaydına konuyor
+/// (bkz. [PinController]).
 class RegisterPinScreen extends StatelessWidget {
   const RegisterPinScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final PinController controller = Get.put(PinController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       // appBar: const TAppBar(title: Text('Secure Your Information')),
       body: SingleChildScrollView(
         child: Padding(
@@ -43,8 +48,8 @@ class RegisterPinScreen extends StatelessWidget {
                 () => TOtpCodeField(
                   length: 4,
                   hasError: controller.hasError.value,
-                  onChanged: (code) => controller.setEnteredOTP(code),
-                  onCompleted: (code) => controller.setEnteredOTP(code),
+                  onChanged: controller.setEnteredOTP,
+                  onCompleted: controller.setEnteredOTP,
                 ),
               ),
               const SizedBox(height: TSizes.spaceBtwSections),

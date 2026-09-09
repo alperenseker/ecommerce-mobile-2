@@ -1,22 +1,21 @@
-/// Tüm API repository'lerinin temel sınıfı.
-///
-/// Paylaşılan `Dio`'yu, sayfalama alanlarını, varsayılan CRUD iskeletini ve
-/// `DioException` → kullanıcıya gösterilebilir metin çevirisini burada tutar.
-///
-/// Yanıt zarfı iki yazımla da gelebildiği için (`Success`/`success`,
-/// `Data`/`data`, `Message`/`message`) okuma daima `isSuccess` / `dataOf` /
-/// `messageOf` üzerinden yapılır.
-library;
-
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../utils/http/dio_client.dart';
 
+/// Bütün API repository'lerinin ortak atası.
+///
+/// Sunucu .NET olduğu için zarf alanları **PascalCase** (`Success`, `Data`,
+/// `Message`) gelir; bazı uçlar camelCase döndürür. [isSuccess] / [dataOf] /
+/// [messageOf] bu yüzden iki yazımı da dener — tek yazıma güvenen kod, uç
+/// değiştiğinde sessizce "başarısız" okur.
+///
+/// Her repository kendi [Dio]'sunu kurmaz; hepsi [THttpClient.dio] üzerinden
+/// tek bağlantı havuzunu ve tek auth/önbellek zincirini paylaşır.
 abstract class TApiRepositoryController<T> extends GetxController {
-  /// Uygulama genelinde paylaşılan `Dio` (taban adres, zaman aşımları, yetki
-  /// ve önbellek interceptor'ları [THttpClient] içinde). Her repository kendi
-  /// istemcisini kurmak yerine bu tek nesneyi yeniden kullanır.
+  /// Uygulama genelinde paylaşılan Dio (taban adres, zaman aşımları, auth ve
+  /// önbellek interceptor'ları [THttpClient] içinde). Her repository kendi
+  /// örneğini kurmak yerine bu teki yeniden kullanır.
   final Dio dio = THttpClient.dio;
 
   final T Function(Map<String, dynamic>) _fromJson;
@@ -37,16 +36,17 @@ abstract class TApiRepositoryController<T> extends GetxController {
 
   String getEndpoint();
 
-  /// Başarı bayrağını **iki yazımı da** kabul ederek okur: `Success`
-  /// (.NET arka ucunun varsayılan serileştirmesi) ya da `success`.
+  /// Başarı bayrağını hem PascalCase (`Success` — .NET sunucunun varsayılan
+  /// serileştirmesi) hem camelCase (`success`) yazımıyla okur. Tek yazıma
+  /// güvenen kod, uç değiştiğinde sessizce "başarısız" okur.
   bool isSuccess(dynamic data) =>
       data is Map && (data['Success'] == true || data['success'] == true);
 
-  /// Mesajı iki yazımı da kabul ederek okur: `Message` ya da `message`.
+  /// Mesajı hem `Message` hem `message` yazımıyla okur.
   String? messageOf(dynamic data) =>
       data is Map ? (data['Message'] ?? data['message']) as String? : null;
 
-  /// Yükü iki yazımı da kabul ederek okur: `Data` ya da `data`.
+  /// Veriyi hem `Data` hem `data` yazımıyla okur.
   dynamic dataOf(dynamic data) => data is Map ? (data['Data'] ?? data['data']) : null;
 
   T fromJson(Map<String, dynamic> json) => _fromJson(json);
@@ -100,14 +100,14 @@ abstract class TApiRepositoryController<T> extends GetxController {
           if (statusCode == 403) return 'Access denied.';
           if (statusCode == 404) return 'Resource not found.';
           if (statusCode == 500) {
-            // 500 gövdesini mesaja taşı: sunucu çökmesini teşhis edebilmek için.
+            // 500'ün gövdesini de taşı; yoksa sunucu çökmesi teşhis edilemez.
             final body = e.response?.data;
             final detail = body is Map
                 ? (body['Message'] ?? body['message'] ?? body['title'] ?? body.toString())
                 : body?.toString() ?? '';
             return 'Server error 500: $detail';
           }
-          // 400 / 409 / 422: arka ucun gerçek mesajını yukarı taşı.
+          // 400 / 409 / 422: sunucunun gerçek mesajı kullanıcıya gösterilmeli.
           final respData = e.response?.data;
           if (respData is Map) {
             final msg = respData['Message'] ?? respData['message'] ??

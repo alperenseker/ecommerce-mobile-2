@@ -1,9 +1,3 @@
-/// Telefon OTP ekranı (60 saniyelik sayaç + tekrar gönder).
-///
-/// ⚠️ Telefonla giriş sunucuda desteklenmiyor; ekran referansla eşitlik için
-/// duruyor. Kayıt OTP'si ayrı ekranda: `RegisterOtpScreen`.
-library;
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,6 +10,10 @@ import '../../../../utils/constants/text_strings.dart';
 import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/otp_controller.dart';
 
+/// Telefon OTP ekranı (6 hane).
+///
+/// ⚠️ Telefon doğrulama ucu sunucuda yok; ekran referanstaki gibi duruyor ama
+/// bugün çalışmıyor.
 class OtpScreen extends StatelessWidget {
   const OtpScreen({super.key});
 
@@ -27,6 +25,7 @@ class OtpScreen extends StatelessWidget {
     final dark = THelperFunctions.isDarkMode(context);
     return SafeArea(
       child: Scaffold(
+        backgroundColor: dark ? TColors.dark : TColors.white,
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace, vertical: TSizes.defaultSpace),
           child: SingleChildScrollView(
@@ -58,7 +57,7 @@ class OtpScreen extends StatelessWidget {
 
                 const SizedBox(height: TSizes.spaceBtwSections * 2),
 
-                /// OTP Text Field
+                /// OTP alanı
                 TOtpCodeField(
                   length: 6,
                   onChanged: (code) => controller.otp = code,
@@ -70,9 +69,11 @@ class OtpScreen extends StatelessWidget {
                 /// Continue Button
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: controller.loader.value ? () {} : () => controller.verifyOTP(),
-                    child: Text(controller.loader.value ? 'Verifying...' : TTexts.tContinue.tr),
+                  child: Obx(
+                    () => ElevatedButton(
+                      onPressed: controller.loader.value ? null : () => controller.verifyOTP(),
+                      child: Text(controller.loader.value ? 'Verifying...'.tr : TTexts.tContinue.tr),
+                    ),
                   ),
                 ),
 
@@ -81,7 +82,7 @@ class OtpScreen extends StatelessWidget {
                 /// Footer Text
                 Center(child: Text(TTexts.otpFooter.tr, style: Theme.of(context).textTheme.titleSmall)),
 
-                /// Footer text with Button
+                /// Sayaç bitmeden "tekrar gönder" tıklanamaz.
                 Center(
                   child: Obx(
                     () => RichText(

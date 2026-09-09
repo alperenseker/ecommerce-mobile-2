@@ -1,8 +1,6 @@
-/// Afiş repository'sinin arayüzü.
-library;
-
 import '../../../features/shop/models/banner_model.dart';
 
+/// Afiş repository sözleşmesi.
 abstract class BannerRepository {
   Future<List<BannerModel>> fetchAllItems();
   Future<BannerModel> fetchSingleItem(String id);

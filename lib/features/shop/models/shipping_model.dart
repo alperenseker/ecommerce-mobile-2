@@ -1,8 +1,6 @@
-/// Kargo/teslimat bilgisi.
-library;
-
 import '../../../utils/constants/enums.dart';
 
+/// Kargo bilgisi (taşıyıcı, takip numarası, durum, tahmini teslim).
 class ShippingInfo {
   final String carrier; // Shipping carrier (e.g., 'DHL', 'FedEx')
   final String trackingNumber; // Tracking number provided by the carrier

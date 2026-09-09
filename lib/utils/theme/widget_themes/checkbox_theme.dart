@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../constants/sizes.dart';
 
-/// Onay kutusu. Seçiliyken indigo dolu, boşken yalnız çerçeve —
-/// listelerde onlarca kutu olduğunda ekran renk kusmasın diye.
+/// Onay kutusu teması.
+///
+/// Seçiliyken indigo dolgu + beyaz tik; seçili değilken şeffaf zemin ve
+/// `borderPrimary` çerçeve. Referansta seçili olmayan hâlde tik rengi siyahtı,
+/// zemin şeffaf olduğu için görünmüyordu; çerçeve rengi eklendi.
 class TCheckboxTheme {
-  TCheckboxTheme._();
+  TCheckboxTheme._(); // Örnek oluşturulmasını engeller
 
+  /// Açık tema
   static CheckboxThemeData lightCheckboxTheme = CheckboxThemeData(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TSizes.xs)),
-    side: const BorderSide(color: TColors.borderPrimary, width: 1.5),
+    side: const BorderSide(width: 1.5, color: TColors.borderPrimary),
     checkColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
         return TColors.white;
@@ -26,9 +30,10 @@ class TCheckboxTheme {
     }),
   );
 
+  /// Karanlık tema
   static CheckboxThemeData darkCheckboxTheme = CheckboxThemeData(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TSizes.xs)),
-    side: const BorderSide(color: TColors.darkBorder, width: 1.5),
+    side: const BorderSide(width: 1.5, color: TColors.darkBorder),
     checkColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
         return TColors.white;

@@ -1,11 +1,9 @@
-/// Form ortasındaki "veya" ayıracı: iki yanında ince çizgi, ortada metin.
-library;
-
 import 'package:flutter/material.dart';
 
 import '../../../utils/constants/colors.dart';
 import '../../../utils/helpers/helper_functions.dart';
 
+/// "veya" gibi bir metni iki ince çizgi arasına alan ayraç.
 class TFormDivider extends StatelessWidget {
   const TFormDivider({super.key, required this.dividerText});
 

@@ -1,6 +1,3 @@
-/// Sipariş repository'sinin arayüzü.
-library;
-
 import '../../../features/shop/models/order_group_model.dart';
 import '../../../features/shop/models/order_model.dart';
 
@@ -12,6 +9,7 @@ double _parseDouble(dynamic value) {
   return 0.0;
 }
 
+/// Sipariş repository sözleşmesi ve yardımcı tipleri.
 abstract class OrderRepository {
   Future<PaginatedOrderResponse> fetchAllOrders({
     int page,

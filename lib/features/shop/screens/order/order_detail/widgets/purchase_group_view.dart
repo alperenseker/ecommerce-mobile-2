@@ -223,7 +223,15 @@ class _SubOrderCard extends StatelessWidget {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     // Aynı rota, bu kez tek sipariş argümanıyla açılıyor.
-                    onPressed: () => Get.toNamed(TRoutes.orderDetail, arguments: order),
+                    // 🔴 `preventDuplicates: false` ŞART: GetX varsayılan olarak
+                    // hedef rota AÇIK olan rotayla aynıysa gitmiyor ve sessizce
+                    // `null` dönüyor. Grup görünümü de tek sipariş görünümü de
+                    // `/orderDetail` olduğu için düğme hiç çalışmıyordu.
+                    onPressed: () => Get.toNamed(
+                      TRoutes.orderDetail,
+                      arguments: order,
+                      preventDuplicates: false,
+                    ),
                     icon: const Icon(Iconsax.export_3, size: TSizes.iconXs),
                     label: Text(TTexts.view.tr),
                   ),

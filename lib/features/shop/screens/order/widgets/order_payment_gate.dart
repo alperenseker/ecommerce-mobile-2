@@ -73,6 +73,10 @@ bool canPayGroup(OrderGroupModel group) {
     paymentMethod: group.paymentMethod,
     paymentStatus: group.paymentStatus,
     amount: group.totalAmount,
+    // İptal edilmiş alışverişin ödemesi tamamlanamaz. Tek sipariş kapısında
+    // bu kural vardı, grup kapısında yoktu: kartla açılıp sonra iptal edilen
+    // bir alışverişte düğme çizilmeye devam ediyordu.
+    isCanceled: group.isCanceled,
   );
 }
 
@@ -95,6 +99,7 @@ bool bankDetailsVisibleForGroup(OrderGroupModel group) {
     transferOnly: transferOnly,
     paymentMethod: group.paymentMethod,
     paymentStatus: group.paymentStatus,
+    isCanceled: group.isCanceled,
   );
 }
 

@@ -1,8 +1,6 @@
-/// Ürün özniteliği repository'sinin arayüzü.
-library;
-
 import '../../../features/shop/models/attribute_model.dart';
 
+/// Öznitelik repository sözleşmesi.
 abstract class AttributeRepository {
   Future<List<AttributeModel>> fetchAllItems();
   Future<AttributeModel> fetchSingleItem(String id);

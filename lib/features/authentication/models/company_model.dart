@@ -1,8 +1,8 @@
-/// Company information returned by the `/company/{iin}` registry lookup.
+/// `/company/{iin}` sicil sorgusundan dönen şirket bilgisi.
 ///
-/// Used during company sign-up to confirm the official record before creating
-/// the account. Field names mirror the web client (`nameRu`, `director`,
-/// `address`) but we read PascalCase variants too for backend tolerance.
+/// Şirket kaydı sırasında resmî kaydı doğrulamak için kullanılır. Alan adları
+/// web istemcisiyle aynı (`nameRu`, `director`, `address`); sunucu toleransı için
+/// PascalCase yazımları da okunur.
 class CompanyModel {
   final String iin;
   final String nameRu;

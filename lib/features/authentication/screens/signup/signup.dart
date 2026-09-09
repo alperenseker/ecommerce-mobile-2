@@ -1,14 +1,5 @@
-/// Kayıt ekranı: başlık, giriş/kayıt sekmeleri ve kayıt formu.
-///
-/// 🔴 KAYIT KAPISI (K29.2): kayıt tümüyle kapalıyken form **hiç çizilmez**,
-/// yerine "geçici olarak kapalı" bloğu ve girişe dönüş düğmesi gelir. Kapalı
-/// olan tek bir kayıt tipi ise seçenek hiç çizilmez — bunu `TSignupForm`
-/// yapıyor.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 
 import '../../../../common/styles/spacing_styles.dart';
 import '../../../../common/widgets/custom_shapes/containers/rounded_container.dart';
@@ -22,6 +13,12 @@ import '../../../../utils/helpers/helper_functions.dart';
 import '../../../personalization/controllers/public_settings_controller.dart';
 import 'widgets/signup_form.dart';
 
+/// Kayıt ekranı.
+///
+/// 🔴 Kayıt kapısı: sunucu perakende/şirket kaydını ayrı ayrı kapatabiliyor.
+/// İkisi de kapalıysa form **hiç çizilmez**, yerine kapalı bloğu gelir.
+/// Giriş ekranı bundan etkilenmez — kayıt kapatmak hesap dondurmak değildir;
+/// bu ekranın altındaki düğme doğrudan girişe götürür.
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
 
@@ -29,10 +26,13 @@ class SignupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     final publicSettings = PublicSettingsController.instance;
-    // Anahtar uygulama açıldıktan sonra çevrilmiş olabilir.
+    // Anahtar uygulama açıldıktan sonra çevrilmiş olabilir; ekran her
+    // açılışında yeniden okunuyor (önbellek atlanarak).
     WidgetsBinding.instance.addPostFrameCallback((_) => publicSettings.reload());
 
     return Scaffold(
+      // TASARIM.md §7: kimlik ekranları beyaz zeminde.
+      backgroundColor: dark ? TColors.dark : TColors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: TSpacingStyle.paddingWithAppBarHeight,
@@ -46,24 +46,18 @@ class SignupScreen extends StatelessWidget {
                 backgroundColor: dark ? TColors.darkContainer : TColors.lightContainer,
                 child: IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back_ios_new_rounded)),
               ),
-              const SizedBox(height: TSizes.spaceBtwItems),
+              const SizedBox(height: TSizes.spaceBtwSections),
 
-              /// Giriş / Kayıt sekmesi (TASARIM.md §7)
-              const TAuthTabs(isLogin: false),
+              /// Giriş ↔ kayıt sekmesi (TASARIM.md §6).
+              const TAuthTabs(current: TAuthTab.signup),
+              const SizedBox(height: TSizes.spaceBtwSections),
 
-              /// FAZ 34 — K29.2: kayıt tümüyle kapalıyken form **hiç
-              /// çizilmez**, yerine kapalı mesajı gösterilir.
-              ///
-              /// 🔴 Giriş ekranı bundan etkilenmez: kayıt kapatmak hesap
-              /// dondurmak değildir (sunucu da `users.isactive`'e dokunmuyor).
-              /// Bu ekranın altındaki bağlantı doğrudan girişe götürür.
               Obx(
                 () => publicSettings.isRegistrationClosed
                     ? const _RegistrationClosedPanel()
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: TSizes.spaceBtwSections),
                           Text(TTexts.signupTitle.tr, style: Theme.of(context).textTheme.headlineMedium),
                           const TSignupForm(),
                         ],
@@ -77,7 +71,7 @@ class SignupScreen extends StatelessWidget {
   }
 }
 
-/// "Kayıt geçici olarak kapalıdır" ekranı + girişe dönüş.
+/// "Kayıt geçici olarak kapalıdır" bloğu + girişe dönüş.
 class _RegistrationClosedPanel extends StatelessWidget {
   const _RegistrationClosedPanel();
 
@@ -86,14 +80,11 @@ class _RegistrationClosedPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: TSizes.spaceBtwSections),
         Text(TTexts.registrationClosedTitle.tr, style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: TSizes.spaceBtwSections),
-        TAuthNotice(
-          message: TTexts.registrationClosedText.tr,
-          tone: TAuthNoticeTone.warning,
-          icon: Iconsax.info_circle,
-        ),
+
+        /// Uyarı kutusu — metin boşsa hiç çizilmiyor (TAuthNotice kuralı).
+        TAuthNotice(text: TTexts.registrationClosedText.tr, type: TAuthNoticeType.warning),
         const SizedBox(height: TSizes.spaceBtwSections),
 
         /// Giriş her durumda açık.

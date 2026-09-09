@@ -1,6 +1,3 @@
-/// Oturumdaki kullanıcı.
-library;
-
 import 'package:t_utils/utils/constants/enums.dart';
 import 'package:t_utils/utils/formatters/formatter.dart';
 
@@ -8,7 +5,11 @@ import '../../../utils/constants/enums.dart';
 import '../../shop/models/order_model.dart';
 import 'address_model.dart';
 
-/// Model class representing user data.
+/// Kullanıcı modeli.
+///
+/// `fromJson` alan adlarının iki yazımını da dener; sunucu `FirstName`/`LastName`
+/// alanlarını ayrık tutar, ekrandaki tek "ad soyad" alanına çeviri tek yerde
+/// yapılır.
 class UserModel {
   final String id;
   String firstName;

@@ -1,13 +1,11 @@
-/// "Varsayılan" bölümü — uygulamanın yedek dilini ayrı bir başlık altında
-/// gösterir; arama kutusuna yazılan metinle eşleşmiyorsa gizlenir.
+/// "Varsayılan dil" bölümü.
 ///
-/// 🔴 Referansta varsayılan **Fransızca** yazılıydı (şablondan kalma).
-/// Bu uygulamanın yedek dili `fallbackLocale: Locale('en','US')`, yani
-/// **İngilizce**; çevirisi olmayan her anahtar oraya düşüyor. Yanlış dili
-/// "varsayılan" diye göstermemek için düzeltildi.
+/// ⚠️ Ekran tarafından kullanılmıyor (bkz. `language_card.dart` başındaki not).
 ///
-/// ⚠️ `LanguageScreen` bu widget'ı kullanmıyor (referansta da kullanmıyordu);
-/// dosya eşliği için taşındı.
+/// 🔴 Varsayılan dil **İngilizce**, referanstaki gibi Fransızca değil:
+/// uygulamanın yedek dili `fallbackLocale: Locale('en','US')` ve sözlüğü
+/// olmayan diller de oraya düşüyor (`LanguageController.localeFor`).
+/// Referanstaki `'fr'` şablondan kalmıştı.
 library;
 
 import 'package:flutter/material.dart';
@@ -23,27 +21,27 @@ import 'language_card.dart';
 class DefaultSectionWidget extends StatelessWidget {
   const DefaultSectionWidget({super.key});
 
-  /// Uygulamanın yedek dili (bkz. `app.dart` → `fallbackLocale`).
-  static const String _fallbackCode = 'en';
-
   @override
   Widget build(BuildContext context) {
     final controller = LanguageController.instance;
     final defaultLanguage = controller.allLanguages.firstWhere(
-      (lang) => lang['code'] == _fallbackCode,
+      (lang) => lang['code'] == 'en',
       orElse: () => controller.allLanguages.first,
     );
 
     return Obx(() {
+      // Varsayılan dil yalnız aramayla eşleşiyorsa (ya da arama boşsa) çizilir.
       final query = controller.searchQuery.value.toLowerCase();
-      final matches = query.isEmpty || defaultLanguage['name']!.toLowerCase().contains(query);
-      if (!matches) return const SizedBox.shrink();
+      if (query.isNotEmpty && !defaultLanguage['name']!.toLowerCase().contains(query)) {
+        return const SizedBox.shrink();
+      }
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
         child: Column(
           spacing: TSizes.spaceBtwItems,
           children: [
+            /// -- Bölüm başlığı
             TSectionHeading(title: TTexts.defaultLabel.tr, showActionButton: false),
             LanguageCard(
               languageName: defaultLanguage['name']!,

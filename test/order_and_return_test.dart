@@ -201,6 +201,42 @@ void main() {
       expect(groups.first.isUnpaid, isTrue);
     });
 
+    test('alışverişin TAMAMI iptalse grup iptal sayılır, biri ayaktaysa sayılmaz', () {
+      final hepsiIptal = OrderGroupModel.fromFlatOrders([
+        OrderModel.fromJson('', orderJson(id: 'a', groupSeq: 1, status: 'cancelled')),
+        OrderModel.fromJson('', orderJson(id: 'b', groupSeq: 2, status: 'cancelled')),
+      ]).first;
+      expect(hepsiIptal.isCanceled, isTrue);
+      // 🔴 gateway modunda bile iptal edilmiş KART alışverişinde düğme yok.
+      expect(canCompleteCardPayment(
+        transferOnly: false,
+        paymentMethod: hepsiIptal.paymentMethod,
+        paymentStatus: hepsiIptal.paymentStatus,
+        amount: hepsiIptal.totalAmount,
+        isCanceled: hepsiIptal.isCanceled,
+      ), isFalse);
+      // İptal alışverişte rekvizitler de çizilmez.
+      expect(shouldShowBankDetails(
+        transferOnly: true,
+        paymentMethod: hepsiIptal.paymentMethod,
+        paymentStatus: hepsiIptal.paymentStatus,
+        isCanceled: hepsiIptal.isCanceled,
+      ), isFalse);
+
+      final biriAyakta = OrderGroupModel.fromFlatOrders([
+        OrderModel.fromJson('', orderJson(id: 'a', groupSeq: 1, status: 'cancelled')),
+        OrderModel.fromJson('', orderJson(id: 'b', groupSeq: 2, status: 'pending')),
+      ]).first;
+      expect(biriAyakta.isCanceled, isFalse);
+      expect(canCompleteCardPayment(
+        transferOnly: false,
+        paymentMethod: biriAyakta.paymentMethod,
+        paymentStatus: biriAyakta.paymentStatus,
+        amount: biriAyakta.totalAmount,
+        isCanceled: biriAyakta.isCanceled,
+      ), isTrue);
+    });
+
     test('grubu olmayan eski sipariş kendi başına tek siparişlik alışveriş olur', () {
       final groups = OrderGroupModel.fromFlatOrders([
         OrderModel.fromJson('', orderJson(id: 'a', groupId: '', groupNumber: '')),

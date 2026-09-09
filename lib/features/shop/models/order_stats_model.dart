@@ -1,4 +1,4 @@
-/// Sipariş istatistikleri özeti.
+/// Sipariş istatistiklerinin özeti (adet, ciro, dönem).
 class OrderStatsModel {
   final String id;
   final int totalOrders;

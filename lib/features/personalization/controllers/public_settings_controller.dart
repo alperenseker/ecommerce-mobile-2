@@ -1,25 +1,21 @@
-/// Üç genel anahtarın (kayıt aç/kapa, ödeme modu) istemci tarafındaki tek
-/// kaynağı. `GET /api/settings/public` (anonim) okunur.
-library;
-
 import 'package:get/get.dart';
 
 import '../../../data/repositories/settings/api_settings_repository.dart';
 import '../models/public_settings_model.dart';
 
-/// FAZ 34 — üç genel anahtarın (kayıt aç/kapa, ödeme modu) istemci tarafındaki
-/// tek kaynağı. `GET /api/settings/public` (anonim) okunur.
+/// Üç genel anahtarın (kayıt aç/kapa, ödeme modu) istemci tarafındaki tek
+/// kaynağı. `GET /api/settings/public` (anonim) okunur.
 ///
-/// İki kural koda gömüldü — ikisi de Faz 32'nin (web) kararlarının aynısı:
+/// İki kural koda gömüldü:
 ///
 /// 🔴 **Hata = bugünkü davranış.** Ağ/sunucu hatasında değer
 /// [PublicSettingsModel.defaults] (kayıt AÇIK, mod `gateway`) kalır ve metot
 /// **asla fırlatmaz**. Bir ağ hatası uygulamayı kayıt kapalıya ya da ödemesiz
-/// moda düşürmemeli; asıl kapı sunucudadır (K29.2).
+/// moda düşürmemeli; asıl kapı sunucudadır.
 ///
-/// 🔴 **Diske YAZILMAZ.** `GetStorage`'a kalıcı yazılsaydı superAdmin anahtarı
-/// çevirdikten sonra bayat değer müşteriyi yanlış ekrana sokardı. Değer yalnız
-/// uygulama oturumu boyunca bellekte tutulur.
+/// 🔴 **Diske YAZILMAZ.** Kalıcı yazılsaydı yönetici anahtarı çevirdikten sonra
+/// bayat değer müşteriyi yanlış ekrana sokardı. Değer yalnız uygulama oturumu
+/// boyunca bellekte tutulur.
 class PublicSettingsController extends GetxController {
   static PublicSettingsController get instance => Get.isRegistered<PublicSettingsController>()
       ? Get.find()
@@ -29,7 +25,7 @@ class PublicSettingsController extends GetxController {
   final RxBool loaded = false.obs;
 
   /// Aynı anda birden çok ekran isterse tek istek açılır, ötekiler aynı sözü
-  /// bekler (web'deki `getPublicSettings()` deseni).
+  /// bekler.
   Future<void>? _inFlight;
 
   ApiSettingsRepository get _repository => Get.isRegistered<ApiSettingsRepository>()
@@ -58,8 +54,8 @@ class PublicSettingsController extends GetxController {
 
   /// Anahtarları **yeniden** okur (istemci önbelleği atlanır).
   ///
-  /// Sipariş oluşturmadan hemen önce çağrılır: bayat bir mod değeri müşteriyi
-  /// kapalı ödeme yoluna sokar ya da 409'a çarptırır.
+  /// Kayıt ekranı açılırken ve sipariş oluşturmadan hemen önce çağrılır: bayat
+  /// bir değer müşteriyi kapalı bir yola sokar.
   ///
   /// ⚠️ Adı bilerek `refresh` DEĞİL: `GetxController` o adı zaten taşıyor
   /// (dinleyicileri uyaran senkron metot) ve üzerine yazmak GetX'in kendi
@@ -78,10 +74,10 @@ class PublicSettingsController extends GetxController {
     }
   }
 
-  /// Sunucudan **403 + `errorCode`** geldiğinde ekranı gerçeğe çeker (K29.2).
+  /// Sunucudan **403 + `errorCode`** geldiğinde ekranı gerçeğe çeker.
   ///
   /// Anahtar, ekran açıldıktan sonra çevrilmiş olabilir: kullanıcı hâlâ kayıt
-  /// formunu görüyor ama sunucu artık kabul etmiyor. Kodlar Faz 29'un
+  /// formunu görüyor ama sunucu artık kabul etmiyor. Kodlar sunucunun
   /// **değiştirilemez** sözleşmesidir.
   void applyRegistrationError(String? errorCode) {
     switch (errorCode) {

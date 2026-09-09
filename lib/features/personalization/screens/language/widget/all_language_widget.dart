@@ -1,7 +1,6 @@
-/// "Tüm diller" bölümü — arama süzgecinden geçen dilleri alt alta dizer.
+/// "Bütün diller" bölümü.
 ///
-/// ⚠️ `LanguageScreen` bu widget'ı kullanmıyor (referansta da kullanmıyordu);
-/// dosya eşliği için taşındı. Bkz. [LanguageCard].
+/// ⚠️ Ekran tarafından kullanılmıyor (bkz. `language_card.dart` başındaki not).
 library;
 
 import 'package:flutter/material.dart';

@@ -6,6 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Cihaz ve sistem arayüzü yardımcıları (klavye, durum çubuğu, ekran ölçüsü,
+/// yönelim, titreşim, bağlantı).
+///
+/// Ekran ölçüsü isteyenlerin çoğu `Get.context!` üzerinden okuyor; bu yüzden
+/// bu sınıfın çağrıldığı yerde bir GetX bağlamı kurulmuş olmalı.
 class TDeviceUtils {
   static void hideKeyboard(BuildContext context) {
     FocusScope.of(context).requestFocus(FocusNode());

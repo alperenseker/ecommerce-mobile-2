@@ -1,10 +1,8 @@
-/// Sohbet mesajı.
-library;
-
 import 'package:flutter_chat_types/flutter_chat_types.dart';
 
 import '../../../utils/constants/enums.dart';
 
+/// Sohbetteki tek mesaj (metin, ek, gönderen, okundu bilgisi).
 class MessageModel {
   String id;
   String senderId;

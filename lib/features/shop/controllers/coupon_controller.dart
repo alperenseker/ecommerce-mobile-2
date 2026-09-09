@@ -34,9 +34,9 @@ class CouponController extends GetxController {
     } else {
       coupon.value = selectedCoupon;
       isCouponToggled.value = true;
-      // Ödeme özeti kuponu buradan görüyor. Controller kurulu değilse
-      // (ödeme ekranı hiç açılmadıysa) dokunulmaz — kupon zaten
-      // `coupon` üzerinde taşınıyor ve ekran açılınca oradan okunuyor.
+      // Ödeme özeti kuponu buradan görüyor. Kurulu değilse dokunulmaz —
+      // kupon zaten `coupon` üzerinde taşınıyor ve ödeme ekranı açılınca
+      // oradan okunuyor.
       if (Get.isRegistered<CheckoutController>()) {
         CheckoutController.instance.isCouponToggled.value = true;
       }

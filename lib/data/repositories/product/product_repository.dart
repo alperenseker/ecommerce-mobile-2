@@ -1,8 +1,6 @@
-/// Ürün repository'sinin arayüzü.
-library;
-
 import '../../../features/shop/models/product_model.dart';
 
+/// Ürün repository sözleşmesi.
 abstract class ProductRepository {
   Future<List<ProductModel>> fetchAllItems();
   Future<ProductModel> fetchSingleItem(String id);

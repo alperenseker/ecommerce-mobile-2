@@ -1,9 +1,9 @@
-/// A single company bank account (rekvizit) shown on checkout and on unpaid
-/// bank-transfer orders. Mirrors the web checkout's `/bank-details` payload.
+/// Ödeme adımında ve ödenmemiş havale siparişlerinde gösterilen tek banka
+/// hesabı (rekvizit). Web ödeme adımının `/bank-details` yanıtıyla birebir.
 ///
-/// FAZ 34 — hesaplar artık **şirkete ait** (Faz 30, K29.4): her 1C kaynağının
-/// kendi satırları var ve müşteri o siparişin şirketinin hesabını görmeli.
-/// Şirket alanları bu yüzden modelde taşınıyor.
+/// 🔴 Hesaplar **şirkete aittir**: her 1C kaynağının kendi satırları var ve
+/// müşteri o siparişin şirketinin hesabını görmeli. Şirket alanları bu yüzden
+/// modelde taşınıyor.
 class BankDetailModel {
   final String id;
   final String bankName;

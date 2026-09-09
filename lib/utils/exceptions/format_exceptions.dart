@@ -1,11 +1,8 @@
-/// Biçim (parse) hatalarının okunur mesaja çevirisi.
-library;
-
 import 'package:get/get.dart';
 
 import '../constants/text_strings.dart';
 
-/// Custom exception class to handle various format-related errors.
+/// Biçim (format) hatalarını okunur mesaja çeviren sınıf.
 class TFormatException implements Exception {
   /// The associated error message.
   final String message;

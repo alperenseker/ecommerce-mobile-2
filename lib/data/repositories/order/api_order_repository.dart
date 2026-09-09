@@ -1,17 +1,19 @@
-/// Sipariş ve alışveriş grubu uçları (`order/...`).
-///
-/// 🔴 **Bir ödeme = bir GRUP + şirket başına bir sipariş.** Sepette iki
-/// şirketin (1C kaynağının) ürünü varsa sunucu siparişi böler, ikisi de aynı
-/// `GroupId` altında toplanır ve tek çekimle ödenir. Grup ucu yoksa/hata
-/// verirse düz sipariş listesinden istemcide grup kurulur.
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import '../../../features/shop/models/order_group_model.dart';
 import '../../../features/shop/models/order_model.dart';
 import 'order_repository.dart';
 
+/// Sipariş uçları (`order`).
+///
+/// 🔴 **Bir ödeme = bir GRUP + şirket başına bir sipariş.** Sepette iki şirketin
+/// (1C kaynağının) ürünü varsa sunucu siparişi böler, ikisi de aynı `GroupId`
+/// altında toplanır ve tek çekimle ödenir. Müşterinin "siparişim" dediği bütün
+/// gruptur, tek satır değil.
+///
+/// Ana yol `order/groups/user/{id}`; o uç yoksa ya da erişilemezse düz
+/// `order/user/{id}` listesinden **istemcide** grup kurulur (her satır
+/// `GroupId`/`GroupNumber` taşıyor), böylece ekran her koşulda dolar.
 class ApiOrderRepository extends TApiRepositoryController<OrderModel>
     implements OrderRepository {
 
@@ -167,9 +169,11 @@ class ApiOrderRepository extends TApiRepositoryController<OrderModel>
     required String paymentMethod,
     String? customerNote,
     String? couponCode,
-    // FAZ 07 — stoksuz sipariş yetkisi olan bayi stok bitse de sipariş
+    // 🔴 FAZ 07 — stoksuz sipariş yetkisi olan bayi stok bitse de sipariş
     // verebiliyor; sunucu stok kapısını bu bayrağa göre gevşetiyor
     // (web `services/order.service.js` → `CanOrderWithoutStock`).
+    // Referans mobilde YOK; alan olmadan o bayinin siparişi stok kapısına
+    // takılıyor.
     bool canOrderWithoutStock = false,
   }) async {
     try {
@@ -178,8 +182,8 @@ class ApiOrderRepository extends TApiRepositoryController<OrderModel>
         'shippingAddressId': shippingAddressId,
         'billingAddressId': billingAddressId,
         'paymentMethod': paymentMethod,
-        // Arka uç bu alanları zorunlu tutuyor (null'a 400 dönüyor); not ya da
-        // kupon yoksa boş dize gönderilir.
+        // Sunucu bu alanları zorunlu tutuyor (null'ı 400 ile reddediyor);
+        // not/kupon yoksa boş dize gönderilir.
         'customerNote': customerNote ?? '',
         'couponCode': couponCode ?? '',
         'canOrderWithoutStock': canOrderWithoutStock,

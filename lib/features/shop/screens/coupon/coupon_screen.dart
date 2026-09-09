@@ -16,8 +16,10 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../common/widgets/appbar/appbar.dart';
 import '../../../../common/widgets/loaders/t_empty_state.dart';
 import '../../../../common/widgets/shimmers/vertical_product_shimmer.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/coupon_controller.dart';
 import '../../models/coupon_model.dart';
 import 'coupon_card.dart';
@@ -32,6 +34,8 @@ class CouponScreen extends StatelessWidget {
     final controller = CouponController.instance;
 
     return Scaffold(
+      // Kartlar açık gri zemin üzerinde durur (hesap yüzeyiyle aynı dil).
+      backgroundColor: THelperFunctions.isDarkMode(context) ? TColors.dark : TColors.light,
       appBar: TAppBar(
         title: Text(TTexts.coupon.tr),
         showBackArrow: true,
@@ -59,7 +63,12 @@ class CouponScreen extends StatelessWidget {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.all(TSizes.defaultSpace),
+            padding: EdgeInsets.fromLTRB(
+              TSizes.defaultSpace,
+              TSizes.md,
+              TSizes.defaultSpace,
+              MediaQuery.paddingOf(context).bottom + TSizes.spaceBtwSections,
+            ),
             itemCount: coupons.length,
             itemBuilder: (context, index) => CouponCard(coupon: coupons[index]),
             separatorBuilder: (context, index) => const SizedBox(height: TSizes.spaceBtwItems),

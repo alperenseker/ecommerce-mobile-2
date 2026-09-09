@@ -1,9 +1,7 @@
-/// Sipariş geçmişindeki tek hareket (durum değişikliği, not, ödeme).
-library;
-
 import 'package:t_utils/utils/constants/enums.dart';
 import '../../../utils/formatters/formatter.dart';
 
+/// Sipariş geçmişindeki tek olay (durum değişikliği, not, ödeme).
 class OrderActivity {
   final ActivityType activityType; // Enum: Type of activity
   final DateTime activityDate; // Date when the activity occurred

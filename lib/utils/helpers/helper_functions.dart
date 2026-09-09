@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+/// Ekranların paylaştığı küçük yardımcılar: renk çözümü, güvenli alan
+/// ölçüleri, tarih biçimi, metin kısaltma, telefon maskeleme.
+///
+/// Renk dönüşümleri (`restoreColorFromValue` / `computeColorValue`) sunucudan
+/// 32-bit ARGB tamsayı olarak gelen öznitelik renkleri içindir.
 class THelperFunctions {
   static Color? getColor(String value) {
     /// Define your product specific colors here and it will match the attribute colors and show specific 🟠🟡🟢🔵🟣🟤

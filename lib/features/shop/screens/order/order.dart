@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../common/widgets/appbar/appbar.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import 'widgets/orders_list.dart';
 
 class OrderScreen extends StatelessWidget {
@@ -15,6 +17,8 @@ class OrderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: THelperFunctions.isDarkMode(context) ? TColors.dark : TColors.light,
+
       /// -- Başlık
       appBar: TAppBar(
         title: Text(TTexts.myOrders.tr, style: Theme.of(context).textTheme.headlineSmall),
@@ -22,11 +26,16 @@ class OrderScreen extends StatelessWidget {
         showActions: false,
         showSkipButton: false,
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(TSizes.defaultSpace),
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(
+          TSizes.defaultSpace,
+          TSizes.md,
+          TSizes.defaultSpace,
+          MediaQuery.paddingOf(context).bottom,
+        ),
 
         /// -- Alışverişler
-        child: TOrderListItems(),
+        child: const TOrderListItems(),
       ),
     );
   }

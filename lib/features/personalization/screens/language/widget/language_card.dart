@@ -1,9 +1,9 @@
-/// Radyo düğmeli dil kartı.
+/// Dil kartı (radyo düğmeli sürüm).
 ///
-/// ⚠️ Bu widget'ı `LanguageScreen` **kullanmıyor** — ekranın kendi satırı
-/// (`TLanguageTile`) var; referansta da durum aynıydı. Referansla dosya
-/// eşliği bozulmasın diye (KURALLAR §4) taşındı ve TASARIM.md paletine
-/// çevrildi.
+/// ⚠️ Bu widget ile [AllLanguageWidget], [DefaultSectionWidget] ve
+/// [LanguageHeader] **ekran tarafından kullanılmıyor** — referansta da
+/// kullanılmıyorlardı. KURALLAR §4 ("hiçbir dosya eksilmez") gereği
+/// taşındılar; ekranın kendi satır çizimi `language_screen.dart` içinde.
 library;
 
 import 'package:flutter/material.dart';
@@ -17,11 +17,16 @@ import '../../../../../utils/helpers/helper_functions.dart';
 import '../../../controllers/language_controller.dart';
 
 class LanguageCard extends StatelessWidget {
-  const LanguageCard({super.key, required this.languageName, required this.languageCode, required this.flagAsset});
-
   final String languageName;
   final String languageCode;
   final String flagAsset;
+
+  const LanguageCard({
+    super.key,
+    required this.languageName,
+    required this.languageCode,
+    required this.flagAsset,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,36 +34,48 @@ class LanguageCard extends StatelessWidget {
     final dark = THelperFunctions.isDarkMode(context);
 
     return Obx(
-      () => RadioGroup<String>(
-        // `Radio`'nun kendi `groupValue`/`onChanged` alanları Flutter 3.32'de
-        // kullanımdan kalktı; seçim artık üstteki `RadioGroup`'tan yönetiliyor.
-        groupValue: controller.selectedLocale.value.languageCode,
-        onChanged: (value) => controller.changeLanguage(value ?? languageCode),
-        child: GestureDetector(
-          onTap: () => controller.changeLanguage(languageCode),
-          child: TRoundedContainer(
-            showBorder: true,
-            radius: TSizes.cardRadiusMd,
-            borderColor: TColors.borderSecondary,
-            backgroundColor: dark ? TColors.darkSurface : TColors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+      () => GestureDetector(
+        onTap: () => controller.changeLanguage(languageCode),
+        child: TRoundedContainer(
+          showBorder: true,
+          radius: TSizes.borderRadiusMd,
+          backgroundColor: dark ? TColors.darkSurface : TColors.white,
+          borderColor: TColors.borderSecondary,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
                   children: [
-                    /// -- Bayrak
-                    TCircularImage(image: flagAsset, padding: 0, height: 40, width: 40),
+                    TRoundedContainer(
+                      radius: TSizes.borderRadiusSm,
+                      padding: const EdgeInsets.all(TSizes.sm),
+                      backgroundColor: dark ? TColors.darkContainer : TColors.lightContainer,
+                      child: TCircularImage(image: flagAsset, padding: 0, height: 40, width: 40),
+                    ),
                     const SizedBox(width: TSizes.spaceBtwItems),
-
-                    /// -- Dil adı
-                    Text(languageName, style: Theme.of(context).textTheme.titleSmall),
+                    Expanded(
+                      child: Text(
+                        languageName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
+              ),
 
-                /// -- Seçim düğmesi
-                Radio<String>(value: languageCode, activeColor: TColors.primary),
-              ],
-            ),
+              /// -- Seçim düğmesi
+              //
+              // ⚠️ Referansta `Radio(groupValue:, onChanged:)` vardı; o iki alan
+              // Flutter 3.32'de kullanımdan kalktı. Davranış aynı, sarmalayıcı
+              // `RadioGroup` grubu yönetiyor.
+              RadioGroup<String>(
+                groupValue: controller.selectedLocale.value.languageCode,
+                onChanged: (value) => controller.changeLanguage(languageCode),
+                child: Radio<String>(value: languageCode, activeColor: TColors.primary),
+              ),
+            ],
           ),
         ),
       ),

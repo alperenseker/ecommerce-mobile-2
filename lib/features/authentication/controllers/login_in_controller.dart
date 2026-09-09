@@ -1,12 +1,3 @@
-/// Giriş ekranının controller'ı: form durumu, "beni hatırla" ve giriş akışı.
-///
-/// Giriş başarılı olduğunda sırasıyla bildirim jetonu güncellenir, kullanıcı
-/// kaydı çekilir ve `screenRedirect()` ile ana menüye geçilir. Yetki
-/// (`usersettings`) çağrısı `screenRedirect()` içinde yapılır ve **başarısız
-/// olsa bile giriş bozulmaz**; en kısıtlayıcı varsayılana düşülür
-/// (`UserSettingsController`).
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -19,7 +10,14 @@ import '../../../utils/helpers/network_manager.dart';
 import '../../../utils/popups/full_screen_loader.dart';
 import '../../../utils/popups/loaders.dart';
 import '../../personalization/controllers/user_controller.dart';
+import '../../personalization/controllers/user_settings_controller.dart';
 
+/// Giriş ekranının denetleyicisi.
+///
+/// Girişten sonraki sıra bilinçli: önce jeton alınır, sonra bildirim jetonu
+/// yazılır, sonra kullanıcı kaydı ve **ticari yetkiler** (`usersettings`)
+/// yüklenir. Yetki çağrısı ayrı bir `try` içinde: 🔴 yetkiler alınamasa bile
+/// giriş bozulmaz, en kısıtlayıcı varsayılana düşülür.
 class LoginController extends GetxController {
   static LoginController get instance => Get.isRegistered() ? Get.find() : Get.put(LoginController());
 
@@ -72,6 +70,17 @@ class LoginController extends GetxController {
       await userController.updateUserRecordWithToken(token);
       // Assign user data to RxUser of UserController to use in app
       await userController.fetchUserRecord();
+
+      // 🔴 Yönetici yetkileri (`CanBypassPayment`, `CanOrderWithoutStock`,
+      // `PriceCategory`). Ayrı `try` içinde: bu çağrı düşerse giriş yine de
+      // tamamlanır, denetleyici en kısıtlayıcı varsayılanda kalır.
+      try {
+        if (Get.isRegistered<UserSettingsController>()) {
+          await UserSettingsController.instance.fetchUserSettings();
+        } else {
+          await Get.put(UserSettingsController()).fetchUserSettings();
+        }
+      } catch (_) {}
 
       // Remove Loader
       TFullScreenLoader.stopLoading();

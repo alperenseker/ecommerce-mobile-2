@@ -1,48 +1,40 @@
-/// Uygulamanın **tek** HTTP istemcisi.
-///
-/// Eskiden her repository kendi `Dio`'sunu kuruyordu (15+ ayrı bağlantı havuzu,
-/// her birinde auth interceptor'ın ayrı bir kopyası). Artık hepsi buradaki tek
-/// istemciyi paylaşır; taban adres, zaman aşımları, yetki başlığı ve GET
-/// önbelleği tek yerde tanımlıdır.
-library;
-
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
 
 import '../../data/repositories/authentication/authentication_repository.dart';
 
-/// Single shared [Dio] instance for the whole app.
+/// Uygulamanın tamamı için **tek** paylaşılan [Dio] örneği.
 ///
-/// Previously every repository created its own [Dio] (15+ separate connection
-/// pools, each with its own copy of the auth interceptor). They now all share
-/// this one client, which carries:
-///   * the auth-token interceptor (token read per-request, so it always
-///     reflects the latest login state), and
-///   * a small in-memory GET cache ([TCacheInterceptor]) for read-heavy public
-///     catalog endpoints.
+/// Önceden her repository kendi [Dio]'sunu kuruyordu (15'ten fazla ayrı bağlantı
+/// havuzu, her birinde auth interceptor'ın ayrı bir kopyası). Hepsi artık bu tek
+/// istemciyi paylaşıyor; üzerinde iki interceptor var:
+///   * jeton interceptor'ı — jeton **her istekte yeniden okunur**, böylece daima
+///     son oturum durumunu yansıtır;
+///   * [TCacheInterceptor] — yalnız herkese açık katalog uçları için küçük,
+///     bellek içi GET önbelleği.
 class THttpClient {
   THttpClient._();
 
   static const String baseUrl = 'https://ecom.aycom.kz:5006/api/';
 
-  /// Paylaşılan istemci. İlk erişimde kurulur.
+  /// The shared client. Built lazily on first access.
   static final Dio dio = _build();
 
   static Dio _build() {
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       contentType: 'application/json',
-      // Bunlar olmadan yanıt vermeyen bir sunucu (ya da kopan bağlantı)
-      // isteği sonsuza kadar askıda bırakır; onu bekleyen arayüz (ör. yükleme
-      // penceresi) kurtulma yolu olmadan kilitlenir.
+      // Bunlar olmadan hiç yanıt vermeyen bir sunucu (ya da kopan bağlantı)
+      // isteği sonsuza dek asar; onu bekleyen arayüz — örneğin bir yükleme
+      // penceresi — çıkışsız kalır.
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 20),
     ));
 
-    /// Jeton her isteğe eklenir; yoksa `[Authorize]` isteyen uçlar (adres,
-    /// ayarlar, kullanıcı, sipariş, ...) 401 döner. Jeton **her istekte
-    /// yeniden okunur**, böylece en güncel oturum durumunu yansıtır. Çağıran
-    /// açıkça bir `Authorization` başlığı koyduysa üzerine yazılmaz.
+    /// Jetonu her isteğe ekler; yoksa `[Authorize]` isteyen uçlar (adres,
+    /// ayarlar, kullanıcı, sipariş…) 401 döner. Jeton **her istekte yeniden
+    /// okunur**, böylece son oturum durumunu yansıtır. Çağıranın kendi
+    /// koyduğu bir `Authorization` başlığı ezilmez.
     ///
     /// `options: Options(extra: {'skip_auth': true})` ile token HİÇ
     /// eklenmez. Kayıt ekranı tanımı gereği anonimdir ve
@@ -66,30 +58,32 @@ class THttpClient {
       },
     ));
 
-    /// Nadiren değişen genel veriler için bellek içi önbellek.
+    /// Seyrek değişen herkese açık veri için bellek içi önbellek.
     dio.interceptors.add(TCacheInterceptor());
 
     return dio;
   }
 }
 
-/// Nadiren değişen genel verinin (afiş, kategori, öznitelik, ayar, ürün) her
-/// ekranda yeniden çekilmesini önleyen küçük bellek içi yanıt önbelleği.
+/// Seyrek değişen herkese açık verinin (afiş, kategori, öznitelik, ayar,
+/// ürün) her ekranda yeniden çekilmesini önleyen küçük bellek içi önbellek.
 ///
 /// 🔴 Tasarımı gereği güvenli:
-///  * Yalnız GET istekleri ve yalnız izin listesindeki yolla başlayanlar
-///    önbelleklenir. **Kullanıcıya özel veri (sepet, adres, sipariş, favori,
-///    bildirim, kullanıcı/kullanıcı ayarları) asla önbelleklenmez** — bayat
-///    gösterilemez.
-///  * Kayıtların ömrü [_ttl] kadardır.
-///  * Başarılı HERHANGİ bir yazma isteği (POST/PUT/PATCH/DELETE) önbelleğin
-///    tamamını temizler; böylece yazmadan sonraki ilk okuma tazedir.
-///  * Tek bir istek için atlamak isteyen
-///    `options: Options(extra: {'no_cache': true})` gönderir.
+///  * Yalnız yolu **izin listesindeki** bir önekle başlayan GET istekleri
+///    önbelleklenir. Kullanıcıya özel veri (sepet, adres, sipariş, favori,
+///    bildirim, kullanıcı/kullanıcı ayarları) **asla** önbelleklenmez —
+///    bayat gösterilmesi yanlış tutar, yanlış adres, yanlış stok demektir.
+///  * Kayıtlar [_ttl] sonunda düşer.
+///  * Başarılı **her** yazma isteği (POST/PUT/PATCH/DELETE) önbelleğin
+///    tamamını temizler, böylece bir yazmanın ardından gelen ilk okuma taze
+///    veri görür.
+///  * Tek bir istek için `options: Options(extra: {'no_cache': true})` ile
+///    önbellek atlanır.
 class TCacheInterceptor extends Interceptor {
   static const Duration _ttl = Duration(seconds: 90);
 
-  /// Önbelleklenmesi güvenli yol önekleri: yalnız genel katalog verisi.
+  /// Önbelleklenmesi güvenli yol önekleri: yalnız herkese açık katalog
+  /// verisi. Bu kümeye kullanıcıya özel bir yol EKLEME.
   static const Set<String> _cacheablePrefixes = {
     'banners',
     'categories',
@@ -139,7 +133,7 @@ class TCacheInterceptor extends Interceptor {
         );
       }
     } else {
-      // Yazma oldu: her şeyi at ki sonraki okuma taze gelsin.
+      // Bir yazma oldu: her şeyi at ki sonraki okuma taze olsun.
       _store.clear();
     }
     handler.next(response);

@@ -1,21 +1,17 @@
-/// Karşılama (onboarding) ekranı — uygulamayı ilk açan kullanıcıya gösterilir.
-///
-/// Üç sayfa yan yana kaydırılır; son sayfada `isFirstTime` kapatılır ve
-/// karşılama ekranına geçilir.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/image_strings.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/onboarding_controller.dart';
 import 'widgets/onboarding_dot_navigation.dart';
 import 'widgets/onboarding_next_button.dart';
 import 'widgets/onboarding_page.dart';
 import 'widgets/onboarding_skip_button.dart';
 
-/// Onboarding screen to introduce users to the app.
+/// Uygulamayı ilk kez açan kullanıcıya gösterilen üç sayfalık tanıtım.
 class OnBoardingScreen extends StatelessWidget {
   const OnBoardingScreen({super.key});
 
@@ -23,7 +19,9 @@ class OnBoardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Controller for managing onboarding logic and state.
     final controller = Get.put(OnBoardingController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       body: Stack(
         children: [
           /// Horizontal Scrollable Pages

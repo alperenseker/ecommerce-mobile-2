@@ -1,11 +1,3 @@
-/// Telefon numarasıyla giriş ekranının controller'ı.
-///
-/// ⚠️ Bu akış sunucuda **desteklenmiyor**: `loginWithPhoneNo` bilerek hata
-/// fırlatıyor (bkz. `AuthenticationRepository`). Ekran ve controller
-/// referansla eşitlik için duruyor; karşılama ekranında telefonla giriş
-/// düğmesi de yorumda.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -24,6 +16,15 @@ import '../../../utils/popups/loaders.dart';
 import '../../personalization/controllers/user_controller.dart';
 import '../../personalization/models/user_model.dart';
 
+/// Telefon numarasıyla giriş denetleyicisi.
+///
+/// ⚠️ Sunucuda telefon OTP ucu **yok**; `loginWithPhoneNo` bilerek hata
+/// fırlatıyor, bu yüzden akış bugün çalışmıyor. Referansta olduğu gibi
+/// duruyor ki uç eklendiğinde ekran hazır olsun (KURALLAR §4).
+///
+/// Numara `TFormatter.formatPhoneNumberWithCountryCode` ile ülke koduyla
+/// birleştirilip gönderiliyor; doğrulama başarılıysa kullanıcı kaydı yoksa
+/// burada açılıyor.
 class SignInController extends GetxController {
   static SignInController get instance => Get.find();
 
@@ -74,7 +75,7 @@ class SignInController extends GetxController {
         // Show success message if OTP is verified
         TLoaders.successSnackBar(title: TTexts.phoneVerifiedTitle.tr, message: TTexts.phoneVerifiedMessage.tr);
 
-        // Kayıtlı değilse kullanıcıyı veritabanında oluştur.
+        // Register new user in the Firestore, if not already registered.
         await UserController.instance.fetchUserRecord();
         if (UserController.instance.user.value.id.isEmpty) {
           await registerUserInTheDatabase(formattedPhoneNumber);
@@ -115,6 +116,7 @@ class SignInController extends GetxController {
   Future<void> registerUserInTheDatabase(String phoneNumber) async {
     final token = await TNotificationService.getToken();
 
+    // Save Authenticated user data in the Firebase Firestore
     final newUser = UserModel(
       id: AuthenticationRepository.instance.getUserID,
       firstName: '',

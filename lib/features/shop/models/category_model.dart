@@ -1,10 +1,10 @@
-/// Kategori düğümü. `subCategories` özyinelemelidir; ağaç derinliği sabit
-/// değildir (canlıda 4 seviyeye kadar iniyor).
-library;
-
 import '../../../utils/formatters/formatter.dart';
 import 'brand_model.dart';
 
+/// Kategori modeli.
+///
+/// `subCategories` özyinelemelidir ve derinlik sabit değildir (canlıda 1–4
+/// seviye). Ağaç çizen her yer değişken derinliği desteklemeli.
 class CategoryModel {
   String id;
   String name;

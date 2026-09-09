@@ -1,14 +1,10 @@
-/// Şifremi unuttum — 2. adım: e-postaya gelen 6 haneli kodu doğrula.
-///
-/// Kod doğrulanınca yeni şifre ekranına geçilir.
-library;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../routes/routes.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/image_strings.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
@@ -16,6 +12,8 @@ import '../../../../utils/helpers/helper_functions.dart';
 import '../../../../utils/validators/validation.dart';
 import '../../controllers/forget_password_controller.dart';
 
+/// Şifremi unuttum — 2. adım: e-postayla gelen kodu doğrula. Kod doğruysa yeni
+/// şifre ekranına geçilir.
 class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key, required this.email});
 
@@ -24,7 +22,9 @@ class ResetPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ForgetPasswordController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         actions: [IconButton(onPressed: () => Get.offAllNamed(TRoutes.logIn), icon: const Icon(CupertinoIcons.clear))],

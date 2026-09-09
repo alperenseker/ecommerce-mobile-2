@@ -1,9 +1,7 @@
-/// Marka.
-library;
-
 import 'package:t_utils/t_utils.dart';
 import 'category_model.dart';
 
+/// Marka modeli.
 class BrandModel {
   String id;
   String name;

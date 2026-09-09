@@ -1,23 +1,22 @@
-/// Halyk ePay ödeme jetonu ve widget parametreleri.
-///
-/// 🔴 Widget'a giden tutar, jetonun üretildiği tutarla **birebir aynı**
-/// olmalı; farklıysa Halyk reddeder. `invoiceId` istemcide üretilmez.
-/// `postlink` sunucu-sunucu çağrılır; istemci yalnız adresini widget'a verir.
-library;
-
 import 'dart:convert';
 
 import 'package:get_storage/get_storage.dart';
 
 import '../../../utils/http/dio_client.dart';
 
-/// Halyk ePay integration — the mobile counterpart of the web `checkout.js`
-/// `EPAY` block and its helpers (`epayLang`, the `/payments/epay-token` call
-/// and the `paymentObject`).
+/// Halyk ePay tümleştirmesi — web'deki `checkout.js` `EPAY` bloğunun mobil
+/// karşılığı (`epayLang`, `/payments/epay-token` çağrısı ve `paymentObject`).
 ///
-/// The Halyk widget (`payment-api.js` → `halyk.pay(...)`) is browser/JS only, so
-/// it is hosted inside a [WebView] via [buildHtml]. Card data is entered on
-/// Halyk's PCI-secure page; nothing sensitive is collected in the app.
+/// Halyk bileşeni (`payment-api.js` → `halyk.pay(...)`) yalnız tarayıcıda
+/// çalıştığı için [buildHtml] ile bir [WebView] içinde barındırılıyor. Kart
+/// bilgisi Halyk'in PCI güvenli sayfasına girilir; uygulama hassas hiçbir veri
+/// toplamaz.
+///
+/// 🔴 [successReturn] / [failureReturn] **başka bir alan adıdır** (`ecom.aycom.kz`,
+/// portsuz — web ön yüzü); API taban adresiyle karıştırılmamalı.
+///
+/// ⚠️ FAZ 02'nin kapsamı dışındaydı; dosya eşitliği kabul kriteri gereği
+/// getirildi. Asıl sahibi FAZ 07.
 class TEpayService {
   TEpayService._();
 

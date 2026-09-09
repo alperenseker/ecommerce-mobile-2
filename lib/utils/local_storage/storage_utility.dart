@@ -1,11 +1,10 @@
-/// `GetStorage` sarmalayıcısı — anahtarlar kullanıcı başına ayrılır.
-///
-/// 🔴 Anahtar adları referanstakiyle **birebir** aynı kalmalı; değişirse eski
-/// kurulumlardaki veri okunamaz.
-library;
-
 import 'package:get_storage/get_storage.dart';
 
+/// Kullanıcıya özel yerel depo sarmalayıcısı.
+///
+/// [init] kullanıcı kimliğiyle ayrı bir `GetStorage` kutusu açar: sepet, favori
+/// gibi veriler kullanıcı başına ayrılır, böylece cihazda hesap değiştirildiğinde
+/// önceki kullanıcının verisi yeni kullanıcıya görünmez.
 class TLocalStorage {
   late final GetStorage _storage;
 

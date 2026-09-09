@@ -1,4 +1,5 @@
-/// Kayıtlı kredi kartı görünümü.
+/// Kullanıcının kayıtlı kart özeti (kart verisi uygulamada tutulmaz;
+/// gerçek kart girişi Halyk'in PCI güvenli sayfasında yapılır).
 class CreditCardModel {
   final String id;
   final String cardNumber;

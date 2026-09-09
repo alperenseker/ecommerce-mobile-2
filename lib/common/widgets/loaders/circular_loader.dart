@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../utils/constants/colors.dart';
 import '../../../utils/constants/sizes.dart';
 
-/// A circular loader widget with customizable foreground and background colors.
+/// Daire zemin üstünde dönen yükleme göstergesi.
 class TCircularLoader extends StatelessWidget {
-  /// Default constructor for the TCircularLoader.
-  ///
-  /// Parameters:
-  ///   - foregroundColor: The color of the circular loader.
-  ///   - backgroundColor: The background color of the circular loader.
+  /// [foregroundColor] dönen halkanın, [backgroundColor] arkasındaki dairenin
+  /// rengidir.
   const TCircularLoader({
     super.key,
     this.foregroundColor = TColors.white,
@@ -23,9 +20,9 @@ class TCircularLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(TSizes.lg),
-      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle), // Circular background
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
       child: Center(
-        child: CircularProgressIndicator(color: foregroundColor, backgroundColor: Colors.transparent), // Circular loader
+        child: CircularProgressIndicator(color: foregroundColor, backgroundColor: Colors.transparent),
       ),
     );
   }

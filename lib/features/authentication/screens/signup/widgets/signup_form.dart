@@ -1,10 +1,3 @@
-/// Kayıt formu.
-///
-/// Hesap tipine göre alanlar değişir: **şirkette** BİN/İİN (12 hane, zorunlu),
-/// **bireyselde** ad + soyad. Kapalı olan kayıt tipi ekrana hiç çizilmez;
-/// tek seçenek kaldıysa seçicinin kendisi de gizlenir (K29.2).
-library;
-
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +12,8 @@ import '../../../../../utils/validators/validation.dart';
 import '../../../controllers/signup_controller.dart';
 import 'terms_conditions_checkbox.dart';
 
+/// Kayıt formu. Hesap tipine göre **aynı form** farklı alanlar çiziyor:
+/// şirket seçiliyse BİN/İİN, bireysel seçiliyse ad + soyad.
 class TSignupForm extends StatelessWidget {
   const TSignupForm({
     super.key,
@@ -34,11 +29,11 @@ class TSignupForm extends StatelessWidget {
         children: [
           const SizedBox(height: TSizes.spaceBtwSections),
 
-          /// Account Type (Individual / Company)
+          /// Hesap tipi (Bireysel / Şirket)
           ///
-          /// FAZ 34 — K29.2: kapalı kayıt tipi **hiç çizilmez**. Tek seçenek
-          /// kaldıysa seçici tümden gizlenir (tek başına duran bir seçenek
-          /// seçim izlenimi verir ama seçilecek bir şey yoktur).
+          /// 🔴 Kapalı kayıt tipi **hiç çizilmez**. Tek seçenek kaldıysa seçici
+          /// tümden gizlenir (tek başına duran bir seçenek seçim izlenimi verir
+          /// ama seçilecek bir şey yoktur).
           Obx(
             () => controller.showAccountTypeSelector
                 ? Column(
@@ -50,7 +45,7 @@ class TSignupForm extends StatelessWidget {
                 : const SizedBox.shrink(),
           ),
 
-          /// Company: IIN/BIN  |  Individual: First & Last Name
+          /// Şirket: BİN/İİN  |  Bireysel: ad & soyad
           Obx(
             () => controller.isCompany
                 ? TextFormField(
@@ -58,11 +53,12 @@ class TSignupForm extends StatelessWidget {
                     keyboardType: TextInputType.number,
                     maxLength: 12,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    // 12 hane kuralı yalnız şirket akışında zorunlu; bireysel
+                    // kayıtta bu alan hiç çizilmediği için doğrulanmıyor da.
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return TValidator.validateEmptyText('IIN / BIN'.tr, value);
+                        return TValidator.validateEmptyText('IIN / BIN', value);
                       }
-                      // 12 hane kuralı yalnız şirket akışında zorunlu.
                       if (value.trim().length != 12) {
                         return 'IIN / BIN must be 12 digits'.tr;
                       }
@@ -88,7 +84,7 @@ class TSignupForm extends StatelessWidget {
                       Expanded(
                         child: TextFormField(
                           controller: controller.lastName,
-                          validator: (value) => TValidator.validateEmptyText(TTexts.firstName.tr, value),
+                          validator: (value) => TValidator.validateEmptyText(TTexts.lastName.tr, value),
                           expands: false,
                           decoration: InputDecoration(labelText: TTexts.lastName.tr, prefixIcon: const Icon(Iconsax.user)),
                         ),
@@ -110,12 +106,11 @@ class TSignupForm extends StatelessWidget {
           TextFormField(
             cursorColor: TColors.primary,
             cursorHeight: TSizes.lg,
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.bodyMedium,
             validator: (value) => TValidator.validatePhoneNumber(value),
             controller: controller.phoneNumber,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
-              fillColor: isDark ? TColors.darkSurface : TColors.white,
               prefixIcon: CountryCodePicker(
                 alignLeft: false,
                 hideMainText: true,
@@ -128,7 +123,7 @@ class TSignupForm extends StatelessWidget {
                 favorite: const ['+92', '+44'],
                 onChanged: (value) => controller.selectedCountryCode.value = value.dialCode!,
                 searchDecoration: InputDecoration(fillColor: isDark ? TColors.darkContainer : TColors.lightContainer),
-                dialogBackgroundColor: isDark ? TColors.darkSurface : TColors.white,
+                dialogBackgroundColor: isDark ? TColors.dark : TColors.white,
               ),
               hintText: TTexts.phoneNo.tr,
               errorStyle: const TextStyle(color: TColors.error),
@@ -169,9 +164,9 @@ class TSignupForm extends StatelessWidget {
   }
 }
 
-/// Segmented Individual / Company selector bound to [SignupController.accountType].
+/// Bireysel / Şirket seçicisi — [SignupController.accountType]'a bağlı.
 ///
-/// FAZ 34 — bu widget **yalnız iki kayıt tipi de açıkken** çiziliyor
+/// Bu widget **yalnız iki kayıt tipi de açıkken** çiziliyor
 /// ([SignupController.showAccountTypeSelector]), bu yüzden burada ayrıca
 /// seçenek eleme yok. Tek tip açıkken hangi akışın koşacağını
 /// [SignupController.effectiveAccountType] belirliyor.
@@ -208,8 +203,6 @@ class _AccountTypeSelector extends StatelessWidget {
   }
 }
 
-/// Tek seçenek kutusu. Seçiliyken indigo çerçeve + `accent` zemin
-/// (TASARIM.md §6 ikincil düğme dili).
 class _AccountTypeChip extends StatelessWidget {
   const _AccountTypeChip({
     required this.label,
@@ -226,16 +219,21 @@ class _AccountTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = THelperFunctions.isDarkMode(context);
+    // TASARIM.md §6 ikincil düğme dili: beyaz zemin + çizgi, seçilince indigo
+    // çerçeve ve `accent` zemin.
     final borderColor = selected ? TColors.primary : (isDark ? TColors.darkBorder : TColors.borderPrimary);
+    final background = selected
+        ? (isDark ? TColors.darkAccent : TColors.accent)
+        : (isDark ? TColors.darkSurface : TColors.white);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(TSizes.cardRadiusMd),
+      borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: TSizes.md),
         decoration: BoxDecoration(
-          color: selected ? (isDark ? TColors.darkAccent : TColors.accent) : Colors.transparent,
+          color: background,
           border: Border.all(color: borderColor, width: selected ? 1.5 : 1),
-          borderRadius: BorderRadius.circular(TSizes.cardRadiusMd),
+          borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

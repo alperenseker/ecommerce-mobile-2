@@ -1,10 +1,10 @@
 /// Ayarlar ekranının tepesindeki kullanıcı kartı.
 ///
-/// Misafirde ad/e-posta yerine "giriş yapın" daveti ve giriş düğmesi çıkar —
-/// girişsiz kullanıcıya boş bir profil göstermek yanıltıcı.
+/// ⚠️ Renkler referanstan farklı: orada başlık koyu turuncu olduğu için metin
+/// **beyaz** yazılıydı; TASARIM.md §6 ile başlık beyaza döndü, bu yüzden
+/// metin tema renklerini kullanıyor.
 ///
-/// TASARIM.md: referanstaki koyu turuncu başlık kalktığı için metinler artık
-/// beyaz değil, normal metin renginde.
+/// Misafirde ad yerine "misafir kullanıcı" ve sağda giriş ikonu çizilir.
 library;
 
 import 'package:flutter/material.dart';
@@ -28,15 +28,15 @@ class TUserProfileTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final isNetworkImage = controller.user.value.profilePicture.isNotEmpty;
+      final image = isNetworkImage ? controller.user.value.profilePicture : '';
       final isGuest = authRepo.isGuestUser;
-      final picture = controller.user.value.profilePicture;
-      final isNetworkImage = !isGuest && picture.isNotEmpty;
 
       return ListTile(
         contentPadding: EdgeInsets.zero,
         leading: TCircularImage(
           padding: 0,
-          image: isNetworkImage ? picture : '',
+          image: image,
           width: 52,
           height: 52,
           isNetworkImage: isNetworkImage,
@@ -46,7 +46,7 @@ class TUserProfileTile extends StatelessWidget {
         ),
         title: Text(
           isGuest ? TTexts.guestUser.tr : controller.user.value.fullName,
-          style: Theme.of(context).textTheme.headlineSmall,
+          style: Theme.of(context).textTheme.titleLarge,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

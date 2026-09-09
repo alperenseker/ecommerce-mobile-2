@@ -1,15 +1,12 @@
-/// Köşeleri yuvarlatılmış genel kap.
-///
-/// TASARIM.md §5 gereği gölgesizdir: ayrım gölgeyle değil 1px çizgiyle
-/// (`showBorder`) verilir. Varsayılan yarıçap `cardRadiusLg`.
-library;
-
 import 'package:flutter/material.dart';
-
-import '../../../../utils/constants/colors.dart';
+import '../../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 
-/// A container widget with rounded corners and customizable properties.
+/// Köşeleri yuvarlatılmış genel kap.
+///
+/// Kart, rozet ve geri düğmesi gibi çok yerde tekrar eden `Container`
+/// süslemesini tek yerde topluyor; TASARIM.md §6'nın "gölgesiz, 1px çizgili"
+/// kuralı buradan geçen her kutuya uygulanabiliyor.
 class TRoundedContainer extends StatelessWidget {
   /// Create a rounded container with customizable properties.
   ///

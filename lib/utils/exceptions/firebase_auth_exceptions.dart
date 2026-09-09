@@ -1,13 +1,11 @@
-/// Firebase kimlik hatalarının çevirisi.
-///
-/// ⚠️ Bu proje Firebase KULLANMIYOR; dosya referansla eşitlik için duruyor.
-library;
-
 import 'package:get/get.dart';
 
 import '../constants/text_strings.dart';
 
-/// Custom exception class to handle various Firebase authentication-related errors.
+/// Firebase kimlik doğrulama hatalarını okunur mesaja çeviren sınıf.
+///
+/// ⚠️ Proje Firebase kullanmıyor (KURALLAR §6); dosya referansla eşitlik için
+/// duruyor, çağrılmıyor.
 class TFirebaseAuthException implements Exception {
   /// The error code associated with the exception.
   final String code;

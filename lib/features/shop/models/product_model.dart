@@ -1,9 +1,3 @@
-/// Katalog ürünü.
-///
-/// 🔴 `HasPrice` / `PriceHidden` alanları fiyat gizleme kuralının kaynağıdır;
-/// fiyat çizen hiçbir yer bunlara bakmadan sayı basmamalı.
-library;
-
 import 'dart:convert';
 
 import 'package:get/get.dart';
@@ -16,6 +10,17 @@ import 'product_attribute_model.dart';
 import 'product_review_model.dart';
 import 'product_variation_model.dart';
 
+/// Ürün modeli — katalogun temel taşı.
+///
+/// 🔴 **Fiyat gizleme buradan okunur.** `HasPrice` sunucunun fiyatı çözüp
+/// çözemediğini, `PriceHidden` fiyatın bilerek gizlendiğini söyler;
+/// [isPriceHidden] ikisinin bileşimidir ve web'deki `isPriceHidden()` ile
+/// aynı kuralı uygular. Bu iki alanı atlarsan fiyatsız ürünlerde 0 ₸ görünür.
+///
+/// 🔴 `erpSource` ürünün hangi 1C şirketine ait olduğunu söyler; sipariş
+/// şirket başına bölündüğü için sepet/ödeme akışı bu alana bakar.
+///
+/// `fromJson` alan adlarının **iki yazımını da** dener (`productId` / `ProductId`).
 class ProductModel {
   // Basic Information
   String id;
@@ -95,9 +100,9 @@ class ProductModel {
   int twoStarCount;
   int oneStarCount;
 
-  /// FAZ 05 — kunye/ozellik tablosunda gosterilen iki alan. Sunucu ikisini de
-  /// urun listesinde gonderiyor (`Barcode`, `VatRate`); web `product.js` ->
-  /// `specsHtml` de bunlari basiyor. `vatRate` sunucudan METIN geliyor ("18").
+  /// FAZ 05 — künye/özellik tablosunda gösterilen iki alan. Sunucu ikisini de
+  /// ürün listesinde gönderiyor (`Barcode`, `VatRate`); web `product.js` ->
+  /// `specsHtml` de bunları basıyor. `vatRate` sunucudan METİN geliyor ("18").
   String? barcode;
   String? vatRate;
 
@@ -222,25 +227,25 @@ class ProductModel {
     }
   }
 
-  /// 🔴 FIYAT SEMANTIGI (sunucu + web `data/product-model.js`):
-  ///   * `Price`    -> **GUNCEL** fiyat (odenecek olan)
-  ///   * `OldPrice` -> indirimden ONCEKI fiyat; modelde [salePrice] alanina
-  ///     ayristiriliyor (alan adi referanstan geliyor, degistirilmedi)
-  /// Indirim YALNIZ eski fiyat guncelden buyukse vardir. Alan adina bakip
-  /// "salePrice varsa indirimli fiyat odur" demek fiyati TERS cevirir:
-  /// musteriye eski fiyati odetir ve rozete "--25%" yazdirir.
+  /// 🔴 FİYAT SEMANTİĞİ (sunucu + web `data/product-model.js`):
+  ///   * `Price`    -> **GÜNCEL** fiyat (ödenecek olan)
+  ///   * `OldPrice` -> indirimden ÖNCEKİ fiyat; modelde [salePrice] alanına
+  ///     ayrıştırılıyor (alan adı referanstan geliyor, değiştirilmedi)
+  /// İndirim YALNIZ eski fiyat güncelden büyükse vardır. Alan adına bakıp
+  /// "salePrice varsa indirimli fiyat odur" demek fiyatı TERS çevirir:
+  /// müşteriye eski fiyatı ödetir ve rozete "-%25" yazdırır.
   ///
-  /// Canlida bugun `OldPrice` her uruncte 0 (2026-09-04: 433/433), yani bu
-  /// dal hic calismiyor — ama calistigi gun dogru calissin.
+  /// Canlıda bugün `OldPrice` her üründe 0 (2026-09-04: 433/433), yani bu
+  /// dal hiç çalışmıyor — ama çalıştığı gün doğru çalışsın.
 
-  /// Ustu cizili gosterilecek eski fiyat; indirim yoksa null.
+  /// Üstü çizili gösterilecek eski fiyat; indirim yoksa null.
   double? get oldPrice => (salePrice ?? 0) > price && price > 0 ? salePrice : null;
 
-  /// Gercekten indirim var mi. Fiyati gizli urunde indirim de gosterilmez —
-  /// yuzde rozeti fiyati dolayli olarak sizdirirdi.
+  /// Gerçekten indirim var mı. Fiyatı gizli üründe indirim de gösterilmez —
+  /// yüzde rozeti fiyatı dolaylı olarak sızdırırdı.
   bool get hasDiscount => !isPriceHidden && oldPrice != null;
 
-  /// Indirim yuzdesi (tam sayi). Indirim yoksa 0.
+  /// İndirim yüzdesi (tam sayı). İndirim yoksa 0.
   int get discountPercent => hasDiscount ? ((1 - price / oldPrice!) * 100).round() : 0;
 
   /// Helper Function

@@ -1,6 +1,3 @@
-/// Onboarding "atla" düğmesi — doğrudan son sayfaya gider.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,6 +6,7 @@ import '../../../../../utils/constants/text_strings.dart';
 import '../../../../../utils/device/device_utility.dart';
 import '../../../controllers/onboarding_controller.dart';
 
+/// Tanıtımı atlayıp son sayfaya geçiren metin düğmesi.
 class TOnBoardingSkipButton extends StatelessWidget {
   const TOnBoardingSkipButton({super.key});
 

@@ -1,8 +1,6 @@
-/// Ayar repository'sinin arayüzü.
-library;
-
 import '../../../features/personalization/models/setting_model.dart';
 
+/// Ayar repository sözleşmesi.
 abstract class SettingsRepository {
   Future<SettingsModel> getSettings();
   Future<void> registerSettings(SettingsModel setting);

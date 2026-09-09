@@ -1,18 +1,19 @@
-/// Per-user commercial settings managed from the admin panel and served by
-/// `GET /api/usersettings/{userId}`.
+/// Yönetici panelinden yönetilen, kullanıcıya özel **ticari** ayarlar
+/// (`GET /api/usersettings/{userId}`).
 ///
-/// Drives behaviours the regular product/user data can't: whether the user may
-/// order out-of-stock items, their price tier, custom discount and the credit
-/// limit they can spend on account.
+/// Sıradan ürün/kullanıcı verisinin anlatamadığı davranışları belirler:
+/// kullanıcı stokta olmayanı sipariş edebilir mi (`CanOrderWithoutStock`), fiyat
+/// kategorisi, özel indirimi ve hesabına yazdırabileceği kredi limiti
+/// (`HasCreditLine`, `CreditLimit`, `UsedCredit`) ile minimum sipariş tutarı.
 class UserSettingsModel {
   final String? id;
   final String userId;
 
-  /// Price tier (e.g. "A", "B", "C"). Backend applies the matching prices when
-  /// the catalog is requested with this user's id.
+  /// Fiyat kategorisi (ör. "A", "B", "C"). Katalog bu kullanıcının kimliğiyle
+  /// istendiğinde sunucu ona uyan fiyatları uygular.
   final String priceCategory;
 
-  /// User may place orders without paying immediately (order on account).
+  /// Kullanıcı peşin ödemeden sipariş verebilir (hesaba yazma).
   ///
   /// 🔴 FAZ 34 — bu bayrak **tek başına "kredili müşteri" demek DEĞİLDİR.**
   /// Genel ödeme modu `transfer_only` iken sunucu (K29.7 uyum katmanı) bunu
@@ -30,21 +31,22 @@ class UserSettingsModel {
   /// tutarı kontrolü **koşmaya devam eder**.
   final bool hasCreditLine;
 
-  /// User may add/order products that are out of stock.
+  /// Kullanıcı stokta olmayan ürünü sepete ekleyip sipariş edebilir.
   final bool canOrderWithoutStock;
 
-  /// Total credit the user can spend on account. 0 means no credit line.
+  /// Hesaba yazılabilecek toplam kredi. 0 ise kredi hattı yok.
   final double creditLimit;
 
-  /// Credit already consumed by previous on-account orders.
+  /// Önceki hesaba yazma siparişleriyle kullanılmış kredi.
   final double usedCredit;
 
-  /// Extra discount rate (percentage) granted to this user.
+  /// Bu kullanıcıya tanınan ek indirim oranı (yüzde).
   final double customDiscountRate;
 
-  /// Minimum cart total required to place an order (non credit/bypass users
-  /// only). 0 means no minimum is enforced — mirrors the web checkout's
-  /// `MinimumOrderAmount` / `checkMinimumOrderLimit`.
+  /// Sipariş verebilmek için gereken en düşük sepet tutarı (yalnız kredisiz /
+  /// ödeme atlama yetkisi olmayan kullanıcılar için). 0 ise alt sınır
+  /// uygulanmaz — web ödeme adımındaki `MinimumOrderAmount` /
+  /// `checkMinimumOrderLimit` ile aynı kural.
   final double minimumOrderAmount;
 
   final String adminNotes;
@@ -65,16 +67,17 @@ class UserSettingsModel {
     this.isActive = true,
   });
 
-  /// True when the admin opened a credit line for this user.
+  /// Yönetici bu kullanıcıya kredi hattı açtıysa doğru.
   bool get hasCreditLimit => creditLimit > 0;
 
-  /// Remaining credit available to spend (never negative).
+  /// Harcanabilir kalan kredi (asla eksiye düşmez).
   double get availableCredit => (creditLimit - usedCredit).clamp(0.0, double.infinity);
 
   static UserSettingsModel empty() => UserSettingsModel();
 
-  /// Tolerant parsing: backend returns PascalCase keys (.NET default), but we
-  /// also accept camelCase so the model survives a serialization change.
+  /// Toleranslı ayrıştırma: sunucu PascalCase anahtar döndürür (.NET
+  /// varsayılanı), ama camelCase de kabul edilir; serileştirme değişse bile
+  /// model ayakta kalır.
   factory UserSettingsModel.fromJson(Map<String, dynamic> data) {
     bool getBool(List<String> keys) {
       for (final k in keys) {

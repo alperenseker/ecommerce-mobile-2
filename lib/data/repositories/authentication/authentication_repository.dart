@@ -1,11 +1,3 @@
-/// Oturum durumunun tek kaynağı: jeton, kullanıcı kimliği, misafir modu ve
-/// açılışta hangi ekrana gidileceği kararı.
-///
-/// Jeton `GetStorage`'da tutulur ve `THttpClient`'ın auth interceptor'ı her
-/// istekte buradan okur — böylece giriş/çıkış anında yeniden yapılandırma
-/// gerekmez.
-library;
-
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -27,6 +19,16 @@ import '../../../utils/popups/dialogs.dart';
 import 'api_auth.dart';
 import 'package:iconsax/iconsax.dart';
 
+/// Oturum durumunun tek sahibi: jeton, kullanıcı kimliği, misafir modu ve
+/// açılışta hangi ekranın gösterileceği kararı.
+///
+/// Jeton `GetStorage`'da saklanır ve [THttpClient]'ın auth interceptor'ı her
+/// istekte buradan okur — bu yüzden çıkış yapıldığında ayrıca başlık temizlemek
+/// gerekmez.
+///
+/// ⚠️ Temiz kurulumda tanıtım/karşılama ekranı **görünmez**: `isGuestUser`
+/// varsayılanı `true` olduğu için [screenRedirect] doğrudan ana menüye gider;
+/// o iki ekran ancak çıkış yapıldıktan sonra çıkar. Referansta da aynen böyle.
 class AuthenticationRepository extends GetxController {
   static AuthenticationRepository get instance => Get.find();
 
@@ -65,12 +67,12 @@ class AuthenticationRepository extends GetxController {
     if (isCustomAuthUser.value && customAuthToken.value.isNotEmpty) {
       await deviceStorage.write('isGuestMode', false);
 
-      // Kullanıcı kaydını çek
+      // Fetch User Record
       await UserController.instance.fetchUserRecord();
 
-      // Yöneticinin belirlediği ticari ayarlar (stoksuz sipariş, kredi
-      // limiti, fiyat kategorisi). `await` güvenli: hata olursa kısıtlayıcı
-      // varsayılanlara düşülür, giriş bozulmaz.
+      // 🔴 Yöneticinin verdiği ticari ayarlar (stok aşımı, kredi, fiyat
+      // kategorisi). `await` güvenli: denetleyici hatayı yutup en kısıtlayıcı
+      // varsayılana düşüyor, yani bu çağrı girişi bozamaz.
       if (Get.isRegistered<UserSettingsController>()) {
         await UserSettingsController.instance.fetchUserSettings();
       }
@@ -89,7 +91,7 @@ class AuthenticationRepository extends GetxController {
       // User is not logged in and not a guest.
       // This is for new users or users who have logged out and not chosen guest mode.
       deviceStorage.writeIfNull('isFirstTime', true);
-      // If it's their first time, show OnBoarding, otherwise WelcomeScreen.
+      // İlk açılışta tanıtım, sonrasında karşılama ekranı.
       bool isFirstTime = deviceStorage.read('isFirstTime') ?? true;
       if (isFirstTime) {
         Get.offAll(() => const OnBoardingScreen());
@@ -336,7 +338,9 @@ class AuthenticationRepository extends GetxController {
       await deviceStorage.remove('isCustomAuthUser');
       await deviceStorage.remove('userData');
 
-      // Controller'lardaki kullanıcı durumunu da sıfırla
+      // 🔴 Bellekteki kullanıcı ve ticari ayarlar da temizleniyor; yoksa
+      // çıkıştan sonra önceki kullanıcının fiyat kategorisi/kredi limiti
+      // ekranda kalır.
       UserController.instance.user.value = UserModel.empty();
       if (Get.isRegistered<UserSettingsController>()) {
         UserSettingsController.instance.clear();

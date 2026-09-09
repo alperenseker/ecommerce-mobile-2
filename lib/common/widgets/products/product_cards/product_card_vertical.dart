@@ -5,11 +5,11 @@
 /// sağ üstte yuvarlak beyaz düğme; stok **hap** rozet; fiyat `w800`;
 /// "sepete ekle" sakin düğme.
 ///
-/// Yükseklik [TSizes.productCardHeight] (300) ile hizalıdır; başlık kısa
-/// olduğunda araya [Spacer] giriyor, böylece fiyat + düğme her kartta aynı
-/// hizada duruyor.
+/// Yükseklik [TSizes.productCardHeight] ile hizalıdır; artan alanı **görsel**
+/// yutar (bkz. gövdedeki `Expanded`), böylece fiyat + düğme her kartta aynı
+/// hizada durur ve başlıkla fiyat arasında boşluk kalmaz.
 ///
-/// Karta dokunmak ürün detayını açar (FAZ 05'te bağlandı).
+/// Karta dokunmak ürün detayını (`ProductDetailScreen`) açar.
 library;
 
 import 'package:flutter/material.dart';
@@ -41,8 +41,10 @@ class TProductCardVertical extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final salePercentage =
-        ProductController.instance.calculateSalePercentage(product.price, product.oldPrice);
+    final salePercentage = ProductController.instance.calculateSalePercentage(
+      product.price,
+      product.oldPrice,
+    );
     final dark = THelperFunctions.isDarkMode(context);
     // Küçük resmi ekranda kaplayacağı boyutta çöz (tam çözünürlükte değil);
     // yoksa bir ızgara dolusu büyük fotoğraf belleği bitiriyor ve cihaz ısınıyor.
@@ -62,40 +64,48 @@ class TProductCardVertical extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// -- Görsel altlığı
-            Container(
-              height: TSizes.productCardImageHeight,
-              width: double.infinity,
-              color: dark ? TColors.darkBorder : TColors.lightContainer,
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(TSizes.sm),
-                    child: Center(
-                      child: TRoundedImage(
-                        imageUrl: product.thumbnail,
-                        applyImageRadius: true,
-                        isNetworkImage: isNetworkImage,
-                        memCacheWidth: thumbCacheWidth,
+            ///
+            /// 🔴 Sabit yükseklik + altta `Spacer` DEĞİL: başlık kısa olan
+            /// kartlarda o `Spacer` başlıkla fiyat arasında kocaman beyaz bir
+            /// delik bırakıyordu. Artan alanı artık **görsel** yutuyor: hem
+            /// delik kapanıyor hem de resim büyüyor. Fiyat ve düğme yine
+            /// hücrenin dibinde, bütün kartlarda aynı hizada; başlık iki
+            /// satıra çıkarsa görsel kendiliğinden kısalır, kart taşmaz.
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                color: dark ? TColors.darkBorder : TColors.lightContainer,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(TSizes.sm),
+                      child: Center(
+                        child: TRoundedImage(
+                          imageUrl: product.thumbnail,
+                          applyImageRadius: true,
+                          isNetworkImage: isNetworkImage,
+                          memCacheWidth: thumbCacheWidth,
+                        ),
                       ),
                     ),
-                  ),
 
-                  /// İndirim rozeti
-                  if (salePercentage != null) ProductSaleTagWidget(salePercentage: salePercentage),
+                    /// İndirim rozeti
+                    if (salePercentage != null) ProductSaleTagWidget(salePercentage: salePercentage),
 
-                  /// Kalp + karşılaştır
-                  Positioned(
-                    top: TSizes.xs,
-                    right: TSizes.xs,
-                    child: Column(
-                      children: [
-                        TFavouriteIcon(productId: product.id, productModel: product),
-                        const SizedBox(height: TSizes.xs),
-                        TCompareIcon(productModel: product),
-                      ],
+                    /// Kalp + karşılaştır
+                    Positioned(
+                      top: TSizes.xs,
+                      right: TSizes.xs,
+                      child: Column(
+                        children: [
+                          TFavouriteIcon(productId: product.id, productModel: product),
+                          const SizedBox(height: TSizes.xs),
+                          TCompareIcon(productModel: product),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
@@ -128,9 +138,7 @@ class TProductCardVertical extends StatelessWidget {
               ),
             ),
 
-            // Fiyat + düğme satırını hücrenin dibine iter; böylece başlık ne
-            // kadar uzun olursa olsun düğme her kartta aynı hizada durur.
-            const Spacer(),
+            const SizedBox(height: TSizes.sm),
 
             /// -- Fiyat + stok hapı
             Padding(
@@ -140,7 +148,7 @@ class TProductCardVertical extends StatelessWidget {
               // Fiyatı gizli ürünlerde (433 üründen 204'ü) "Price on request"
               // yarısına sığmayıp "Price on re…" diye kırpılıyordu. Wrap ile
               // ikisi de doğal genişliğini alır, sığmazsa hap alt satıra iner
-              // (üstteki Spacer bu payı zaten tutuyor).
+              // (üstteki görsel esnek olduğu için bu payı o veriyor).
               child: Wrap(
                 spacing: TSizes.xs,
                 runSpacing: TSizes.xs / 2,

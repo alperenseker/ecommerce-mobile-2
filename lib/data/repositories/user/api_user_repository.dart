@@ -1,6 +1,3 @@
-/// Kullanıcı profili uçları (`users/{id}`).
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import '../../../features/personalization/models/user_model.dart';
@@ -8,6 +5,7 @@ import '../../../features/shop/models/order_model.dart';
 import '../../../utils/constants/enums.dart';
 import 'user_repository.dart';
 
+/// Kullanıcı uçları (`users/{id}`, `users/{id}/credit-limits`).
 class ApiUserRepository extends TApiRepositoryController<UserModel>
     implements UserRepository {
 

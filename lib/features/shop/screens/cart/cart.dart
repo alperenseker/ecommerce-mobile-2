@@ -14,7 +14,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../common/widgets/appbar/appbar.dart';
-import '../../../../common/widgets/appbar/profile_action_icon.dart';
+import '../../../../common/widgets/appbar/appbar_actions.dart';
 import '../../../../common/widgets/loaders/t_empty_state.dart';
 import '../../../../common/widgets/texts/t_product_price_text.dart';
 import '../../../../data/repositories/authentication/authentication_repository.dart';
@@ -28,6 +28,7 @@ import '../../../personalization/controllers/settings_controller.dart';
 import '../../controllers/product/cart_controller.dart';
 import '../checkout/checkout.dart';
 import 'widgets/cart_items.dart';
+import '../../../../common/widgets/loaders/delayed_loader.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key, this.showBackArrow = false});
@@ -91,13 +92,14 @@ class _CartScreenState extends State<CartScreen> {
                     onPressed: controller.clearCartDialog,
                   ),
           ),
-          const TProfileActionIcon(),
+          // Sepetin kendi ekranındayız: başlıkta ikinci bir sepet düğmesi yok.
+          const TAppBarActions(showCart: false),
         ],
       ),
 
       body: Obx(() {
         if (controller.loading.value && controller.cartItems.isEmpty) {
-          return const Center(child: CircularProgressIndicator(color: TColors.primary));
+          return const TDelayedLoader();
         }
 
         if (controller.cartItems.isEmpty) {
@@ -162,8 +164,14 @@ class _CartScreenState extends State<CartScreen> {
                     child: ElevatedButton(
                       // Genel düğme temasında yatay dolgu yok; içerik boyutlu
                       // düğmede etiket sıkışıyor, dolguyu geri veriyoruz.
+                      // 🔴 `minimumSize` de geçilmeli: tema en küçük genişliği
+                      // SONSUZ veriyor (düğmeler sayfa boyunca gerilsin diye)
+                      // ve `Row` çocuğuna sonsuz genişlik veremez — çizim
+                      // anında "BoxConstraints forces an infinite width" ile
+                      // patlar. Yükseklik zaten üstteki `SizedBox`tan geliyor.
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: TSizes.xl),
+                        minimumSize: const Size(0, TSizes.buttonHeight),
                       ),
                       onPressed: () async {
                         // Sepet sunucuda ve web ile paylaşılıyor: ekran

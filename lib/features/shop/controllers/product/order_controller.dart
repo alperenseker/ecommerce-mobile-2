@@ -197,10 +197,20 @@ class OrderController extends GetxController {
   /// Liste satırı ilk kez açıldığında çağrılır. Aynı sipariş ikinci kez
   /// açıldığında istek atılmaz; hata durumunda önbelleğe **boş liste yazılmaz**
   /// ki kullanıcı yeniden deneyebilsin.
-  Future<void> loadOrderItems(String orderId) async {
+  ///
+  /// 🔴 [known] — `order/groups/user/{id}` kalemleri ZATEN gönderiyor (canlı
+  /// sunucuda doğrulandı). Elde kalem varsa ağa hiç çıkılmaz; yoksa (ya da
+  /// gruplar düz listeden kurulduysa) `order/{id}` çağrılır. Kalemler yine
+  /// **talep üzerine** açılır — 40 siparişin kalemleri önden ÇEKİLMİYOR.
+  Future<void> loadOrderItems(String orderId, {List<CartItemModel>? known}) async {
     if (orderId.isEmpty) return;
     if (orderItems.containsKey(orderId)) return;
     if (loadingOrderItems.contains(orderId)) return;
+
+    if (known != null && known.isNotEmpty) {
+      orderItems[orderId] = known;
+      return;
+    }
 
     loadingOrderItems.add(orderId);
     loadingOrderItems.refresh();

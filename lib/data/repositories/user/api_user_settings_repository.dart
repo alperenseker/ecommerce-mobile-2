@@ -1,17 +1,15 @@
-/// Kullanıcının **ticari** ayarları (`usersettings/{userId}`).
-///
-/// 🔴 Ödeme ekranının bel bağladığı alanlar burada: `HasCreditLine`,
-/// `CanOrderWithoutStock`, `CreditLimit`, `UsedCredit`, `MinimumOrderAmount`,
-/// `PriceCategory`. `CanBypassPayment` **kredili müşteri göstergesi değildir**
-/// (`transfer_only` modunda sunucu herkese true döndürüyor).
-library;
-
 import 'package:get/get.dart';
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 
 import '../../../features/personalization/models/user_settings_model.dart';
 import 'user_settings_repository.dart';
 
+/// Kullanıcının **ticari** ayarlarını getirir (`usersettings/{userId}`).
+///
+/// Bunlar yöneticinin verdiği yetkilerdir: stoksuz sipariş (`CanOrderWithoutStock`),
+/// kredi limiti (`HasCreditLine`, `CreditLimit`, `UsedCredit`), minimum sipariş
+/// tutarı ve fiyat kategorisi. Ekranların kapıları buna bakar; çağrı başarısızsa
+/// kısıtlayıcı varsayılana düşülür.
 class ApiUserSettingsRepository extends TApiRepositoryController<UserSettingsModel>
     implements UserSettingsRepository {
 

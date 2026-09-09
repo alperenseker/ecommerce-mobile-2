@@ -1,4 +1,4 @@
-/// Sohbet katılımcısı.
+/// Sohbet katılımcısı (kullanıcı kimliği, ad, rol).
 class ParticipantModel {
   String userId;
   String name;

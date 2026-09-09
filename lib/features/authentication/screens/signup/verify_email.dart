@@ -1,10 +1,3 @@
-/// E-posta doğrulama bekleme ekranı.
-///
-/// Kapatma ikonu önce **çıkış yapar**, sonra giriş ekranına döner: kayıt
-/// verisi önceki ekranda saklandığı için, doğrulanmamış bir hesapla uygulama
-/// her açılışında yine bu ekran gösterilir.
-library;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,6 +9,11 @@ import '../../../../utils/constants/text_strings.dart';
 import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/verify_email_controller.dart';
 
+/// E-posta doğrulama bekleme ekranı.
+///
+/// Başlıktaki kapatma düğmesi önce **çıkış yaptırıyor**: kayıt bilgisi önceki
+/// ekranda saklandığı için, doğrulanmamış hesapla uygulama her açıldığında bu
+/// ekran gelir; kullanıcıya çıkıştan başka yol bırakılmıyor.
 class VerifyEmailScreen extends StatelessWidget {
   const VerifyEmailScreen({super.key, this.email});
 

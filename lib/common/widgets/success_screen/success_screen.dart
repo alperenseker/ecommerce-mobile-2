@@ -1,9 +1,3 @@
-/// Ortak "başarılı" ekranı: animasyon + başlık + açıklama + tek düğme.
-///
-/// Devam düğmesinin ne yapacağını çağıran belirler ([onPressed]); ekran
-/// kendi başına yönlendirme yapmaz.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -12,6 +6,11 @@ import '../../../utils/constants/sizes.dart';
 import '../../../utils/constants/text_strings.dart';
 import '../../styles/spacing_styles.dart';
 
+/// Bir akış bittiğinde gösterilen ortak "başarılı" ekranı.
+///
+/// Devam düğmesinin ne yapacağına çağıran karar veriyor ([onPressed]); ekranın
+/// kendisi yönlendirme bilmiyor, bu yüzden kayıt/ödeme gibi farklı akışlarda
+/// tekrar kullanılabiliyor.
 class SuccessScreen extends StatelessWidget {
   const SuccessScreen({super.key, required this.image, required this.title, required this.subTitle, required this.onPressed});
 
@@ -35,7 +34,7 @@ class SuccessScreen extends StatelessWidget {
 
                 /// Title & SubTitle
                 Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                const SizedBox(height: TSizes.spaceBtwItems / 2),
+                const SizedBox(height: TSizes.spaceBtwItems/2),
                 Text(subTitle, style: Theme.of(context).textTheme.labelMedium, textAlign: TextAlign.center),
                 const SizedBox(height: TSizes.spaceBtwSections),
 

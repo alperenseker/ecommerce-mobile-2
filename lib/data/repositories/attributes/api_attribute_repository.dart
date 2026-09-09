@@ -1,15 +1,15 @@
-/// Öznitelik uçları (`attributes`).
-///
-/// ⚠️ `fetchAllItems()` burada UYGULANMAZ; temel sınıftan gelen hâli
-/// `UnimplementedError` fırlatır. Liste isteyen `fetchPaginatedItems()`
-/// kullanmalı. (Referansta da böyle.)
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import '../../../features/shop/models/attribute_model.dart';
 import 'attributes_repository.dart';
 
+/// Öznitelik uçları (`attributes`).
+///
+/// ⚠️ [fetchAllItems] **uygulanmamıştır** — temel sınıftan gelen hâli
+/// `UnimplementedError` fırlatır. Öznitelik listesi isteyen `fetchPaginatedItems`
+/// kullanmalı. (Referansta da böyle; eksiği kapatmak faz kapsamı dışı.)
+///
+/// ⚠️ Sunucuda şu an kayıt yok: uç 200 ama `Data: []` dönüyor.
 class ApiAttributeRepository extends TApiRepositoryController<AttributeModel>
     implements AttributeRepository {
   static ApiAttributeRepository get instance => Get.find();

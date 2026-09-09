@@ -1,12 +1,3 @@
-/// Katalog uçları (`products`).
-///
-/// 🔴 İsteklere `userId` eklenir çünkü **fiyatı sunucu kullanıcıya göre
-/// çözer** (bayi fiyat kategorisi); misafirde liste fiyatı gelir.
-///
-/// 🔴 `products/{id}/variants` **dizi değil NESNE** döndürür; normalleştirme
-/// `ProductVariantsModel.fromJson` içinde yapılır.
-library;
-
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:t_utils/t_utils.dart';
@@ -17,6 +8,17 @@ import '../../../utils/constants/text_strings.dart';
 import '../authentication/authentication_repository.dart';
 import 'product_repository.dart';
 
+/// Katalog uçları (`products`).
+///
+/// 🔴 **Fiyat kullanıcıya göre çözülür.** Oturum açıksa isteğe `userId`
+/// eklenir; sunucu o kullanıcının yönetici tarafından atanmış fiyat kategorisine
+/// (`PriceCategory`) göre fiyat döndürür. Misafirde liste fiyatı gelir. Bu
+/// parametre düşerse bayiye perakende fiyatı gösterilir.
+///
+/// 🔴 **`products/{id}/variants` DİZİ DEĞİL NESNE döndürür.** Web'de varyantların
+/// hiç görünmemesinin sebebi buydu. Normalleştirme [ProductVariantsModel] içinde
+/// yapılır; hata ya da varyantsız üründe `hasVariants:false` boş model döner,
+/// böylece ekran seçiciyi sessizce gizler.
 class ApiProductRepository extends TApiRepositoryController<ProductModel>
     implements ProductRepository {
   static ApiProductRepository get instance => Get.find();
@@ -34,13 +36,15 @@ class ApiProductRepository extends TApiRepositoryController<ProductModel>
   @override
   String getEndpoint() => 'products';
 
-  /// Tek istekte cekilen katalog tavani — aktif urun sayisinin USTUNDE tutulmali.
+  /// Tek istekte çekilen katalog tavanı — aktif ürün sayısının ÜSTÜNDE
+  /// tutulmalı.
   static const int _catalogPageSize = 20000;
 
-  /// 🔴 Kullanıcıya özel fiyatlandırma: oturum açıkken sunucu, yöneticinin
-  /// atadığı fiyat kategorisinin (`PriceCategory`) fiyatlarını döndürür;
-  /// misafirde liste fiyatı gelir. [url]'e doğru ayraçla (`?`/`&`) `userId`
-  /// eklenir — bu parametre atlanırsa bayi yanlış fiyat görür.
+  /// 🔴 **Kullanıcıya özel fiyat.** Oturum açıksa sunucu, kullanıcının
+  /// yönetici tarafından atanmış fiyat kategorisine (`PriceCategory`) göre
+  /// fiyat döndürür; misafirde liste fiyatı gelir. [url]'ye `userId`'yi doğru
+  /// ayraçla (`?`/`&`) ekler. Bu parametre düşerse bayiye perakende fiyatı
+  /// gösterilir.
   String _withUserPricing(String url) {
     final userId = Get.isRegistered<AuthenticationRepository>()
         ? AuthenticationRepository.instance.getUserID
@@ -80,10 +84,10 @@ class ApiProductRepository extends TApiRepositoryController<ProductModel>
   @override
   Future<List<ProductModel>> fetchAllItems() async {
     try {
-      // Katalog tek istekte cekiliyor. Sunucu 'ORDER BY createdat DESC'
-      // siraliyor ve pageSize'a ust sinir koymuyor: bu deger AKTIF urun
-      // sayisinin ustunde kalmali, yoksa en ESKI urunler sessizce kesilir
-      // (web'de tam bu yuzden Foral'in tamami kaybolmustu).
+      // Katalog tek istekte çekiliyor. Sunucu 'ORDER BY createdat DESC'
+      // sıralıyor ve pageSize'a üst sınır koymuyor: bu değer AKTİF ürün
+      // sayısının üstünde kalmalı, yoksa en ESKİ ürünler sessizce kesilir
+      // (web'de tam bu yüzden Foral'in tamamı kaybolmuştu).
       final response = await dio.get(
           _withUserPricing('${getEndpoint()}?pageSize=$_catalogPageSize&isActive=true'));
 
@@ -112,12 +116,11 @@ class ApiProductRepository extends TApiRepositoryController<ProductModel>
     }
   }
 
-  /// [categoryId] kategorisindeki ürünleri getirir.
-  ///
-  /// Ürün listesi yanıtı ürün başına kategori kimliği TAŞIMIYOR; bu yüzden
-  /// kategori süzmesi istemcide değil, `categoryId` sorgu parametresiyle
-  /// **sunucuda** yapılmak zorunda. Sayfalamayı destekler: mağaza kategoriyi
-  /// tümden değil, 24'erli çeker.
+  /// [categoryId] altındaki ürünleri getirir. Ürün listesi yanıtı ürün başına
+  /// kategori kimliği taşımadığı için süzme **sunucuda**, `categoryId` sorgu
+  /// parametresiyle yapılmalı — istemcide süzmeye kalkmak boş liste verir.
+  /// Sayfalamayı destekler; mağaza kategoriyi tümden değil parça parça
+  /// çekebilir.
   Future<List<ProductModel>> fetchProductsByCategory(String categoryId, {int page = 1, int pageSize = 1000}) async {
     try {
       final response = await dio.get(
@@ -371,13 +374,13 @@ class ApiProductRepository extends TApiRepositoryController<ProductModel>
     }
   }
 
-  /// [productId] için Model (Design) + Renk (Color) varyant ağacını getirir.
-  /// Web'deki `getVariants(id)` → `/products/{id}/variants` ile aynı.
+  /// Fetch the Model (Design) + Color (Renk) variant tree for [productId].
+  /// Web'deki `getVariants(id)` → `/products/{id}/variants` karşılığı.
   ///
-  /// 🔴 Bu uç **dizi değil NESNE** döndürür; web'de varyantların hiç
-  /// görünmemesinin sebebi buydu. Ürünün varyantı yoksa ya da çağrı herhangi
-  /// bir nedenle patlarsa boş model (`hasVariants: false`) döner, böylece
-  /// arayüz seçiciyi sessizce gizler.
+  /// 🔴 Uç **dizi değil nesne** döndürür; normalleştirme
+  /// [ProductVariantsModel.fromJson] içindedir. Ürünün varyantı yoksa ya da
+  /// çağrı başarısızsa `hasVariants:false` boş model döner, böylece arayüz
+  /// seçiciyi sessizce gizler — hata penceresi açmaz.
   Future<ProductVariantsModel> getProductVariants(String productId) async {
     try {
       final response =
@@ -395,9 +398,9 @@ class ApiProductRepository extends TApiRepositoryController<ProductModel>
     }
   }
 
-  /// Renk kutucuklarını boyamak için kullanılan renk kodu → hex eşlemesi.
-  /// Web'deki `getColors()` → `/products/colors` ile aynı. Hata durumunda boş
-  /// eşleme döner; çağıran varsayılan bir renge düşebilsin diye.
+  /// Renk kutucuklarını boyamak için kullanılan `renk kodu → hex` eşlemesi.
+  /// Web'deki `getColors()` → `/products/colors` karşılığı. Hatada boş eşleme
+  /// döner, çağıran varsayılan renge düşebilsin.
   Future<Map<String, String>> getProductColors() async {
     try {
       final response = await dio.get('${getEndpoint()}/colors');
@@ -408,8 +411,7 @@ class ApiProductRepository extends TApiRepositoryController<ProductModel>
           return data.map((key, value) =>
               MapEntry(key.toString(), value?.toString() ?? ''));
         }
-        // Bazı sürümler eşleme yerine {code/name, hex} nesnelerinden oluşan
-        // bir dizi döndürüyor; iki biçim de kabul edilir.
+        // Some backends return a list of {code/name, hex} objects instead of a map.
         if (data is List) {
           final result = <String, String>{};
           for (final item in data) {

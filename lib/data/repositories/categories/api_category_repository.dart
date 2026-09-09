@@ -1,16 +1,15 @@
-/// Kategori ağacı (`categories`).
-///
-/// ⚠️ `fetchAllItems()` ağacı **düzleştirerek** döndürür: kökler ve tüm alt
-/// dallar tek listede, her biri kendi `subCategories`'ini taşımaya devam eder.
-/// Ağaç çizen ekranlar kökleri `parentId` boş olanlardan seçmeli; ağaç
-/// derinliği sabit değildir (4 seviyeye kadar iniyor).
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import '../../../features/shop/models/category_model.dart';
 import 'category_repository.dart';
 
+/// Kategori uçları (`categories`).
+///
+/// 🔴 [fetchAllItems] ağacı **DÜZLEŞTİRİR**: kökler ve tüm alt dallar tek listede
+/// döner (canlıda 41 satır), her biri kendi `subCategories`'ini taşımaya devam
+/// eder. Yani liste uzunluğu "kök sayısı" DEĞİLDİR — ağaç/menü çizen yer kökleri
+/// `parentId` boş olanlardan seçmeli. Derinlik sabit değil: canlıda `Foral`
+/// 4, `Fores` 2, `Stark Alpha` 1 seviye.
 class ApiCategoryRepository extends TApiRepositoryController<CategoryModel>
     implements CategoryRepository {
   static ApiCategoryRepository get instance => Get.find();

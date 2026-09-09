@@ -1,9 +1,9 @@
-/// İade talebi.
-library;
-
 import '../../../utils/constants/enums.dart';
 import 'cart_item_model.dart';
 
+/// İade talebi modeli.
+///
+/// ⚠️ İade uçları sunucuda henüz yok (canlıda 404); model hazır duruyor.
 class ReturnRequest {
   String id;
   String orderId;

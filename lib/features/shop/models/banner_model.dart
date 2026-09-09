@@ -1,10 +1,8 @@
-/// Ana sayfa afişi.
-library;
-
 import 'package:t_utils/t_utils.dart';
 
 import '../../../utils/constants/enums.dart';
 
+/// Ana sayfa afişi.
 class BannerModel {
   String id;
   String imageUrl;

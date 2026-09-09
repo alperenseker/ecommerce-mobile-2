@@ -1,27 +1,29 @@
-/// PIN güncelleme ekranı.
-///
-/// ⚠️ Güncelleme telefon OTP'siyle doğrulanıyor; o akış sunucuda henüz yok
-/// (bkz. `PinController.updatePin`).
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../common/widgets/appbar/appbar.dart';
 import '../../../../common/widgets/login_signup/otp_code_field.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/image_strings.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/pin_controller.dart';
 
+/// PIN güncelleme ekranı.
+///
+/// ⚠️ Akış telefon OTP'siyle doğrulama istiyor; o uç sunucuda olmadığı için
+/// ekran bugün çalışmıyor. Referansta olduğu gibi duruyor.
 class UpdatePinScreen extends StatelessWidget {
   const UpdatePinScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final PinController controller = Get.put(PinController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: const TAppBar(
         showBackArrow: true,
         showActions: true,
@@ -51,9 +53,10 @@ class UpdatePinScreen extends StatelessWidget {
               Obx(
                 () => TOtpCodeField(
                   length: 4,
+                  obscure: true,
                   hasError: controller.hasError.value,
-                  onChanged: (code) => controller.setEnteredOTP(code),
-                  onCompleted: (code) => controller.setEnteredOTP(code),
+                  onChanged: controller.setEnteredOTP,
+                  onCompleted: controller.setEnteredOTP,
                 ),
               ),
               const SizedBox(height: TSizes.spaceBtwSections),

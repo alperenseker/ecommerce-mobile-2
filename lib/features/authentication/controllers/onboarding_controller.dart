@@ -1,16 +1,13 @@
-/// Karşılama (onboarding) sayfalarının durumu: hangi sayfadayız, nokta
-/// göstergesi, ileri/atla.
-///
-/// Son sayfada `isFirstTime` **false** yazılır; açılışta yönlendirmeyi yapan
-/// `AuthenticationRepository.screenRedirect()` bu anahtara bakıp karşılama
-/// yerine giriş ekranını gösterir.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../screens/welcome/welcome_screen.dart';
 
+/// Tanıtım (onboarding) sayfalarının denetleyicisi.
+///
+/// Son sayfada `isFirstTime` **false** yazılıyor: bu anahtar, oturumu olmayan
+/// kullanıcının bir daha tanıtımı değil doğrudan karşılama ekranını görmesini
+/// sağlıyor (`AuthenticationRepository.screenRedirect`).
 class OnBoardingController extends GetxController {
   static OnBoardingController get instance => Get.find();
 
@@ -29,7 +26,7 @@ class OnBoardingController extends GetxController {
 
   /// Update Current Index & jump to next page
   void nextPage() {
-    // Son sayfadaysak karşılama ekranına geç ve bir daha onboarding gösterme.
+    // Son sayfadaysak karşılama ekranına geç ve tanıtımı bir daha gösterme.
     if (currentPageIndex.value == 2) {
 
       final userStorage = GetStorage();

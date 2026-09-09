@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Uygulamanın tek renk kaynağı.
 ///
-/// Sınıf ve alan adları referans uygulamayla (fores/ecommerce-mobile) birebir
-/// aynıdır; yalnızca değerler yeni web paletine (TASARIM.md §2) çekilmiştir.
-/// Böylece renk kullanan yüzlerce dosyaya dokunmadan tema değişebiliyor.
-/// Referansın turuncusu tamamen kalktı; artık hiçbir yerde kullanılmıyor.
+/// Değerler `faz/TASARIM.md` §2'den gelir; oradaki palet de web projesindeki
+/// `assets/css/01-tokens.css` belirteçlerinin Flutter karşılığıdır. Sınıf ve
+/// alan adları referans uygulamayla **birebir aynı** tutuldu: 339 dosya bu
+/// adlarla renk okuyor, yalnız değerler indigo palete taşındı. Bu yüzden
+/// buradaki hiçbir alan silinmez/yeniden adlandırılmaz — yalnız değer değişir.
+///
+/// Renk yalnızca anlam taşıdığı yerde kullanılır (eylem, uyarı, durum);
+/// ayrımlar renk yerine 1px çizgi ile verilir.
 class TColors {
   TColors._();
 
@@ -57,7 +61,7 @@ class TColors {
   static const Color iconPrimaryDark = Color(0xFFFFFFFF);
 
   // ---- YENİ: web paletinden gelen ek roller ----
-  // Renk yalnız anlam taşıdığı yerde çıkar; bu roller o anlamların karşılığı.
+  // Bu dört rol referansta yoktu; web'de anlam taşıyan renkleri karşılıyorlar.
   static const Color deal = Color(0xFFF04358); // indirim / sayaç balonu
   static const Color dealSoft = Color(0xFFFEECEF);
   static const Color star = Color(0xFFFFB020); // yıldız
@@ -67,9 +71,9 @@ class TColors {
   static const Color infoSoft = Color(0xFFEAF2FD);
 
   // ---- KARANLIK TEMA (TASARIM.md §8) ----
-  // Karanlıkta primary aynı indigo kalır; accent yerine bu koyu mor kullanılır.
-  static const Color darkBackground = Color(0xFF14161B);
-  static const Color darkSurface = Color(0xFF1E212A);
-  static const Color darkBorder = Color(0xFF2A2E39);
-  static const Color darkAccent = Color(0xFF232744);
+  // Karanlık temada `accent` yerine bu kullanılır: açık temadaki indigo yumuşak
+  // zemin (#EEF0FE) koyu zeminde okunmuyor.
+  static const Color darkSurface = Color(0xFF1E212A); // koyu kap
+  static const Color darkBorder = Color(0xFF2A2E39); // koyu çizgi
+  static const Color darkAccent = Color(0xFF232744); // koyu indigo yumuşak zemin
 }

@@ -12,11 +12,17 @@ import '../theme/widget_themes/text_button_theme.dart';
 import '../theme/widget_themes/text_field_theme.dart';
 import '../theme/widget_themes/text_theme.dart';
 
-/// Uygulama teması.
+/// Uygulamanın açık ve karanlık teması.
 ///
-/// Sayfa zemini beyaz kalır; bölümler arası ayrım gölgeyle değil 1px
-/// `borderSecondary` çizgiyle verilir (TASARIM.md §5). Karanlık tema
-/// referanstan korunmuştur, değerleri TASARIM.md §8'den gelir.
+/// Yapı referans uygulamayla aynı (aynı 9 bileşen teması, aynı alan adları);
+/// değerler `faz/TASARIM.md`'den geliyor.
+///
+/// Referanstan iki ek var:
+///  * **`colorScheme` açıkça veriliyor.** Referans yalnız `primaryColor`
+///    ayarlıyordu; Material 3 bileşenleri (NavigationBar göstergesi, diyalog,
+///    SnackBar) rengi `colorScheme`'den okuduğu için turuncu yerine indigo
+///    istiyorsak burada tanımlamak zorunlu.
+///  * **`dividerTheme`.** TASARIM.md §1: ayrımlar gölge değil 1px çizgi.
 class TAppTheme {
   TAppTheme._();
 
@@ -28,7 +34,10 @@ class TAppTheme {
     primaryColor: TColors.primary,
     textTheme: TTextTheme.lightTextTheme,
     chipTheme: TChipTheme.lightChipTheme,
-    scaffoldBackgroundColor: TColors.white,
+
+    /// Sayfa zemini beyaz değil, hafif gri-mavi: kartlar beyaz kalınca ayrım
+    /// gölgesiz de okunuyor (TASARIM.md §1-§2).
+    scaffoldBackgroundColor: TColors.light,
     appBarTheme: TAppBarTheme.lightAppBarTheme,
     checkboxTheme: TCheckboxTheme.lightCheckboxTheme,
     bottomSheetTheme: TBottomSheetTheme.lightBottomSheetTheme,
@@ -36,19 +45,27 @@ class TAppTheme {
     outlinedButtonTheme: TOutlinedButtonTheme.lightOutlinedButtonTheme,
     textButtonTheme: TTextButtonTheme.lightTextButtonTheme,
     inputDecorationTheme: TTextFormFieldTheme.lightInputDecorationTheme,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: TColors.primary,
-      brightness: Brightness.light,
-      primary: TColors.primary,
-      surface: TColors.white,
-      error: TColors.error,
-    ),
     dividerTheme: const DividerThemeData(
       color: TColors.borderSecondary,
       thickness: TSizes.dividerHeight,
       space: TSizes.dividerHeight,
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: TColors.primary),
+    colorScheme: const ColorScheme.light(
+      primary: TColors.primary,
+      onPrimary: TColors.white,
+      primaryContainer: TColors.accent,
+      onPrimaryContainer: TColors.secondary,
+      secondary: TColors.secondary,
+      onSecondary: TColors.white,
+      surface: TColors.white,
+      onSurface: TColors.textPrimary,
+      surfaceContainerHighest: TColors.lightContainer,
+      outline: TColors.borderPrimary,
+      outlineVariant: TColors.borderSecondary,
+      error: TColors.error,
+      onError: TColors.white,
+      errorContainer: TColors.errorSoft,
+    ),
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: TColors.primary,
       selectionHandleColor: TColors.primary,
@@ -64,7 +81,7 @@ class TAppTheme {
     primaryColor: TColors.primary,
     textTheme: TTextTheme.darkTextTheme,
     chipTheme: TChipTheme.darkChipTheme,
-    scaffoldBackgroundColor: TColors.darkBackground,
+    scaffoldBackgroundColor: TColors.dark,
     appBarTheme: TAppBarTheme.darkAppBarTheme,
     checkboxTheme: TCheckboxTheme.darkCheckboxTheme,
     bottomSheetTheme: TBottomSheetTheme.darkBottomSheetTheme,
@@ -72,23 +89,30 @@ class TAppTheme {
     outlinedButtonTheme: TOutlinedButtonTheme.darkOutlinedButtonTheme,
     textButtonTheme: TTextButtonTheme.darkTextButtonTheme,
     inputDecorationTheme: TTextFormFieldTheme.darkInputDecorationTheme,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: TColors.primary,
-      brightness: Brightness.dark,
-      primary: TColors.primary,
-      surface: TColors.darkSurface,
-      error: TColors.error,
-    ),
     dividerTheme: const DividerThemeData(
       color: TColors.darkBorder,
       thickness: TSizes.dividerHeight,
       space: TSizes.dividerHeight,
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: TColors.primary),
+    colorScheme: const ColorScheme.dark(
+      primary: TColors.primary,
+      onPrimary: TColors.white,
+      primaryContainer: TColors.darkAccent,
+      onPrimaryContainer: TColors.light,
+      secondary: TColors.secondary,
+      onSecondary: TColors.white,
+      surface: TColors.darkSurface,
+      onSurface: TColors.light,
+      surfaceContainerHighest: TColors.darkSurface,
+      outline: TColors.darkBorder,
+      outlineVariant: TColors.darkBorder,
+      error: TColors.error,
+      onError: TColors.white,
+    ),
     textSelectionTheme: const TextSelectionThemeData(
-      cursorColor: TColors.white,
-      selectionHandleColor: TColors.white,
-      selectionColor: Color(0x33FFFFFF),
+      cursorColor: TColors.primary,
+      selectionHandleColor: TColors.primary,
+      selectionColor: Color(0x334A57E8),
     ),
   );
 }

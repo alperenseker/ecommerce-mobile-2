@@ -1,11 +1,12 @@
-/// Ana sayfa afişleri (`banners`).
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import '../../../features/shop/models/banner_model.dart';
 import 'banner_repository.dart';
 
+/// Afiş uçları (`banners`).
+///
+/// ⚠️ Sunucuda şu an **kayıt yok**: uç 200 ama `Data: []` dönüyor. Afiş karuseli
+/// çizen ekran boş hâli tasarlamak zorunda — "veri gelmiyor, kod bozuk" değil.
 class ApiBannerRepository extends TApiRepositoryController<BannerModel>
     implements BannerRepository {
   static ApiBannerRepository get instance => Get.find();

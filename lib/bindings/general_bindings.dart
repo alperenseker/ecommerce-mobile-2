@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../data/repositories/address/api_address_repository.dart';
 import '../data/repositories/attributes/api_attribute_repository.dart';
 import '../data/repositories/banners/api_banner_repository.dart';
+import '../data/repositories/cart/api_cart_repository.dart';
 import '../data/repositories/categories/api_category_repository.dart';
 import '../data/repositories/chat/api_chat_repository.dart';
 import '../data/repositories/notifications/api_notification_repository.dart';
@@ -13,10 +14,9 @@ import '../data/repositories/settings/api_settings_repository.dart';
 import '../data/repositories/stats/api_order_stats_repository.dart';
 import '../data/repositories/user/api_user_repository.dart';
 import '../data/repositories/user/api_user_settings_repository.dart';
-import '../data/repositories/cart/api_cart_repository.dart';
 import '../data/repositories/wishlist/api_wishlist_repository.dart';
-import '../data/services/notifications/notification_service.dart';
 import '../features/authentication/controllers/otp_controller.dart';
+import '../data/services/notifications/notification_service.dart';
 import '../features/personalization/controllers/address_controller.dart';
 import '../features/personalization/controllers/notifcation_controller.dart';
 import '../features/personalization/controllers/public_settings_controller.dart';
@@ -33,7 +33,6 @@ import '../features/shop/controllers/product/cart_controller.dart';
 import '../features/shop/controllers/product/checkout_controller.dart';
 import '../features/shop/controllers/product/compare_controller.dart';
 import '../features/shop/controllers/product/favourites_controller.dart';
-import '../features/shop/controllers/product/images_controller.dart';
 import '../features/shop/controllers/product/order_controller.dart';
 import '../features/shop/controllers/product/product_controller.dart';
 import '../features/shop/controllers/product/variation_controller.dart';
@@ -44,19 +43,20 @@ import '../utils/helpers/network_manager.dart';
 
 /// Uygulama açılışında kurulan genel bağımlılıklar.
 ///
-/// Kayıt sırası referanstakiyle aynı tutulur. Yorumda kalan satırlar henüz
-/// gelmemiş controller'lara aittir; her biri ait olduğu fazda açılacak.
+/// Repository'ler referansta `fenix: true` ile **tembel** kaydediliyor: hepsi
+/// ince API sarmalayıcısı, açılışta 15'ini birden kurmak yalnız soğuk açılışı
+/// yavaşlatıyordu. `.instance` / `Get.find()` yine çalışır — nesne ilk
+/// erişimde doğar ve sonra ayakta kalır. Aynı kural bu projede de korunuyor.
+///
+/// FAZ 02'de 15 repository, FAZ 04'te sekiz katalog denetleyicisi açıldı;
+/// geri kalanlar geldiği fazda açılacak.
 class GeneralBindings extends Bindings {
   @override
   void dependencies() {
     /// -- Çekirdek
     Get.put(NetworkManager());
 
-    /// -- Repository'ler (FAZ 02'de açıldı)
-    /// `fenix: true` ile tembel kayıt: hepsi ince API sarmalayıcı, açılışta
-    /// yan etkileri yok; 15'ini birden kurmak yalnız soğuk açılışı
-    /// yavaşlatıyordu. `.instance` / `Get.find()` yine çalışır — nesne ilk
-    /// erişimde kurulur ve sonrasında ayakta kalır.
+    // -- Repository'ler (referanstaki sıra ve `fenix: true` korundu)
     Get.lazyPut(() => ApiAddressRepository(), fenix: true);
     Get.lazyPut(() => ApiUserRepository(), fenix: true);
     Get.lazyPut(() => ApiUserSettingsRepository(), fenix: true);
@@ -73,39 +73,35 @@ class GeneralBindings extends Bindings {
     Get.lazyPut(() => ApiCartRepository(), fenix: true);
     Get.lazyPut(() => ApiWishlistRepository(), fenix: true);
 
-    /// FAZ 05 — ürün detayında kullanılan çekirdek controller'lar.
-    /// `ProductVariantController` ve `ImagesController` ürüne özel durum
-    /// taşıdığı için burada DEĞİL, `ProductDetailScreen.initState` içinde
-    /// `Get.put` ile kuruluyor — ekran her açıldığında sıfırdan başlasın.
+    // FAZ 05 — ürün detayında kullanılan çekirdek denetleyiciler.
+    //
+    // 🔴 `ProductVariantController` ve `ImagesController` BURADA DEĞİL,
+    // `ProductDetailScreen.initState` içinde `Get.put` ile kuruluyor: ikisi de
+    // ÜRÜNE ÖZEL durum taşıyor (galeri, seçili model/renk) ve ekran her
+    // açıldığında sıfırdan başlamalı. Burada `lazyPut` ile tutulsalardı bir
+    // önceki ürünün görselleri/seçimleri yeni ürüne sızardı.
     Get.lazyPut(() => VariationController(), fenix: true);
-    Get.lazyPut(() => ImagesController(), fenix: true);
     Get.lazyPut(() => ReviewController(), fenix: true);
 
-    /// -- Kişiselleştirme (FAZ 03'te açıldı)
-    /// `UserController` ve `UserSettingsController` girişten hemen sonra
-    /// `screenRedirect()` içinde çağrılıyor; `SettingsController`'ı da
-    /// `UserController` kuruyor.
-    /// FAZ 07 — adres controller'ı ödeme ekranı için erken geldi (ekranları
-    /// FAZ 09'da). Ödeme ekranı, `OrderController` ve adres formları
-    /// `.instance` ile okuyor.
+    // -- Kişiselleştirme (FAZ 03'te girişin ihtiyaç duyduğu üçü açıldı)
+    // ⚠️ `AddressController` aslında FAZ 09'un; ödeme ekranı adres olmadan
+    // çalışamadığı için FAZ 07'de erken geldi (bkz. DURUM.md).
     Get.lazyPut(() => AddressController(), fenix: true);
     Get.lazyPut(() => SettingsController(), fenix: true);
     Get.lazyPut(() => UserController(), fenix: true);
     Get.lazyPut(() => UserSettingsController(), fenix: true);
-    /// FAZ 09 — bildirimler. Ekranları kendi binding'ini (`NotificationBinding`)
-    /// taşıyor; buradaki tembel kayıt, bildirim gönderen diğer akışların
-    /// (`.instance`) listeye ulaşabilmesi için.
     Get.lazyPut(() => NotificationController(), fenix: true);
 
-    /// FAZ 34 — üç genel anahtar (kayıt aç/kapa, ödeme modu). Anonim uçtan
-    /// okunuyor; kayıt ekranı giriş yapmamış kullanıcıya da çizilecek, bu
-    /// yüzden `permanent` ve uygulama açılışında bir kez yükleniyor.
+    // Üç genel anahtar (kayıt aç/kapa, ödeme modu). Anonim uçtan okunuyor;
+    // kayıt ekranı giriş yapmamış kullanıcıya da çizileceği için `permanent`
+    // ve uygulama açılışında bir kez yükleniyor.
     Get.put(PublicSettingsController(), permanent: true);
     Get.lazyPut(() => OTPController());
 
-    /// FAZ 04 — katalog (ekranlar arasında `.instance` ile erişiliyor).
-    /// `fenix: true`: ekran kapanıp controller düşse bile bir sonraki
-    /// erişimde yeniden kurulur.
+    // FAZ 04 — katalog (ekranlar arasında `.instance` ile erişiliyor).
+    // `fenix: true`: ekran kapanıp controller düşse bile bir sonraki erişimde
+    // yeniden kurulur; ana sayfa ↔ mağaza sekme geçişinde katalog yeniden
+    // indirilmesin diye önemli.
     Get.lazyPut(() => CategoryController(), fenix: true);
     Get.lazyPut(() => ProductController(), fenix: true);
     Get.lazyPut(() => BrandController(), fenix: true);
@@ -115,31 +111,28 @@ class GeneralBindings extends Bindings {
     Get.lazyPut(() => HomeController(), fenix: true);
     Get.lazyPut(() => BannerController(), fenix: true);
 
-    /// FAZ 06 — sepet · favori · karşılaştırma · kupon
-    /// Üçü de ürün kartlarından, ürün detayından ve alt gezinme sayaçlarından
-    /// `.instance` ile okunuyor; `fenix: true` ile ekran kapansa bile bir
-    /// sonraki erişimde yeniden kuruluyorlar.
-    /// `CompareController` referansın binding'inde YOK (orada her ekranda
-    /// `Get.put` ile kuruluyordu); alt gezinme sayacı uygulama açılışında
-    /// okunduğu için buraya alındı — üç sayaç aynı yerden beslensin.
+    // Sepet · favori · karşılaştırma · kupon.
+    // ⚠️ `CompareController` referansın binding'inde YOK (orada her ekranda
+    // `Get.put` ile kuruluyordu); alt gezinmedeki sayaç uygulama açılışında
+    // okunduğu için üç sayaç da tek yerden besleniyor.
     Get.lazyPut(() => FavouriteController(), fenix: true);
-    Get.lazyPut(() => CartController(), fenix: true);
     Get.lazyPut(() => CompareController(), fenix: true);
+    Get.lazyPut(() => CartController(), fenix: true);
     Get.lazyPut(() => CouponController(), fenix: true);
 
-    /// FAZ 07 — ödeme.
-    /// `CheckoutController` ve `OrderController` ödeme ekranının `initState`
-    /// içinde `Get.put` ile kuruluyor (ekran her açıldığında ödeme modu
-    /// yeniden okunmalı); buradaki tembel kayıt, ekran kapandıktan sonra
-    /// onay ekranının ve bildirimlerin `.instance` çağrılarını ayakta tutar.
+    // FAZ 07 — ödeme.
+    // 🔴 Sıra önemli: `OrderController` kurulurken `AddressController.instance`
+    // ve `CheckoutController` okunuyor; ikisi de yukarıda kayıtlı.
     Get.lazyPut(() => CheckoutController(), fenix: true);
     Get.lazyPut(() => OrderController(), fenix: true);
 
-    /// FAZ 09 — yerel bildirim servisi (cihaz üstü bildirimler).
-    /// `GetxService`: uygulama boyunca ayakta kalır, `Get.delete` ile düşmez.
+    // FAZ 09 — yerel bildirim servisi.
+    // ⚠️ FAZ 07 sipariş sonrası yerel bildirim üretiyordu ama servis hiç
+    // kurulmuyordu; `GetxService` olarak burada kuruluyor.
     Get.put(TNotificationService());
 
-    /// Dil controller'ı `main.dart`'ta `permanent` kuruluyor — `GetMaterialApp`
-    /// başlangıç locale'ini ondan okuduğu için burada geç kalırdı.
+    // ⚠️ `LanguageController` burada DEĞİL `main.dart`'ta `permanent`
+    // kuruluyor: `GetMaterialApp` başlangıç `locale`'ini ondan okuyor ve
+    // `GeneralBindings` o noktada henüz çalışmamış oluyor.
   }
 }

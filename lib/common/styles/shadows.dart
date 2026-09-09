@@ -1,33 +1,43 @@
 import 'package:flutter/material.dart';
 
-import '../../utils/constants/colors.dart';
-
-/// Gölge tanımları (TASARIM.md §5).
+/// Gölge tanımları.
 ///
-/// Sayfa akışında gölge YOKTUR; ayrım 1px `TColors.borderSecondary` çizgiyle
-/// verilir. Buradaki gölgeler yalnız akışın üstüne çıkan katmanlar içindir.
+/// TASARIM.md §5: **sayfa akışında gölge yok** — kart/bölüm ayrımı 1px
+/// `borderSecondary` çizgiyle veriliyor. Gölge yalnız gerçekten üste çıkan
+/// katmanların hakkı (basılı kart, açılır katman). Referanstaki 50px bulanık,
+/// 7px yayılan gölge bu yüzden çok daha kısıldı.
 class TShadowStyle {
-  /// Basıldığında hafifçe yükselen kart/ürün kutusu.
   static final verticalProductShadow = BoxShadow(
-    color: TColors.black.withValues(alpha: 0.07),
+    color: const Color(0xFF14161B).withValues(alpha: 0.07),
     blurRadius: 8,
     spreadRadius: 0,
     offset: const Offset(0, 2),
   );
 
-  /// Yatay listelerdeki kart da aynı yüksekliği kullanır; iki ayrı ad
-  /// referanstan geliyor, kullanım yerleri bozulmasın diye korundu.
   static final horizontalProductShadow = BoxShadow(
-    color: TColors.black.withValues(alpha: 0.07),
+    color: const Color(0xFF14161B).withValues(alpha: 0.07),
     blurRadius: 8,
     spreadRadius: 0,
     offset: const Offset(0, 2),
   );
 
-  /// Diyalog, sayfa altı sayfası gibi ekranın üstünde duran katmanlar.
+  /// Sayfanın üstünde **yüzen** alt gezinme çubuğu için.
+  ///
+  /// Çubuk artık ekranın dibine yapışık değil, kenarlardan boşluklu duruyor;
+  /// altındaki içerikten ayrılması için tek başına 1px çizgi yetmiyor. Gölge
+  /// yine kısık (TASARIM.md §5): yayılma yok, bulanıklık az.
+  static final floatingBarShadow = BoxShadow(
+    color: const Color(0xFF14161B).withValues(alpha: 0.10),
+    blurRadius: 16,
+    spreadRadius: 0,
+    offset: const Offset(0, 4),
+  );
+
+  /// Sayfanın üstüne binen katmanlar (açılır levha, kayan çubuk) için.
   static final overlayShadow = BoxShadow(
-    color: TColors.black.withValues(alpha: 0.14),
+    color: const Color(0xFF14161B).withValues(alpha: 0.14),
     blurRadius: 30,
+    spreadRadius: 0,
     offset: const Offset(0, 10),
   );
 }

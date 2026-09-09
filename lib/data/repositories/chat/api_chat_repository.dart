@@ -1,37 +1,24 @@
-/// Destek sohbeti uçları (`chat/...`).
-///
-/// 🔴 **Yeni mesajlar YOKLAMA ile alınır, SignalR ile değil.** Hub kodu
-/// (bağlanma, `ReceiveMessage`, yazıyor/okundu olayları) referansla birebir
-/// duruyor ve silinmedi; ama `ChatController` ona bağlanmıyor — web
-/// (`services/chat.service.js`) da yoklama kullanıyor: her sunucuda çalışır,
-/// kurulum istemez ve destek sohbetinde birkaç saniye gecikme sorun değil.
-/// Hub adresi yanlış/kapalıysa uygulama sessizce yoklamaya devam eder.
-///
-/// Yanıt zarfı iki yazımla da gelebildiği için (`Success`/`success`) okuma
-/// DAİMA temel sınıfın `isSuccess` / `dataOf` / `messageOf` yardımcılarından
-/// geçer; bu dosya önceden yalnız küçük harfli yazımı kabul ediyordu ve
-/// .NET'in varsayılan serileştirmesinde sohbet sessizce boş kalıyordu.
-library;
-
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
-import 'package:dio/dio.dart';
-import 'package:get/get.dart' hide FormData, MultipartFile, Response;
+import 'package:get/get.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../../../features/chat/models/chat_model.dart';
 import '../../../features/chat/models/message_model.dart';
-import '../../../features/personalization/controllers/user_controller.dart';
+// FAZ 09 — UserController o fazda geliyor. O zamana kadar aynı değeri
+// (oturumdaki kullanıcı kimliği) AuthenticationRepository'den okuyoruz.
+// import '../../../features/personalization/controllers/user_controller.dart';
+import '../authentication/authentication_repository.dart';
 import '../../../utils/constants/enums.dart';
-import '../../../utils/logging/logger.dart';
 import 'chat_repository.dart';
 
+/// Destek sohbeti uçları (`chat/...`) ve SignalR canlı bağlantısı.
+///
+/// Mesajlar hem HTTP ile çekilir hem de hub üzerinden anlık gelir; yazıyor/okundu
+/// bildirimleri kendi yankımızı ayıklamak için gönderen kimliğine bakar.
 class ApiChatRepository extends TApiRepositoryController<ChatModel>
     implements ChatRepository {
-  static ApiChatRepository get instance => Get.isRegistered<ApiChatRepository>()
-      ? Get.find<ApiChatRepository>()
-      : Get.put(ApiChatRepository());
+  static ApiChatRepository get instance => Get.find();
 
   HubConnection? _hubConnection;
 
@@ -98,7 +85,7 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
       final chatId = args[0]?.toString() ?? '';
       final typingUserId = args[1]?.toString() ?? '';
       final isTyping = args[2] == true;
-      if (typingUserId == UserController.instance.user.value.id) return;
+      if (typingUserId == AuthenticationRepository.instance.getUserID) return;
 
       final controller = _typingControllers[chatId];
       if (controller != null && !controller.isClosed) controller.add(isTyping);
@@ -200,10 +187,8 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
     try {
       final response = await dio.get('${getEndpoint()}/user/$currentUserId');
       if (isSuccess(response.data)) {
-        final List data = (dataOf(response.data) as List?) ?? const [];
-        return data
-            .map((e) => ChatModel.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList();
+        final List data = (dataOf(response.data) as List?) ?? [];
+        return data.map((e) => ChatModel.fromJson(e)).toList();
       }
       throw messageOf(response.data) ?? 'Failed to fetch chats';
     } catch (e) {
@@ -218,12 +203,15 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
     try {
       final response = await dio.get('${getEndpoint()}/$chatId/messages');
       if (isSuccess(response.data)) {
-        final List data = (dataOf(response.data) as List?) ?? const [];
-        return data
-            .map(
-              (e) => MessageModel.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
+        final List data = (dataOf(response.data) as List?) ?? [];
+        // print(
+          // '📨 [FETCH MESSAGES] raw first: ${data.isNotEmpty ? data[0] : 'EMPTY'}',
+        // );
+        // print('📨 [FETCH MESSAGES] total count: ${data.length}');
+        // print(
+          // '📨 [FETCH MESSAGES] all ids: ${data.map((e) => e['Id'] ?? e['id']).toList()}',
+        // );
+        return data.map((e) => MessageModel.fromJson(e)).toList();
       }
       throw messageOf(response.data) ?? 'Failed to fetch messages';
     } catch (e) {
@@ -255,9 +243,7 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
     try {
       final response = await dio.post(getEndpoint(), data: chat.toJson());
       if (isSuccess(response.data)) {
-        return ChatModel.fromJson(
-          Map<String, dynamic>.from(dataOf(response.data) as Map),
-        );
+        return ChatModel.fromJson(Map<String, dynamic>.from(dataOf(response.data) as Map));
       }
       throw messageOf(response.data) ?? 'Failed to create chat';
     } catch (e) {
@@ -267,12 +253,12 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
 
   // ─── createSupportChat ────────────────────────────────────────────────────
 
-  /// Kullanıcının destek sohbetini açar.
+  /// Destek sohbetini web ile **birebir aynı** gövdeyle açar.
   ///
-  /// 🔴 Gövde **web ile birebir** (`services/chat.service.js` → `Chat.ensure`):
-  /// yalnız `participantIds`, `chatType` ve `title`. Destek tarafını sunucu
-  /// kendisi ekliyor; istemcinin admin kullanıcısını bulup katılımcı listesine
-  /// yazması gerekmiyor — admin sorgusu 401 verdiğinde sohbet hiç açılmıyordu.
+  /// 🔴 Referans mobil uygulama önce `users?role=admin` ile yönetici kimliğini
+  /// arayıp katılımcı listesine yazıyordu; o sorgu normal kullanıcı jetonuyla
+  /// 401 dönünce sohbet hiç açılamıyordu. Web (`chat.service.js` → `ensure()`)
+  /// yalnız kendi kimliğini gönderiyor, karşı tarafı sunucu ekliyor.
   @override
   Future<ChatModel?> createSupportChat(String userId) async {
     try {
@@ -285,11 +271,12 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
         },
       );
       if (isSuccess(response.data)) {
-        return ChatModel.fromJson(
-          Map<String, dynamic>.from(dataOf(response.data) as Map),
-        );
+        final data = dataOf(response.data);
+        if (data is Map) {
+          return ChatModel.fromJson(Map<String, dynamic>.from(data));
+        }
       }
-      throw messageOf(response.data) ?? 'Failed to create chat';
+      throw messageOf(response.data) ?? 'Failed to create support chat';
     } catch (e) {
       throw handleException(e);
     }
@@ -300,17 +287,20 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
   @override
   Future<String> sendMessage(String chatId, MessageModel message) async {
     try {
-      // Her zaman HTTP ile gönder — id güvenli gelsin.
+      // Her zaman HTTP ile gönder — id güvenli gelsin
       final response = await dio.post(
         '${getEndpoint()}/$chatId/messages',
         data: message.toMap(),
       );
       if (isSuccess(response.data)) {
-        final data = dataOf(response.data);
-        final sentId = data is Map
-            ? (data['Id'] ?? data['id'])?.toString() ?? message.id
-            : message.id;
+        final sent = dataOf(response.data);
+        final sentId =
+            (sent is Map
+                ? (sent['Id'] ?? sent['id'])?.toString()
+                : null) ??
+            message.id;
         _lastSentMessageId = sentId;
+        // print('✅ [SEND HTTP] messageId: $sentId');
         return sentId;
       }
       throw messageOf(response.data) ?? 'Failed to send message';
@@ -319,59 +309,8 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
     }
   }
 
-  // ─── uploadAttachment ─────────────────────────────────────────────────────
-
-  /// Sohbete dosya eki yükler (`chat/{chatId}/upload`, multipart).
-  ///
-  /// 🔴 **Sunucu bu ucu desteklemiyorsa sessizce `null` döner** — web
-  /// (`Chat.upload`) de öyle yapıyor. Ek atılamadı diye sohbetin tamamı
-  /// çökmemeli; çağıran yalnız "gönderilemedi" der ve yazışma devam eder.
-  /// Dönen değer, mesaja `mediaUrl` olarak yazılacak adrestir.
-  @override
-  Future<String?> uploadAttachment({
-    required String chatId,
-    required Uint8List fileData,
-    required String filename,
-    required String mimeType,
-  }) async {
-    try {
-      final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(
-          fileData,
-          filename: filename,
-          contentType: DioMediaType.parse(mimeType),
-        ),
-      });
-
-      final response = await dio.post(
-        '${getEndpoint()}/$chatId/upload',
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-
-      if (!isSuccess(response.data)) return null;
-
-      // Uç ya düz metin (adres) ya da `{ mediaUrl | url }` nesnesi döndürüyor.
-      final data = dataOf(response.data);
-      if (data is String) return data.isEmpty ? null : data;
-      if (data is Map) {
-        final url = (data['MediaUrl'] ??
-                data['mediaUrl'] ??
-                data['Url'] ??
-                data['url'])
-            ?.toString();
-        return (url == null || url.isEmpty) ? null : url;
-      }
-      return null;
-    } catch (e) {
-      TLoggerHelper.warning('Sohbet eki yüklenemedi: $e');
-      return null;
-    }
-  }
-
   // ─── getChatsByType ───────────────────────────────────────────────────────
 
-  @override
   Future<List<ChatModel>> getChatsByType(
     String currentUserId,
     ChatType chatType,
@@ -381,22 +320,26 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
         '${getEndpoint()}/user/$currentUserId/type/${chatType.name}',
       );
       if (isSuccess(response.data)) {
-        final List data = (dataOf(response.data) as List?) ?? const [];
+        final List data = (dataOf(response.data) as List?) ?? [];
+        // print('🔍 [CHATS] raw data: $data');
 
-        // Tek bir bozuk kayıt bütün listeyi düşürmesin: sohbeti bulamayınca
-        // istemci YENİSİNİ açar ve destek ekibinde ikinci bir konu oluşur.
+        // Her item'ı tek tek parse et, hangisi patlıyor görelim
         final chats = <ChatModel>[];
-        for (var i = 0; i < data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
           try {
-            chats.add(ChatModel.fromJson(Map<String, dynamic>.from(data[i] as Map)));
+            final chat = ChatModel.fromJson(data[i] as Map<String, dynamic>);
+            // print('🔍 [CHATS] parsed[$i] id: ${chat.id}');
+            chats.add(chat);
           } catch (e) {
-            TLoggerHelper.warning('Sohbet çözümlenemedi [$i]: $e');
+            // print('❌ [CHATS] parse error at [$i]: $e');
+            // print('❌ [CHATS] item[$i]: ${data[i]}');
           }
         }
         return chats;
       }
       throw messageOf(response.data) ?? 'Failed to fetch chats by type';
     } catch (e) {
+      // print('❌ [CHATS] exception: $e');
       throw handleException(e);
     }
   }
@@ -405,8 +348,20 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
 
   @override
   Future<List<ChatModel>> getChatsByTypeOnly(ChatType chatType) async {
-    final userId = UserController.instance.user.value.id;
-    return getChatsByType(userId, chatType);
+    try {
+      final userId = AuthenticationRepository.instance.getUserID;
+      final response = await dio.get(
+        '${getEndpoint()}/user/$userId/type/${chatType.name}',
+      );
+
+      if (isSuccess(response.data)) {
+        final List data = (dataOf(response.data) as List?) ?? [];
+        return data.map((e) => ChatModel.fromJson(e)).toList();
+      }
+      throw messageOf(response.data) ?? 'Failed to fetch chats';
+    } catch (e) {
+      throw handleException(e);
+    }
   }
 
   // ─── getChatById ──────────────────────────────────────────────────────────
@@ -416,15 +371,14 @@ class ApiChatRepository extends TApiRepositoryController<ChatModel>
     try {
       final response = await dio.get('${getEndpoint()}/$chatId');
       if (isSuccess(response.data)) {
-        return ChatModel.fromJson(
-          Map<String, dynamic>.from(dataOf(response.data) as Map),
-        );
+        return ChatModel.fromJson(Map<String, dynamic>.from(dataOf(response.data) as Map));
       }
       throw messageOf(response.data) ?? 'Chat not found';
     } catch (e) {
       throw handleException(e);
     }
   }
+
   // ─── markChatAsRead ───────────────────────────────────────────────────────
 
   @override

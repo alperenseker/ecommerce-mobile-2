@@ -1,8 +1,6 @@
-/// Bildirim repository'sinin arayüzü.
-library;
-
 import '../../services/notifications/notification_model.dart';
 
+/// Bildirim repository sözleşmesi.
 abstract class NotificationRepository {
   Future<List<NotificationModel>> fetchAllItems();
   Future<NotificationModel> fetchSingleItem(String id);

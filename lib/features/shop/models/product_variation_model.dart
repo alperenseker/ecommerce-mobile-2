@@ -1,8 +1,6 @@
-/// Ürünün tek bir varyasyonu (öznitelik kombinasyonu + kendi fiyatı/stoğu).
-library;
-
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 
+/// Ürünün tek bir varyasyonu (öznitelik değerleri + kendi fiyat/stok bilgisi).
 class ProductVariationModel {
   final String id;
   String sku;

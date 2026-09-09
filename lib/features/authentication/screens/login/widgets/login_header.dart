@@ -1,6 +1,3 @@
-/// Giriş ekranının başlığı: geri düğmesi, marka logosu, başlık ve alt başlık.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,6 +8,7 @@ import '../../../../../utils/constants/sizes.dart';
 import '../../../../../utils/constants/text_strings.dart';
 import '../../../../../utils/helpers/helper_functions.dart';
 
+/// Giriş ekranının başlığı: geri düğmesi, logo, başlık ve alt başlık.
 class TLoginHeader extends StatelessWidget {
   const TLoginHeader({
     super.key,
@@ -22,7 +20,8 @@ class TLoginHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Geri düğmesi — dönülecek bir ekran yoksa karşılama ekranına düşer.
+        // Geri düğmesi: yığında geri gidilecek bir şey yoksa karşılama
+        // ekranına düşülüyor, yoksa kullanıcı boş bir ekranda kalıyor.
         TRoundedContainer(
           padding: EdgeInsets.zero,
           radius: TSizes.borderRadiusMd,
@@ -42,7 +41,6 @@ class TLoginHeader extends StatelessWidget {
         Text(TTexts.loginTitle.tr, style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: TSizes.sm),
         Text(TTexts.loginSubTitle.tr, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: TSizes.spaceBtwItems),
       ],
     );
   }

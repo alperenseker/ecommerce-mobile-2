@@ -4,16 +4,12 @@ import 'package:lottie/lottie.dart';
 import '../../../utils/constants/colors.dart';
 import '../../../utils/constants/sizes.dart';
 
-/// A widget for displaying an animated loading indicator with optional text and action button.
+/// Lottie animasyonu + metin (+ isteğe bağlı düğme) gösteren yükleme/boş
+/// durum bileşeni.
 class TAnimationLoaderWidget extends StatelessWidget {
-  /// Default constructor for the TAnimationLoaderWidget.
-  ///
-  /// Parameters:
-  ///   - text: The text to be displayed below the animation.
-  ///   - animation: The path to the Lottie animation file.
-  ///   - showAction: Whether to show an action button below the text.
-  ///   - actionText: The text to be displayed on the action button.
-  ///   - onActionPressed: Callback function to be executed when the action button is pressed.
+  /// [text] animasyonun altındaki metin, [animation] Lottie dosyasının yolu.
+  /// [showAction] `true` ise metnin altına [actionText] yazılı bir düğme
+  /// çizilir ve basılınca [onActionPressed] çalışır.
   const TAnimationLoaderWidget({
     super.key,
     required this.text,
@@ -40,7 +36,7 @@ class TAnimationLoaderWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.asset(animation, width: MediaQuery.of(context).size.width * 0.8), // Display Lottie animation
+          Lottie.asset(animation, width: MediaQuery.of(context).size.width * 0.8),
           // Image(width: MediaQuery.of(context).size.width  * 0.8, image: AssetImage(animation)),
           const SizedBox(height: TSizes.defaultSpace),
           Text(

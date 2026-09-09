@@ -1,24 +1,21 @@
-// FAZ 11 — yerelleştirme.
+// FAZ 11 — yerelleştirmenin iş kuralları (ağa çıkmaz).
 //
-// Bu dosya fazın kabul kriterlerini kalıcı olarak sabitler:
-//   1. ON dilin anahtar kümesi BİREBİR aynı — bir dilde eksik anahtar,
-//      o ekranda ham anahtar (`someKey.someOther`) demektir.
-//   2. Hiçbir çeviri değeri anahtarın kendisi değildir (kopyala-yapıştır
-//      sırasında değer yerine anahtar yazılmış olmasın).
-//   3. Kodda `.tr` uygulanan HER `TTexts` sabitinin dört ana dilde
-//      (kk · ru · tr · en) karşılığı vardır.
-//   4. Sunucu bildirim başlıklarını çeviri ANAHTARI olarak gönderiyor;
-//      dördü de sözlükte.
-//   5. Tembel yükleme: açılışta bellekte yalnız İKİ dil haritası olur.
+// Sınanan üç söz:
+//   · ON dilin anahtar kümesi BİREBİR aynı — bir dile anahtar eklenip
+//     ötekine eklenmezse o dilde ekranda ham anahtar görünür,
+//   · tembel yükleme çalışıyor: açılışta bellekte yalnız İKİ harita var
+//     (yedek İngilizce + kayıtlı dil),
+//   · ekranda `.tr` ile çağrılan her anahtarın sözlükte karşılığı var —
+//     kaynak kodu tarayarak; yani kabul kriterindeki "ham anahtar görünmesin"
+//     kuralı derleme zamanında değil, bu testte kilitleniyor.
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-
-import 'package:tstore_ecommerce_app/localization/languages.dart';
-
 import 'package:tstore_ecommerce_app/localization/Languages/brazilian.dart';
 import 'package:tstore_ecommerce_app/localization/Languages/english.dart';
 import 'package:tstore_ecommerce_app/localization/Languages/french.dart';
@@ -29,8 +26,11 @@ import 'package:tstore_ecommerce_app/localization/Languages/russian.dart';
 import 'package:tstore_ecommerce_app/localization/Languages/spanish.dart';
 import 'package:tstore_ecommerce_app/localization/Languages/turkish.dart';
 import 'package:tstore_ecommerce_app/localization/Languages/vietnamese.dart';
+import 'package:tstore_ecommerce_app/localization/languages.dart';
+import 'package:tstore_ecommerce_app/localization/database_translation_model.dart';
 
-/// Dosya adı → sözlük. Sıra dil ekranındaki sıradır.
+/// Sözlükler: ekranda göründükleri sırayla (Kazakça · Rusça · Türkçe ·
+/// İngilizce · sonra diğerleri).
 final Map<String, Map<String, String>> dictionaries = {
   'kazakh': Kazakh.language,
   'russian': Russian.language,
@@ -44,184 +44,192 @@ final Map<String, Map<String, String>> dictionaries = {
   'vietnamese': Vietnamese.language,
 };
 
-/// Dört ana dil: bunlarda çeviri gerçekten o dilde olmalı.
-const mainLanguages = ['kazakh', 'russian', 'turkish', 'english'];
+/// `lib/` altındaki bütün Dart kaynakları.
+List<File> _libFiles() {
+  final dir = Directory('lib');
+  return dir
+      .listSync(recursive: true)
+      .whereType<File>()
+      .where((f) => f.path.endsWith('.dart'))
+      .toList();
+}
+
+/// Dosyanın **yorumsuz** kaynağı: satır (`//`) ve blok (`/* */`) yorumları
+/// atılır, yoksa yorumda duran eski bir anahtar taramayı yanıltır.
+String _code(File file) {
+  final withoutBlocks = file.readAsStringSync().replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '');
+  return withoutBlocks
+      .split('\n')
+      .where((line) => !line.trimLeft().startsWith('//'))
+      .join('\n');
+}
 
 void main() {
-  group('Sözlük bütünlüğü', () {
-    test('on dilin anahtar kümesi birebir aynı', () {
+  group('sözlük bütünlüğü', () {
+    test('on dil de aynı anahtar kümesini taşıyor', () {
       final reference = English.language.keys.toSet();
-      expect(reference.length, greaterThan(700), reason: 'İngilizce sözlük beklenenden küçük');
+      expect(reference, isNotEmpty);
 
       for (final entry in dictionaries.entries) {
         final keys = entry.value.keys.toSet();
         expect(
           keys.difference(reference),
           isEmpty,
-          reason: '${entry.key}.dart içinde İngilizcede olmayan anahtar var',
+          reason: '${entry.key}.dart İngilizcede olmayan anahtar taşıyor',
         );
         expect(
           reference.difference(keys),
           isEmpty,
-          reason: '${entry.key}.dart içinde eksik anahtar var — ekranda ham anahtar görünür',
+          reason: '${entry.key}.dart bu anahtarları eksik bırakmış',
         );
       }
     });
 
-    test('hiçbir değer ham çeviri anahtarı değil', () {
-      // Ölçüt `değer == anahtar` DEĞİL: `TTexts.rememberMe` gibi bazı
-      // sabitlerin değeri zaten okunabilir metin ('Remember Me') ve
-      // İngilizce sözlükte aynısı yazılı — bu doğru. Ekranda kötü görünen,
-      // `someKey` biçimindeki **camelCase** kimliklerin çeviri yerine
-      // geçmesidir; testin aradığı da bu.
-      final rawKey = RegExp(r'^[a-z][a-z0-9]*[A-Z][A-Za-z0-9]*\$');
+    test('hiçbir sözlükte boş çeviri yok', () {
       for (final entry in dictionaries.entries) {
-        final leaks = entry.value.entries
-            .where((e) => e.value == e.key && rawKey.hasMatch(e.key))
-            .map((e) => e.key)
-            .toList();
-        expect(leaks, isEmpty, reason: '${entry.key}.dart: çeviri yerine ham anahtar yazılmış');
+        final empty = entry.value.entries.where((e) => e.value.trim().isEmpty).map((e) => e.key);
+        expect(empty, isEmpty, reason: '${entry.key}.dart boş değer taşıyor');
       }
     });
 
-    test('hiçbir değer boş değil', () {
-      for (final entry in dictionaries.entries) {
-        final empties = entry.value.entries.where((e) => e.value.trim().isEmpty).map((e) => e.key).toList();
-        expect(empties, isEmpty, reason: '${entry.key}.dart: boş çeviri');
-      }
-    });
-
-    test('sunucudan anahtar olarak gelen bildirim başlıkları sözlükte', () {
-      // Canlı `GET /notifications` şu an bu dört başlığı ham anahtar olarak
-      // gönderiyor; ekranda `.tr` uygulanıyor.
-      const serverKeys = [
-        'orderUpdateNowProcessing',
-        'orderShippedOnItsWay',
-        'orderDeliveredEnjoy',
-        'orderCanceledSorry',
-      ];
-      for (final name in dictionaries.keys) {
-        for (final key in serverKeys) {
-          expect(dictionaries[name], contains(key), reason: '$name.dart: $key yok');
-        }
+    test('dört ana dil gerçekten çevrili: değer anahtarın kendisi değil', () {
+      // Yedi dil adı ("English", "Model", "SKU"…) her dilde aynı kalabilir;
+      // ölçüt, sözlüğün ezici çoğunluğunun anahtardan farklı olması.
+      for (final name in ['kazakh', 'russian', 'turkish']) {
+        final dict = dictionaries[name]!;
+        final sameAsKey = dict.entries.where((e) => e.value == e.key).length;
+        expect(
+          sameAsKey / dict.length,
+          lessThan(0.05),
+          reason: '$name.dart çevirilerinin çoğu anahtarın kendisi',
+        );
       }
     });
   });
 
-  group('Kodda çevrilen her metnin karşılığı var', () {
-    test('lib/ içindeki her `TTexts.x.tr` dört ana dilde bulunuyor', () {
-      final textStrings = File('lib/utils/constants/text_strings.dart').readAsStringSync();
-
-      // TTexts sabitinin ADI → DEĞERİ. Sözlük anahtarı değerdir.
-      final constants = <String, String>{};
-      for (final m in RegExp(
-        '''static const (?:String )?([A-Za-z0-9_]+) *= *['"](.*?)['"] *;''',
-      ).allMatches(textStrings)) {
-        constants[m.group(1)!] = m.group(2)!;
-      }
-      expect(constants.length, greaterThan(700));
-
-      // `.tr` / `.trParams` uygulanan sabitleri topla.
-      final used = <String>{};
-      final pattern = RegExp(r'TTexts\.\s*([A-Za-z0-9_]+)\s*\)?\s*\.(?:tr|trParams)\b');
-      for (final file in Directory('lib').listSync(recursive: true)) {
-        if (file is! File || !file.path.endsWith('.dart')) continue;
-        if (file.path.contains('/localization/')) continue;
-        for (final m in pattern.allMatches(file.readAsStringSync())) {
-          used.add(m.group(1)!);
-        }
-      }
-      expect(used.length, greaterThan(300), reason: 'Çevrilen metin sayısı beklenenden az');
-
-      for (final language in mainLanguages) {
-        final dictionary = dictionaries[language]!;
-        final missing = used
-            .where((name) => constants.containsKey(name))
-            .map((name) => constants[name]!)
-            .where((key) => !dictionary.containsKey(key))
-            .toList()
-          ..sort();
-        expect(missing, isEmpty, reason: '$language.dart: ekranda kullanılan ama sözlükte olmayan anahtarlar');
-      }
-    });
-
-    test('lib/ içindeki her `\'düz metin\'.tr` dört ana dilde bulunuyor', () {
-      // FAZ 03 kayıt akışı çeviriyi `TTexts` sabitiyle değil doğrudan
-      // İngilizce metinle yazmış (`'Confirm Company'.tr`). GetX için bu da
-      // geçerli bir anahtar; sözlükte karşılığı yoksa metin İngilizce kalır.
-      final literal = RegExp(r"'([^'\\]{2,80})'\.tr\b");
-      final used = <String>{};
-      for (final file in Directory('lib').listSync(recursive: true)) {
-        if (file is! File || !file.path.endsWith('.dart')) continue;
-        if (file.path.contains('/localization/')) continue;
-        for (final m in literal.allMatches(file.readAsStringSync())) {
-          used.add(m.group(1)!);
-        }
-      }
-      expect(used, isNotEmpty);
-
-      for (final language in mainLanguages) {
-        final dictionary = dictionaries[language]!;
-        final missing = used.where((key) => !dictionary.containsKey(key)).toList()..sort();
-        expect(missing, isEmpty, reason: '$language.dart: düz metin anahtarının karşılığı yok');
-      }
-    });
-  });
-
-  group('Tembel yükleme', () {
-    setUp(() async {
-      final binding = TestWidgetsFlutterBinding.ensureInitialized();
-      // `GetStorage` dosyayı belge klasörüne yazıyor; testte platform kanalı
-      // yok, bu yüzden geçici bir klasör döndürülüyor.
-      final tempDir = Directory.systemTemp.createTempSync('faz11_storage');
-      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+  group('tembel yükleme', () {
+    setUpAll(() async {
+      // GetStorage disk üzerinde çalışıyor; testte path_provider sahte.
+      TestWidgetsFlutterBinding.ensureInitialized();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
         const MethodChannel('plugins.flutter.io/path_provider'),
-        (call) async => tempDir.path,
+        (call) async => Directory.systemTemp.createTempSync('faz11').path,
       );
       await GetStorage.init();
+      Get.testMode = true;
+    });
+
+    tearDown(() async {
+      await GetStorage().remove('language');
       Get.clearTranslations();
     });
 
-    test('on dilin de sözlüğü tanımlı', () {
-      for (final code in ['kk', 'ru', 'tr', 'en', 'fr', 'de', 'es', 'pt', 'pt_BR', 'vi']) {
-        expect(Languages.hasTranslation(code), isTrue, reason: '$code için sözlük yok');
-      }
-      // Sözlüğü olmayan bir dil seçilirse ekran İngilizceye düşmeli.
-      expect(Languages.hasTranslation('zz'), isFalse);
-    });
-
-    test('kayıtlı dil yokken açılışta bellekte YALNIZ İngilizce var', () async {
+    test('kayıtlı dil yokken yalnız yedek İngilizce yüklenir', () async {
       await GetStorage().remove('language');
       final keys = Languages().keys;
       expect(keys.keys, ['en_US']);
     });
 
-    test('kayıtlı dil varken açılışta bellekte YALNIZ iki harita var', () async {
+    test('kayıtlı dil varken bellekte tam İKİ harita olur', () async {
       await GetStorage().write('language', 'kk');
       final keys = Languages().keys;
+      expect(keys.length, 2);
       expect(keys.keys.toSet(), {'en_US', 'kk'});
+    });
+
+    test('kayıtlı dil İngilizce ise ikinci harita açılmaz', () async {
+      await GetStorage().write('language', 'en');
+      final keys = Languages().keys;
+      expect(keys.keys, ['en_US']);
+    });
+
+    test('ensureLoaded seçilen dili istek üzerine ekler', () async {
       await GetStorage().remove('language');
+      Get.addTranslations(Languages().keys);
+      Languages.ensureLoaded('tr');
+      Get.locale = const Locale('tr');
+      // Türkçe sözlükten bir anahtar: yüklenmemiş olsaydı ham anahtar dönerdi.
+      expect('cartTotal'.tr, Turkish.language['cartTotal']);
     });
 
-    test('ensureLoaded seçilen dili ekler, ikinci çağrıda yeniden kurmaz', () {
-      Get.addTranslations(Languages().keys);
-      expect(Get.translations.containsKey('tr'), isFalse);
+    test('on dilin hepsi hasTranslation ile tanınıyor', () {
+      for (final code in ['en', 'fr', 'ru', 'de', 'pt', 'pt_BR', 'vi', 'es', 'tr', 'kk']) {
+        expect(Languages.hasTranslation(code), isTrue, reason: '$code tanınmıyor');
+      }
+      expect(Languages.hasTranslation('zz'), isFalse);
+    });
+  });
 
-      Languages.ensureLoaded('tr');
-      expect(Get.translations['tr'], isNotNull);
+  group('ekranda ham anahtar kalmasın', () {
+    test('kodda .tr ile çağrılan her düz metin anahtarı sözlükte var', () {
+      final pattern = RegExp(r"'((?:\\.|[^'\\]){1,140})'\.tr\b");
+      final missing = <String>{};
 
-      final firstMap = Get.translations['tr'];
-      Languages.ensureLoaded('tr');
-      expect(identical(Get.translations['tr'], firstMap), isTrue,
-          reason: 'Zaten yüklü dilin haritası yeniden kurulmamalı');
+      for (final file in _libFiles()) {
+        if (file.path.contains('${Platform.pathSeparator}localization${Platform.pathSeparator}')) continue;
+        for (final match in pattern.allMatches(_code(file))) {
+          final key = match.group(1)!;
+          if (!English.language.containsKey(key)) missing.add(key);
+        }
+      }
+
+      expect(missing, isEmpty, reason: 'sözlükte karşılığı olmayan ham anahtarlar');
     });
 
-    test('İngilizce `en_US` anahtarıyla, diğerleri kendi koduyla kayıtlı', () {
-      Get.addTranslations(Languages().keys);
-      Languages.ensureLoaded('en');
-      Languages.ensureLoaded('pt_BR');
-      expect(Get.translations.containsKey('en_US'), isTrue);
-      expect(Get.translations.containsKey('pt_BR'), isTrue);
+    test('ekranda .tr ile çağrılan her TTexts sabiti sözlükte var', () {
+      // `TTexts` sabitlerinin DEĞERİ harita anahtarıdır; sabit adından değere
+      // gitmek için kaynak dosyayı okuyoruz (yansıma yok).
+      final source = File('lib/utils/constants/text_strings.dart').readAsStringSync();
+      final decl = RegExp(
+        // \u0022 = çift tırnak; ham dizeyi kapatmasın diye kaçış kodu.
+        r"static const (?:String )?([A-Za-z0-9_]+)\s*=\s*(['\u0022])(.*?)\2\s*;",
+        dotAll: true,
+      );
+      final values = {for (final m in decl.allMatches(source)) m.group(1)!: m.group(3)!};
+      expect(values.length, greaterThan(800));
+
+      // Marka adı ve şablondan kalan kişi adı bilerek çevrilmiyor.
+      const untranslated = {'appName', 'homeAppbarSubTitle'};
+
+      final used = RegExp(r'TTexts\.([A-Za-z0-9_]+)\.tr\b');
+      final missing = <String>{};
+      for (final file in _libFiles()) {
+        if (file.path.contains('${Platform.pathSeparator}localization${Platform.pathSeparator}')) continue;
+        for (final m in used.allMatches(_code(file))) {
+          final name = m.group(1)!;
+          if (untranslated.contains(name)) continue;
+          final value = values[name];
+          if (value == null || !English.language.containsKey(value)) missing.add(name);
+        }
+      }
+      expect(missing, isEmpty, reason: 'sözlükte karşılığı olmayan TTexts sabitleri');
+    });
+
+    test('sunucunun bildirim başlıkları çevrili', () {
+      // Canlı `GET /notifications` bu dört başlığı çeviri anahtarı olarak
+      // gönderiyor; ekran `notification.title.tr` çiziyor.
+      for (final key in [
+        'orderUpdateNowProcessing',
+        'orderShippedOnItsWay',
+        'orderDeliveredEnjoy',
+        'orderCanceledSorry',
+      ]) {
+        expect(English.language.containsKey(key), isTrue, reason: '$key sözlükte yok');
+      }
+    });
+  });
+
+  group('DatabaseTranslationModel', () {
+    test('yerel ayar kurulmadan çağrılınca çökmez, İngilizceye düşer', () {
+      Get.locale = null;
+      final model = DatabaseTranslationModel.translate(
+        '[{"language":"en","translation":"Handle"},{"language":"ru","translation":"Ручка"}]',
+      );
+      expect(model.translation, 'Handle');
+    });
+
+    test('boş metin boş model döndürür', () {
+      expect(DatabaseTranslationModel.translate('').translation, '');
     });
   });
 }

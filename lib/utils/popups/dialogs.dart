@@ -7,16 +7,19 @@ import '../constants/sizes.dart';
 import '../constants/text_strings.dart';
 import '../helpers/helper_functions.dart';
 
-/// A utility class for showing modern, consistent confirmation dialogs
-/// across the whole app. Replaces the old [Get.defaultDialog] popups.
+/// Uygulamanın ortak onay penceresi.
+///
+/// Her ekran kendi [Get.defaultDialog]'unu açtığında görünüm birbirini
+/// tutmuyordu; tüm onaylar buradan geçsin diye toplandı.
 class TDialogs {
-  /// Shows a modern confirmation dialog with an icon badge, title, message and
-  /// two action buttons.
+  /// İkon, başlık, açıklama ve iki düğmeden oluşan onay penceresi.
   ///
-  /// The dialog is automatically dismissed when either button is tapped, so the
-  /// [onConfirm]/[onCancel] callbacks should NOT close the dialog themselves.
+  /// Pencere düğmeye basılınca **kendisi kapanıyor**; bu yüzden
+  /// [onConfirm]/[onCancel] geri çağrıları pencereyi kapatmaya çalışmamalı,
+  /// yoksa bir alttaki ekran da kapanır.
   ///
-  /// Set [isDestructive] to true for delete/remove style actions (red accent).
+  /// Silme gibi geri alınamaz işlemlerde [isDestructive] `true` verilir:
+  /// vurgu rengi kırmızıya döner.
   static Future<void> confirm({
     required String title,
     required String message,
@@ -42,7 +45,7 @@ class TDialogs {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              /// Icon badge
+              /// İkon rozeti
               Container(
                 height: 50,
                 width: 50,
@@ -54,7 +57,7 @@ class TDialogs {
               ),
               const SizedBox(height: TSizes.spaceBtwItems / 1.3),
 
-              /// Title
+              /// Başlık
               Text(
                 title,
                 textAlign: TextAlign.center,
@@ -62,7 +65,7 @@ class TDialogs {
               ),
               const SizedBox(height: TSizes.xs),
 
-              /// Message
+              /// Açıklama
               Text(
                 message,
                 textAlign: TextAlign.center,
@@ -73,7 +76,7 @@ class TDialogs {
               ),
               const SizedBox(height: TSizes.spaceBtwItems * 1.25),
 
-              /// Actions
+              /// Düğmeler
               Row(
                 children: [
                   Expanded(

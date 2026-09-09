@@ -1,10 +1,3 @@
-/// Karşılama ekranı — girişsiz kullanıcının gördüğü ilk ekran.
-///
-/// Yalnız **e-posta/şifre** ile giriş sunuluyor: telefon ve Google girişleri
-/// sunucuda karşılığı olmadığı için referansta da yorumda bırakılmış, aynen
-/// korundu.
-library;
-
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -17,21 +10,28 @@ import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
 import '../../../../utils/helpers/helper_functions.dart';
 
+/// Oturumu olmayan (ve tanıtımı görmüş) kullanıcının karşılama ekranı.
+///
+/// ⚠️ Temiz kurulumda burası **görünmez**: `isGuestUser` varsayılanı `true`
+/// olduğu için açılış doğrudan ana menüye gidiyor; bu ekran ancak çıkış
+/// yapıldıktan sonra çıkıyor. Referansta da aynen böyle.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
     final screenWidth = THelperFunctions.screenWidth();
 
     return Scaffold(
+      // TASARIM.md §7: kimlik ekranları beyaz zeminde; sayfa zemini
+      // (`TColors.light`) burada kullanılmıyor ki form kartı gibi okunmasın.
+      backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: AppBar(
-        // Karşılamada başlık bandı görünmez: ekranın kendi zeminiyle akıyor.
         backgroundColor: Colors.transparent,
-        shape: const Border(),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: dark ? TColors.light : TColors.dark),
           onPressed: () => Get.back(),
         ),
       ),
@@ -58,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
               FadeIn(
                 delay: const Duration(milliseconds: 400),
                 child: Text(
-                  TTexts.welcomeTitle.tr,
+                  TTexts.welcomeToStore.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
@@ -92,11 +92,12 @@ class WelcomeScreen extends StatelessWidget {
                           label: Text(TTexts.loginWithEmailPass.tr),
                         ),
                       ),
-                      // -- Phone & Google login temporarily disabled; only
-                      // email/password is offered for now.
+                      // -- Telefon ve Google girişi referansta da yorumda:
+                      // telefon OTP ucu sunucuda yok, Google ise bu projede
+                      // hiç kurulmadı (Firebase yok).
                       // const SizedBox(height: TSizes.spaceBtwItems),
                       //
-                      // /// -- Phone Login (Larger icon)
+                      // /// -- Phone Login
                       // SizedBox(
                       //   width: screenWidth * 0.8,
                       //   child: OutlinedButton.icon(
@@ -107,7 +108,7 @@ class WelcomeScreen extends StatelessWidget {
                       // ),
                       // const SizedBox(height: TSizes.spaceBtwItems),
                       //
-                      // /// -- Google Sign-In Button (Larger icon)
+                      // /// -- Google Sign-In Button
                       // SizedBox(
                       //   width: screenWidth * 0.8,
                       //   child: OutlinedButton.icon(
@@ -131,11 +132,6 @@ class WelcomeScreen extends StatelessWidget {
                     text: TTexts.haveAnAccount.tr,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: TColors.textSecondary),
                     children: [
-                      // İki parça arasında boşluk yok: ekranda
-                      // "Hesabınız yok mu?Kayıt ol" diye bitişik çıkıyordu.
-                      // Boşluk sözlüğe değil buraya konur (on dosyanın
-                      // sonundaki boşluk gözden kaçar ve kırpılır).
-                      const TextSpan(text: ' '),
                       TextSpan(
                         text: TTexts.signUp.tr,
                         recognizer: TapGestureRecognizer()..onTap = () => Get.toNamed(TRoutes.signup),

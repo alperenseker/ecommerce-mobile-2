@@ -1,8 +1,9 @@
-/// Uygulama günlüğü. `print` yerine daima bu kullanılır.
-library;
-
 import 'package:logger/logger.dart';
 
+/// Tek günlük kapısı.
+///
+/// `print` yerine bu sınıf kullanılır (KURALLAR §5): seviye ayrımı yapar ve
+/// yayın derlemesinde tek yerden susturulabilir.
 class TLoggerHelper {
   static final Logger _logger = Logger(
     printer: PrettyPrinter(),

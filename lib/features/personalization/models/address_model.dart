@@ -1,13 +1,11 @@
-/// Teslimat / fatura adresi.
-///
-/// Sunucu `FirstName` ve `LastName`'i ayrı tutar; ekrandaki tek "ad soyad"
-/// alanına çeviri bu modelde yapılır.
-library;
-
 import '../../../utils/formatters/formatter.dart';
 
 
 
+/// Teslimat/fatura adresi.
+///
+/// Sunucu `FirstName`/`LastName` ayrık tutar; ekranda tek "ad soyad" alanı
+/// vardır, çeviri tek yerde yapılır.
 class AddressModel {
   String id;
   final String name;

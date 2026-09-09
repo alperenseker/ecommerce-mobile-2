@@ -23,6 +23,10 @@ import '../../../models/category_model.dart';
 class TStoreFilterBar extends StatelessWidget {
   const TStoreFilterBar({super.key});
 
+  /// Levhanın üst köşe yarıçapı — kart yarıçapından belirgin biçimde geniş;
+  /// alttan gelen katman böylece sayfadan ayrışıyor.
+  static const double _sheetRadius = 24.0;
+
   @override
   Widget build(BuildContext context) {
     final controller = StoreController.instance;
@@ -41,8 +45,21 @@ class TStoreFilterBar extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      // Levha çentiğin/durum çubuğunun altına girmesin.
+      useSafeArea: true,
+      barrierColor: TColors.black.withValues(alpha: 0.45),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(TSizes.cardRadiusLg)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(_sheetRadius)),
+      ),
+      // Varsayılan açılış sert ve kısa (250ms, lineer'e yakın); levha
+      // "zıplayarak" geliyordu. Girişte yavaşlayarak duran daha uzun bir
+      // hareket, kapanışta daha kısa olanı — el altından çıkıp geri giden
+      // bir kâğıt gibi.
+      sheetAnimationStyle: AnimationStyle(
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+        reverseDuration: const Duration(milliseconds: 220),
+        reverseCurve: Curves.easeInCubic,
       ),
       builder: (_) => _StoreFilterSheet(controller: controller),
     );
@@ -116,32 +133,43 @@ class _StoreFilterSheetState extends State<_StoreFilterSheet> {
     Get.back();
   }
 
-  /// Tek sıralama seçeneği satırı (radyo davranışı).
-  Widget _sortRow(StoreSort option, bool dark) {
-    final selected = _sort == option;
-    return InkWell(
-      borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
-      onTap: () => setState(() => _sort = option),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: TSizes.sm / 1.5),
-        child: Row(
-          children: [
-            Icon(
-              selected ? Iconsax.record_circle5 : Iconsax.record_circle,
-              size: 22,
-              color: selected ? TColors.primary : (dark ? TColors.darkBorder : TColors.borderPrimary),
-            ),
-            const SizedBox(width: TSizes.spaceBtwItems),
+  /// Bölüm başlığı — bütün bölümlerde aynı ağırlık ve aynı üst boşluk.
+  Widget _sectionTitle(String title, {String? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: TSizes.spaceBtwItems / 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          if (trailing != null)
             Text(
-              option.labelKey.tr,
-              style: Theme.of(context).textTheme.bodyLarge!.apply(
-                    color: selected ? TColors.primary : null,
-                    fontWeightDelta: selected ? 1 : 0,
-                  ),
+              trailing,
+              style: Theme.of(context).textTheme.labelLarge!.apply(color: TColors.primary),
             ),
-          ],
-        ),
+        ],
       ),
+    );
+  }
+
+  /// Sıralama seçenekleri.
+  ///
+  /// 🔴 Radyo listesi DEĞİL çip ızgarası: altı seçenek alt alta 240px yer
+  /// kaplıyordu ve levhanın yarısını yiyip fiyatla kategorileri kaydırmanın
+  /// arkasına itiyordu. Çipler iki-üç satıra sığıyor, seçili olan mağaza
+  /// ekranındaki kategori çipleriyle aynı dili konuşuyor.
+  Widget _sortChips() {
+    return Wrap(
+      spacing: TSizes.sm,
+      runSpacing: TSizes.sm,
+      children: StoreSort.values
+          .map(
+            (option) => _ChoiceChip(
+              label: option.labelKey.tr,
+              selected: _sort == option,
+              onTap: () => setState(() => _sort = option),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -180,7 +208,8 @@ class _StoreFilterSheetState extends State<_StoreFilterSheet> {
   /// Girinti derinlikle artar; **derinlik sınırı yoktur** (Foral 4 seviye).
   Widget _categoryNode(CategoryModel category, int depth) {
     final children = CategoryController.instance.getChildren(category.id);
-    final indent = depth * TSizes.lg;
+    // Kök satırlar da kutunun çerçevesine yapışmasın diye taban boşluk var.
+    final indent = TSizes.md + depth * TSizes.lg;
 
     if (children.isEmpty) return _leafTile(category, indent);
 
@@ -208,6 +237,33 @@ class _StoreFilterSheetState extends State<_StoreFilterSheet> {
     );
   }
 
+  /// Fiyat kutusu — mağazadaki hap arama kutusuyla aynı köşe dili.
+  Widget _priceField(TextEditingController controller, String label, bool dark) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(TSizes.inputFieldHeight / 2),
+      borderSide: BorderSide(color: dark ? TColors.darkBorder : TColors.borderPrimary),
+    );
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      textAlignVertical: TextAlignVertical.center,
+      decoration: InputDecoration(
+        hintText: label,
+        prefixText: '₸ ',
+        prefixStyle: Theme.of(context).textTheme.bodyLarge!.apply(color: TColors.darkGrey),
+        filled: true,
+        fillColor: dark ? TColors.dark : TColors.lightGrey,
+        isDense: false,
+        contentPadding: const EdgeInsets.symmetric(horizontal: TSizes.md, vertical: TSizes.sm + TSizes.xs),
+        border: border,
+        enabledBorder: border,
+        focusedBorder: border.copyWith(
+          borderSide: const BorderSide(color: TColors.primary, width: 1.5),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
@@ -221,83 +277,77 @@ class _StoreFilterSheetState extends State<_StoreFilterSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // -- Başlık
+            //
+            // Altındaki çizgi kalktı: tutamaç zaten levhanın başladığı yeri
+            // söylüyor, çizgi başlığı ayrı bir çubuk gibi gösteriyordu.
             Padding(
-              padding: const EdgeInsets.fromLTRB(TSizes.defaultSpace, TSizes.md, TSizes.sm, 0),
+              padding: const EdgeInsets.fromLTRB(TSizes.defaultSpace, 0, TSizes.sm, TSizes.sm),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(TTexts.filter.tr, style: Theme.of(context).textTheme.titleLarge),
-                  TextButton(onPressed: _clearAll, child: Text(TTexts.clearAll.tr)),
+                  TextButton(
+                    onPressed: _clearAll,
+                    child: Text(TTexts.clearAll.tr),
+                  ),
                 ],
               ),
             ),
-            const Divider(height: 1),
 
             // -- Gövde: sıralama · fiyat · kategoriler
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(TSizes.defaultSpace, TSizes.spaceBtwItems, TSizes.defaultSpace, 0),
+                padding: const EdgeInsets.fromLTRB(TSizes.defaultSpace, 0, TSizes.defaultSpace, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     /// Sıralama
-                    Text(TTexts.sortBy.tr, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: TSizes.spaceBtwItems / 2),
-                    ...StoreSort.values.map((option) => _sortRow(option, dark)),
+                    _sectionTitle(TTexts.sortBy.tr),
+                    _sortChips(),
                     const SizedBox(height: TSizes.spaceBtwSections),
 
                     /// Fiyat aralığı
-                    Text(TTexts.priceRange.tr, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: TSizes.spaceBtwItems / 2),
+                    _sectionTitle(TTexts.priceRange.tr),
                     Row(
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _minCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: TTexts.lowestPrice.tr,
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: TSizes.sm, horizontal: TSizes.md),
-                            ),
+                        Expanded(child: _priceField(_minCtrl, TTexts.lowestPrice.tr, dark)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: TSizes.sm),
+                          child: Container(
+                            width: TSizes.md,
+                            height: 1.5,
+                            color: dark ? TColors.darkBorder : TColors.borderPrimary,
                           ),
                         ),
-                        const SizedBox(width: TSizes.spaceBtwItems),
-                        Expanded(
-                          child: TextField(
-                            controller: _maxCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: TTexts.highestPrice.tr,
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: TSizes.sm, horizontal: TSizes.md),
-                            ),
-                          ),
-                        ),
+                        Expanded(child: _priceField(_maxCtrl, TTexts.highestPrice.tr, dark)),
                       ],
                     ),
                     const SizedBox(height: TSizes.spaceBtwSections),
 
                     /// Kategoriler
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(TTexts.categories.tr, style: Theme.of(context).textTheme.titleMedium),
-                        if (_selectedCategories.isNotEmpty)
-                          Text('${_selectedCategories.length}',
-                              style: Theme.of(context).textTheme.labelLarge!.apply(color: TColors.primary)),
-                      ],
+                    _sectionTitle(
+                      TTexts.categories.tr,
+                      trailing: _selectedCategories.isEmpty ? null : '${_selectedCategories.length}',
                     ),
-                    const SizedBox(height: TSizes.spaceBtwItems / 2),
                     if (CategoryController.instance.rootCategories.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: TSizes.md),
                         child: Center(child: Text(TTexts.noDataFound.tr)),
                       )
                     else
-                      ...CategoryController.instance.rootCategories.map((c) => _categoryNode(c, 0)),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
+                          border: Border.all(color: dark ? TColors.darkBorder : TColors.borderSecondary),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        padding: const EdgeInsets.symmetric(vertical: TSizes.xs),
+                        child: Column(
+                          children: CategoryController.instance.rootCategories
+                              .map((c) => _categoryNode(c, 0))
+                              .toList(),
+                        ),
+                      ),
                     const SizedBox(height: TSizes.spaceBtwItems),
                   ],
                 ),
@@ -305,13 +355,23 @@ class _StoreFilterSheetState extends State<_StoreFilterSheet> {
             ),
 
             // -- Uygula (sabit)
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(TSizes.defaultSpace),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(onPressed: _apply, child: Text(TTexts.apply.tr)),
+            //
+            // Üstündeki çizgi, kaydırılan gövdenin düğmenin altından geçtiğini
+            // belli ediyor.
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: dark ? TColors.darkBorder : TColors.borderSecondary),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(TSizes.defaultSpace),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(onPressed: _apply, child: Text(TTexts.apply.tr)),
+                  ),
                 ),
               ),
             ),
@@ -322,7 +382,58 @@ class _StoreFilterSheetState extends State<_StoreFilterSheet> {
   }
 }
 
-/// Etkin süzgeç sayısını rozetle gösteren tek çip.
+/// Süzgeç levhasındaki tek seçim çipi (sıralama seçenekleri).
+///
+/// Mağaza şeridindeki kategori çipiyle aynı dil: seçiliyken indigo çerçeve,
+/// yumuşak indigo zemin ve indigo yazı.
+class _ChoiceChip extends StatelessWidget {
+  const _ChoiceChip({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = THelperFunctions.isDarkMode(context);
+    return Material(
+      color: selected
+          ? (dark ? TColors.darkAccent : TColors.accent)
+          : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(100),
+        side: BorderSide(
+          color: selected ? TColors.primary : (dark ? TColors.darkBorder : TColors.borderSecondary),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: TSizes.md, vertical: TSizes.sm + 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                const Icon(Icons.check, size: 15, color: TColors.primary),
+                const SizedBox(width: TSizes.xs + 2),
+              ],
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge!.apply(
+                  color: selected ? TColors.primary : (dark ? TColors.light : TColors.darkerGrey),
+                  fontWeightDelta: selected ? 1 : 0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Etkin süzgeç sayısını rozetle gösteren süzgeç düğmesi.
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
@@ -336,45 +447,52 @@ class _FilterChip extends StatelessWidget {
   final int badgeCount;
   final bool highlighted;
 
+  /// Yanındaki hap arama kutusuyla aynı ölçü: kare değil, aynı yükseklikte
+  /// yuvarlak bir düğme; ikisi tek şerit gibi okunsun.
+  ///
+  /// 🔴 Etiket kaldırıldı: hap arama kutusunun yanında "Süzgeç" yazısı
+  /// aramaya kalan genişliği yiyordu. Ne olduğunu ikon + rozet anlatıyor,
+  /// adı da uzun basışta ipucu olarak çıkıyor.
+  static const double _size = 52.0;
+
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
     final borderColor = highlighted ? TColors.primary : (dark ? TColors.darkBorder : TColors.borderPrimary);
     final fgColor = highlighted ? TColors.primary : (dark ? TColors.light : TColors.darkerGrey);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: TSizes.inputFieldHeight,
-        padding: const EdgeInsets.symmetric(horizontal: TSizes.md),
-        decoration: BoxDecoration(
-          color: highlighted ? (dark ? TColors.darkAccent : TColors.accent) : Colors.transparent,
-          borderRadius: BorderRadius.circular(TSizes.inputFieldRadius),
-          border: Border.all(color: borderColor),
+    final icon = Icon(Iconsax.setting_4, size: 20, color: fgColor);
+
+    return Tooltip(
+      message: label,
+      child: Material(
+        color: highlighted
+            ? (dark ? TColors.darkAccent : TColors.accent)
+            : (dark ? TColors.darkSurface : TColors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_size / 2),
+          side: BorderSide(color: borderColor),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Iconsax.setting_4, size: 18, color: fgColor),
-            const SizedBox(width: TSizes.spaceBtwItems / 2),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium!.apply(color: fgColor, fontWeightDelta: 1),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: _size,
+            height: _size,
+            child: Center(
+              child: badgeCount > 0
+                  ? Badge(
+                      backgroundColor: TColors.primary,
+                      textColor: TColors.white,
+                      label: Text(
+                        '$badgeCount',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                      ),
+                      child: icon,
+                    )
+                  : icon,
             ),
-            if (badgeCount > 0) ...[
-              const SizedBox(width: TSizes.spaceBtwItems / 2),
-              Container(
-                padding: const EdgeInsets.all(TSizes.xs),
-                decoration: const BoxDecoration(color: TColors.primary, shape: BoxShape.circle),
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                child: Text(
-                  '$badgeCount',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: TColors.white, fontSize: 10, fontWeight: FontWeight.w700, height: 1),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );

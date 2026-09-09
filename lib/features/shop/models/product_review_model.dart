@@ -1,8 +1,6 @@
-/// Ürün değerlendirmesi.
-library;
-
 import '../../../utils/formatters/formatter.dart';
 
+/// Ürün değerlendirmesi (puan, yorum, oy sayısı).
 class ReviewModel {
   String id;
   String productId;

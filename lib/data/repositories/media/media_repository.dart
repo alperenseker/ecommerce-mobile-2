@@ -1,11 +1,9 @@
-/// Medya repository'sinin arayüzü.
-library;
-
 import 'dart:typed_data';
 
 import '../../../features/personalization/models/image_model.dart';
 import '../../../utils/constants/enums.dart';
 
+/// Medya repository sözleşmesi.
 abstract class MediaRepository {
   Future<ImageModel> uploadImageFile({
     required Uint8List fileData,

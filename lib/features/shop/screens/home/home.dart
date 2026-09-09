@@ -1,12 +1,13 @@
 /// Ana sayfa.
 ///
 /// TASARIM.md §7'deki düzen:
-///   1. beyaz sade başlık + arama kutusu
+///   1. beyaz sade başlık
 ///   2. slider (3 sahne, otomatik, dokununca durur)
-///   3. **yeni gelenler** — 5 ürün + "daha fazla"
-///   4. tanıtım afişi slider'ı (referans mobilin bölümü, korundu)
-///   5. **öne çıkanlar** — 5 ürün + "daha fazla"
-///   6. **ana kategoriler** (Fores, Foral, Stark…) — her biri 5 ürün +
+///   3. arama kutusu — slider'ın ALTINDA, başlık kabının içinde
+///   4. **yeni gelenler** — 5 ürün + "daha fazla"
+///   5. tanıtım afişi slider'ı (referans mobilin bölümü, korundu)
+///   6. **öne çıkanlar** — 5 ürün + "daha fazla"
+///   7. **ana kategoriler** (Fores, Foral, Stark…) — her biri 5 ürün +
 ///      "daha fazla"; düğme mağazayı o kategori süzgeciyle açar.
 ///
 /// 🔴 Bloklar IZGARA değil RAF: web'de de öyle (`pages/home.js`). Her bloğu
@@ -31,13 +32,11 @@ import '../../../../data/repositories/product/api_products_repository.dart';
 import '../../../../home_menu.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
-import '../../../../utils/device/device_utility.dart';
 import '../../controllers/categories_controller.dart';
 import '../../controllers/product/product_controller.dart';
 import '../../controllers/store_controller.dart';
 import '../../models/product_model.dart';
 import '../all_products/all_products.dart';
-import 'widgets/category_sidebar.dart';
 import 'widgets/header_search_container.dart';
 import 'widgets/home_appbar.dart';
 import 'widgets/home_slider.dart';
@@ -58,17 +57,27 @@ class HomeScreen extends StatelessWidget {
     final categoryController = Get.put(CategoryController());
 
     return Scaffold(
-      drawer: const TCategorySidebar(),
+      // Yan menü kabuğun (`HomeMenu`) Scaffold'unda; buradan çizilseydi yüzen
+      // alt gezinme çubuğu menünün üstünde kalırdı.
       body: SingleChildScrollView(
         child: Column(
           children: [
-            /// -- 1. Başlık + arama
+            /// -- 1-3. Başlık + slider + arama
             TPrimaryHeaderContainer(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const THomeAppBar(),
                   const SizedBox(height: TSizes.spaceBtwItems / 2),
+
+                  /// -- 2. Slider (arama kutusunun ÜSTÜNDE)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
+                    child: THomeSlider(),
+                  ),
+                  const SizedBox(height: TSizes.spaceBtwItems),
+
+                  /// -- 3. Arama
                   TSearchContainer(text: TTexts.searchInStore.tr),
                   const SizedBox(height: TSizes.spaceBtwItems),
                 ],
@@ -80,14 +89,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// -- 2. Slider
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
-                    child: THomeSlider(),
-                  ),
-                  const SizedBox(height: TSizes.spaceBtwSections),
-
-                  /// -- 3. Yeni gelenler
+                  /// -- 4. Yeni gelenler
                   Obx(() {
                     if (productController.isLoading.value) return const _RowShimmer();
                     return _ProductRow(
@@ -104,14 +106,14 @@ class HomeScreen extends StatelessWidget {
                     );
                   }),
 
-                  /// -- 4. Tanıtım afişi
+                  /// -- 5. Tanıtım afişi
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: TSizes.defaultSpace),
                     child: TPromoBannerSlider(),
                   ),
                   const SizedBox(height: TSizes.spaceBtwSections),
 
-                  /// -- 5. Öne çıkanlar
+                  /// -- 6. Öne çıkanlar
                   Obx(() {
                     if (productController.isLoading.value) return const _RowShimmer();
                     return _ProductRow(
@@ -128,7 +130,7 @@ class HomeScreen extends StatelessWidget {
                     );
                   }),
 
-                  /// -- 6. Ana kategoriler
+                  /// -- 7. Ana kategoriler
                   Obx(() {
                     if (productController.isLoading.value || categoryController.isLoading.value) {
                       return const _RowShimmer();
@@ -149,7 +151,11 @@ class HomeScreen extends StatelessWidget {
                     );
                   }),
 
-                  SizedBox(height: TDeviceUtils.getBottomNavigationBarHeight()),
+                  // Yüzen alt çubuk gövdenin ÜSTÜNDE duruyor (`HomeMenu`,
+                  // `extendBody: true`): Scaffold çubuğun yüksekliğini
+                  // gövdenin MediaQuery dolgusuna yazıyor, son blok o kadar
+                  // pay alıyor ki çubuğun altında saklı kalmasın.
+                  SizedBox(height: MediaQuery.paddingOf(context).bottom + TSizes.defaultSpace),
                 ],
               ),
             ),

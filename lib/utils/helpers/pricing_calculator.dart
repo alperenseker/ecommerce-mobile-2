@@ -1,5 +1,10 @@
 import '../../features/shop/models/cart_model.dart';
 
+/// Vergi, kargo ve sepet toplamı hesapları.
+///
+/// Buradaki vergi oranı ve kargo bedeli referanstaki gibi **örnek sabit**
+/// değerlerdir; gerçek tutarı sipariş uçları sunucuda hesaplıyor. Ekranda
+/// gösterilen tutar için sunucudan gelen değer kullanılır.
 class TPricingCalculator {
   /// -- Calculate Price based on tax and shipping
   static double calculateTotalPrice(double productPrice, double taxRate, double shippingCost) {

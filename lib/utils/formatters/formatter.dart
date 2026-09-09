@@ -1,10 +1,9 @@
-/// Tarih, para ve telefon biçimlendirmeleri.
-library;
-
 import 'package:intl/intl.dart';
 
-/// A utility class for formatting various types of data such as dates,
-/// currency, and phone numbers.
+/// Tarih, para ve telefon biçimlendirme yardımcıları.
+///
+/// Biçim kararı tek yerde durur; ekranlar kendi `NumberFormat`'ını kurmaz, aksi
+/// hâlde aynı tutar iki ekranda iki türlü görünür.
 class TFormatter {
   /// Formats a DateTime object to a string in the format 'dd/MM/yyyy'.
   /// If no date is provided, it defaults to the current date.

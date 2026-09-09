@@ -1,20 +1,16 @@
-/// Havale rekvizitleri (`bank-details`).
-///
-/// 🔴 Süzgeçsiz çağrı 12 satır döndürür (3 şirket × 4 hesap). Müşteriye hangi
-/// hesaba yatıracağını göstermek için sonuç **daima şirkete (`erpSource`)
-/// göre gruplanmalı**.
-library;
-
 import 'package:dio/dio.dart';
 
 import '../../../features/shop/models/bank_detail_model.dart';
 import '../../../utils/http/dio_client.dart';
 
-/// Havale rekvizitlerini `GET /bank-details` ucundan çeker.
-/// (same endpoint the web checkout uses).
+/// Havale rekvizitlerini `GET /bank-details` ucundan çeker (web ödeme adımının
+/// kullandığı uç).
 ///
-/// FAZ 34 — hesaplar şirketleşti (Faz 30). Uç `?erpSource=<kod|kimlik>` ile
-/// süzülebiliyor ve yanıt her satırın şirketini taşıyor.
+/// 🔴 Hesaplar **şirkete aittir**: her 1C kaynağının kendi satırları var ve
+/// müşteri o siparişin şirketinin hesabını görmeli. Süzgeçsiz çağrıda 12 satır
+/// döner (3 şirket × 4 hesap); ekran **daima şirkete göre gruplamalı**, yoksa
+/// müşteri yanlış hesaba para yatırır. Uç `?erpSource=<kod|kimlik>` ile de
+/// süzülebilir.
 class ApiBankDetailsRepository {
   final Dio _dio = THttpClient.dio;
 

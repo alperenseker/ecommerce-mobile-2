@@ -1,15 +1,3 @@
-/// Kayıt akışının controller'ı — iki ayrı akış yürütür:
-///
-///   BİREYSEL : OTP gönder → doğrula → `Auth/register`
-///   ŞİRKET   : `Auth/pre-register` (geçici jeton) → `company/{iin}` →
-///              şirket doğru mu penceresi → OTP → kayıt
-///              (şirket 1C'de yoksa bilgiler elle girilir)
-///
-/// 🔴 KAYIT KAPISI: sunucu perakende/şirket kaydını ayrı ayrı kapatabilir.
-/// Kapalı seçenek ekrana **hiç çizilmez**; hata göstermek yerine o bölüm yok
-/// sayılır. Giriş formu her durumda açık kalır.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,6 +13,11 @@ import '../screens/login/login.dart';
 import '../screens/signup/register_otp_screen.dart';
 import '../screens/signup/widgets/company_dialogs.dart';
 
+/// Kayıt akışının denetleyicisi — iki ayrı yol yürütür.
+///
+/// **Bireysel:** OTP gönder → doğrula → `Auth/register`.
+/// **Şirket:** `Auth/pre-register` (geçici jeton) → `company/{iin}` → şirket
+/// doğrulama penceresi → OTP → kayıt.
 class SignupController extends GetxController {
   static SignupController get instance => Get.find();
 
@@ -40,22 +33,22 @@ class SignupController extends GetxController {
   final iin = TextEditingController();
   final selectedCountryCode = RxString('+44');
 
-  /// 'retail' (individual) or 'company'. Drives the conditional UI (name vs IIN)
-  /// and which sign-up flow runs.
+  /// 'retail' (bireysel) veya 'company'. Hem formun hangi alanları çizeceğini
+  /// hem hangi kayıt akışının koşacağını belirler.
   final accountType = 'retail'.obs;
 
   GlobalKey<FormState> signupFormKey = GlobalKey<FormState>();
 
   /// Ekranın ve kayıt akışının kullandığı **etkin** hesap tipi.
   ///
-  /// FAZ 34 — kapalı bir kayıt tipi seçili kalırsa müşteri formu doldurup
-  /// 403 yer. Açık olan tek tip varsa seçim ona çekilir.
+  /// Kapalı bir kayıt tipi seçili kalırsa müşteri formu doldurup 403 yer. Açık
+  /// olan tek tip varsa seçim ona çekilir.
   ///
-  /// 🔴 Bu bir **türetilmiş değer**, bir yan etki değil: [accountType]'a
-  /// yazan bir dinleyici (`ever`) kurulmadı. Dinleyici, anahtarın okunması
-  /// ile kullanıcının "Hesap Oluştur"a basması arasında yarışa girebilirdi;
-  /// türetilmiş değerde böyle bir aralık yok — kapalı bir hesap tipi
-  /// sunucuya **hiçbir zaman** gönderilemez.
+  /// 🔴 Bu bir **türetilmiş değer**, bir yan etki değil: [accountType]'a yazan
+  /// bir dinleyici (`ever`) kurulmadı. Dinleyici, anahtarın okunması ile
+  /// kullanıcının "Hesap Oluştur"a basması arasında yarışa girebilirdi;
+  /// türetilmiş değerde böyle bir aralık yok — kapalı bir hesap tipi sunucuya
+  /// **hiçbir zaman** gönderilemez.
   String get effectiveAccountType {
     if (!retailRegistrationEnabled && companyRegistrationEnabled) return 'company';
     if (!companyRegistrationEnabled && retailRegistrationEnabled) return 'retail';
@@ -68,16 +61,15 @@ class SignupController extends GetxController {
 
   PublicSettingsController get _publicSettings => PublicSettingsController.instance;
 
-  /// FAZ 34 — hangi kayıt tipleri açık (K29.2). Ekran bunlara bakarak
-  /// kapalı bölümü **hiç çizmez**; sunucudaki 403 yine de tek gerçek kapıdır.
+  /// Hangi kayıt tipleri açık. Ekran bunlara bakarak kapalı bölümü **hiç
+  /// çizmez**; sunucudaki 403 yine de tek gerçek kapıdır.
   bool get retailRegistrationEnabled => _publicSettings.retailRegistrationEnabled;
   bool get companyRegistrationEnabled => _publicSettings.companyRegistrationEnabled;
 
   /// Tek seçenek kaldıysa hesap tipi seçicisi tümden gizlenir.
   bool get showAccountTypeSelector => retailRegistrationEnabled && companyRegistrationEnabled;
 
-  /// -- SIGNUP entry point. Validates shared inputs then dispatches to the
-  /// retail or company flow.
+  /// -- Kayıt girişi: ortak alanlar doğrulanır, sonra ilgili akış çağrılır.
   Future<void> signup() async {
     try {
       // Check Internet Connectivity
@@ -102,9 +94,9 @@ class SignupController extends GetxController {
         await _retailFlow();
       }
     } on TRegistrationClosedException catch (e) {
-      // FAZ 34 — anahtar, ekran açıldıktan SONRA çevrilmiş olabilir. Sunucunun
-      // `errorCode`'u ekrana işlenir: kapanan bölüm bir daha çizilmez ve
-      // varsa kalan seçeneğe geçilir (K29.2).
+      // 🔴 Anahtar, ekran açıldıktan SONRA çevrilmiş olabilir. Sunucunun
+      // `errorCode`'u ekrana işlenir: kapanan bölüm bir daha çizilmez ve varsa
+      // kalan seçeneğe geçilir.
       TFullScreenLoader.stopLoading();
       _publicSettings.applyRegistrationError(e.errorCode);
       TLoaders.warningSnackBar(
@@ -117,7 +109,7 @@ class SignupController extends GetxController {
     }
   }
 
-  /// Individual: send OTP -> verify -> register.
+  /// Bireysel: OTP gönder → doğrula → kayıt.
   Future<void> _retailFlow() async {
     await _sendOtpThenRegister(
       name: firstName.text.trim(),
@@ -127,19 +119,23 @@ class SignupController extends GetxController {
     );
   }
 
-  /// Company: pre-register -> look up by IIN/BIN -> confirm (or manual entry) ->
-  /// send OTP -> verify -> register.
+  /// Şirket: ön kayıt → BİN/İİN ile 1C sorgusu → onay (ya da elle giriş) →
+  /// OTP → kayıt.
   Future<void> _companyFlow() async {
     final iinText = iin.text.trim();
 
     TFullScreenLoader.openLoadingDialog(TTexts.weAreProcessingInformation.tr, TImages.docerAnimation);
+    // `company/{iin}` sorgusu jeton ister; ön kayıt tam da bunun için geçici
+    // bir jeton üretiyor (jetonsuz çağrı 401 dönüyor).
     final tempToken = await _repo.preRegister(email: email.text.trim(), accountType: 'company');
     final company = await _repo.getCompanyByIin(iinText, tempToken: tempToken);
     TFullScreenLoader.stopLoading();
 
     if (company == null || company.isEmpty) {
-      // 1C'de yok → bilgiler elle alınır ve hesap `retail` + iin olarak açılır
-      // (referanstaki karar; şirket hesabı sunucuda 1C eşleşmesi bekliyor).
+      // ⚠️ 1C'de bulunmayan şirket `retail` + `iin` olarak açılıyor. Web
+      // (`login-register.js`) aynı durumda `AccountType: company` gönderiyor —
+      // iki proje burada ayrışıyor. Referans mobildeki hâl korundu
+      // (KURALLAR §2); hangisinin doğru olduğu sunucu tarafına sorulmalı.
       final manual = await showIpCompanyDialog();
       if (manual == null) return;
       await _sendOtpThenRegister(
@@ -160,8 +156,8 @@ class SignupController extends GetxController {
     }
   }
 
-  /// Shared tail: send the registration OTP, open the verification screen, and
-  /// register on success.
+  /// İki akışın ortak kuyruğu: OTP gönder, doğrulama ekranını aç, dönüşte kaydı
+  /// oluştur.
   Future<void> _sendOtpThenRegister({
     required String name,
     required String surname,
@@ -169,9 +165,9 @@ class SignupController extends GetxController {
     required String iin,
   }) async {
     TFullScreenLoader.openLoadingDialog(TTexts.weAreProcessingInformation.tr, TImages.docerAnimation);
-    // FAZ 34 — hesap tipi gönderiliyor: sunucu o tipin anahtarına bakıp
-    // gerekiyorsa OTP üretmeden reddediyor (Faz 29 kapısı). Tip gönderilmese
-    // kapı yalnız "ikisi de kapalı" durumunda çalışırdı.
+    // 🔴 Hesap tipi gönderiliyor: sunucu o tipin anahtarına bakıp gerekiyorsa
+    // OTP üretmeden reddediyor. Tip gönderilmese kapı yalnız "ikisi de kapalı"
+    // durumunda çalışırdı.
     await _repo.sendRegistrationOtp(email.text.trim(), accountType: accountType);
     TFullScreenLoader.stopLoading();
 
@@ -181,7 +177,7 @@ class SignupController extends GetxController {
     await _doRegister(name: name, surname: surname, accountType: accountType, iin: iin);
   }
 
-  /// Create the account, then return to the login screen (no auto-login).
+  /// Hesabı oluşturur ve giriş ekranına döner (otomatik giriş yapılmaz).
   Future<void> _doRegister({
     required String name,
     required String surname,

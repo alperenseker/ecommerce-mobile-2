@@ -1,7 +1,7 @@
-/// Ad/soyad değiştirme formu.
+/// Ad / soyad değiştirme ekranı.
 ///
-/// İki ayrı alan var çünkü sunucu adı ve soyadı ayrı tutuyor. (Adres
-/// defterindeki tek alanlı "ad soyad" kuralı yalnız adres kaydı için geçerli.)
+/// Yalnız bireysel hesaplarda açılır: şirket hesabında ad ve direktör 1C'den
+/// geliyor ve profil ekranında kilitli çiziliyor.
 library;
 
 import 'package:flutter/material.dart';
@@ -34,8 +34,8 @@ class ChangeName extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              TTexts.changeNameSubTitle.tr,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: TColors.textSecondary),
+              TTexts.changeNameHint.tr,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: TColors.textSecondary),
             ),
             const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -69,7 +69,10 @@ class ChangeName extends StatelessWidget {
 
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(onPressed: () => controller.updateUserName(), child: Text(TTexts.save.tr)),
+              child: ElevatedButton(
+                onPressed: () => controller.updateUserName(),
+                child: Text(TTexts.save.tr),
+              ),
             ),
           ],
         ),

@@ -1,18 +1,20 @@
-/// Form doğrulayıcıları.
+/// Form alanlarının tek doğrulama kaynağı.
 ///
-/// Kurallar referanstakiyle birebir aynıdır: şifre en az 6 karakter **ve**
-/// büyük harf + rakam + özel karakter ister. Sunucu bunlardan yalnız 6
-/// karakteri zorluyor; istemcideki ek kurallar bilerek daha sıkı tutuldu ve
-/// gevşetilmedi — gevşetmek, referansla aynı hesabın mobilde kabul edilip
-/// webde reddedilmesine yol açardı.
+/// 🔴 Şifre kuralı burada sunucudan **daha sıkı**: 6 karakterin yanında büyük
+/// harf + rakam + özel karakter isteniyor (referanstaki hâli). `new_password`
+/// ekranındaki canlı kural listesi bu dördüyle aynı olmalı — birini değiştiren
+/// ötekini de değiştirsin, yoksa liste yeşile döner ama form reddeder.
 library;
 
-/// VALIDATION CLASS
+import 'package:get/get.dart';
+
+import '../constants/text_strings.dart';
+
 class TValidator {
   /// Empty Text Validation
   static String? validateEmptyText(String? fieldName, String? value) {
     if (value == null || value.isEmpty) {
-      return '$fieldName is required.';
+      return '$fieldName ${TTexts.isRequired.tr}';
     }
 
     return null;
@@ -21,24 +23,25 @@ class TValidator {
   /// Username Validation
   static String? validateUsername(String? username) {
     if (username == null || username.isEmpty) {
-      return 'Username is required.';
+      return TTexts.usernameRequired.tr;
     }
 
-    // Kullanıcı adı deseni: 3-20 karakter, harf/rakam/alt çizgi/tire.
+    // Define a regular expression pattern for the username.
     const pattern = r"^[a-zA-Z0-9_-]{3,20}$";
 
+    // Create a RegExp instance from the pattern.
     final regex = RegExp(pattern);
 
+    // Use the hasMatch method to check if the username matches the pattern.
     bool isValid = regex.hasMatch(username);
 
-    // Alt çizgi veya tire ile başlayıp bitmesi ayrıca engelleniyor; desen
-    // bunu tek başına yakalamıyor.
+    // Check if the username doesn't start or end with an underscore or hyphen.
     if (isValid) {
       isValid = !username.startsWith('_') && !username.startsWith('-') && !username.endsWith('_') && !username.endsWith('-');
     }
 
     if (!isValid) {
-      return 'Username is not valid.';
+      return TTexts.usernameInvalid.tr;
     }
 
     return null;
@@ -47,13 +50,14 @@ class TValidator {
   /// Email Validation
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required.';
+      return TTexts.emailRequired.tr;
     }
 
+    // Regular expression for email validation
     final emailRegExp = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
 
     if (!emailRegExp.hasMatch(value)) {
-      return 'Invalid email address.';
+      return TTexts.emailInvalid.tr;
     }
 
     return null;
@@ -62,38 +66,44 @@ class TValidator {
   /// Password Validation
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required.';
+      return TTexts.passwordRequired.tr;
     }
 
-    // Asgari uzunluk — sunucunun da zorladığı tek kural.
+    // Check for minimum password length
     if (value.length < 6) {
-      return 'Password must be at least 6 characters long.';
+      return TTexts.passwordMinLength.tr;
     }
 
+    // Check for uppercase letters
     if (!value.contains(RegExp(r'[A-Z]'))) {
-      return 'Password must contain at least one uppercase letter.';
+      return TTexts.passwordUppercase.tr;
     }
 
+    // Check for numbers
     if (!value.contains(RegExp(r'[0-9]'))) {
-      return 'Password must contain at least one number.';
+      return TTexts.passwordNumber.tr;
     }
 
+    // Check for special characters
     if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-      return 'Password must contain at least one special character.';
+      return TTexts.passwordSpecialChar.tr;
     }
 
     return null;
   }
 
   /// Phone Number Validation
-  ///
-  /// Yalnız boşluk denetimi yapılır. Referansta 14 haneli desen denenmiş ve
-  /// yorumda bırakılmış: ülke kodu ayrı bir alandan geldiği için hane sayısı
-  /// ülkeye göre değişiyor ve sabit desen geçerli numaraları reddediyordu.
   static String? validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Phone number is required.';
+      return TTexts.phoneRequired.tr;
     }
+    //
+    // // Regular expression for phone number validation (assuming a 10-digit US phone number format)
+    // final phoneRegExp = RegExp(r'^\d{14}$');
+    //
+    // if (!phoneRegExp.hasMatch(value)) {
+    //   return 'Invalid phone number format (13 digits required).';
+    // }
 
     return null;
   }

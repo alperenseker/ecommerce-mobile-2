@@ -1,8 +1,8 @@
-/// Ad/soyad değiştirme ekranının controller'ı.
+/// Ad / soyad değiştirme ekranının denetleyicisi.
 ///
-/// Sunucu adı ve soyadı ayrı tutuyor (`FirstName` / `LastName`); bu ekranda
-/// da iki ayrı alan var — adres defterindeki tek alanlı "ad soyad" kuralı
-/// buraya uygulanmaz, çünkü profil kaydının iki ayrı alanı gerçekten var.
+/// Sunucu ad ile soyadı ayrı alanlarda (`FirstName` / `LastName`) tutuyor;
+/// bu ekranda da iki alan var (adres formundan farklı — orada tek "ad soyad"
+/// alanı vardır ve çeviri `AddressController` içinde yapılır).
 library;
 
 import 'package:flutter/material.dart';
@@ -53,14 +53,15 @@ class UpdateNameController extends GetxController {
         return;
       }
 
-      // Sunucu PascalCase bekliyor; alan adları referanstakiyle aynı.
       Map<String, dynamic> name = {'FirstName': firstName.text.trim(), 'LastName': lastName.text.trim()};
       await userRepository.updateSingleField(userController.user.value.id, name);
 
-      // Bellekteki kullanıcı da güncellenir ki profil ekranı yeniden çekmeden
-      // yeni adı göstersin.
+      // Bellekteki kayıt da güncellenir.
       userController.user.value.firstName = firstName.text.trim();
       userController.user.value.lastName = lastName.text.trim();
+      // 🔴 `refresh()` şart: `user` bir `Rx<UserModel>` ve alanı yerinde
+      // değiştirmek dinleyicileri uyandırmıyor — referansta bu satır yoktu ve
+      // profil ekranı eski adı göstermeye devam ediyordu.
       userController.user.refresh();
 
       TFullScreenLoader.stopLoading();

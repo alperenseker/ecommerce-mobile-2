@@ -1,76 +1,50 @@
-/// Kimlik ekranlarındaki uyarı/bilgi kutusu.
-///
-/// 🔴 Metin boşsa widget **hiç çizilmez** (`SizedBox.shrink`). Web'de bu
-/// kutular `hidden` ile duruyor; Flutter'da boş bir kap çizmek ekranda
-/// açıklamasız renkli bir blok bırakırdı.
-library;
-
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
 import '../../../utils/constants/colors.dart';
 import '../../../utils/constants/sizes.dart';
-import '../custom_shapes/containers/rounded_container.dart';
 
-/// Kutunun anlamı — renk buradan gelir, çağıran renk seçmez.
-enum TAuthNoticeTone { info, success, warning, error }
+/// Kimlik ekranlarındaki bilgi/uyarı kutusu.
+///
+/// 🔴 Metin boşsa widget **hiç çizilmez**. Ekranda yer tutan boş bir kutu,
+/// "bir şey yüklenemedi" izlenimi veriyor; bu yüzden `SizedBox.shrink()`
+/// dönülüyor ve üstteki `SizedBox` boşlukları da devreye girmiyor.
+enum TAuthNoticeType { info, warning, error, success }
 
 class TAuthNotice extends StatelessWidget {
-  const TAuthNotice({
-    super.key,
-    required this.message,
-    this.tone = TAuthNoticeTone.info,
-    this.icon,
-    this.title,
-  });
+  const TAuthNotice({super.key, required this.text, this.type = TAuthNoticeType.info});
 
-  final String? message;
-  final String? title;
-  final TAuthNoticeTone tone;
-  final IconData? icon;
-
-  Color get _foreground => switch (tone) {
-        TAuthNoticeTone.info => TColors.info,
-        TAuthNoticeTone.success => TColors.success,
-        TAuthNoticeTone.warning => TColors.warning,
-        TAuthNoticeTone.error => TColors.error,
-      };
-
-  Color get _background => switch (tone) {
-        TAuthNoticeTone.info => TColors.infoSoft,
-        TAuthNoticeTone.success => TColors.successSoft,
-        TAuthNoticeTone.warning => TColors.warningSoft,
-        TAuthNoticeTone.error => TColors.errorSoft,
-      };
+  final String? text;
+  final TAuthNoticeType type;
 
   @override
   Widget build(BuildContext context) {
-    final text = message?.trim() ?? '';
-    // Metin yoksa hiç çizme.
-    if (text.isEmpty && (title == null || title!.trim().isEmpty)) return const SizedBox.shrink();
+    final message = text?.trim() ?? '';
+    if (message.isEmpty) return const SizedBox.shrink();
 
-    return TRoundedContainer(
+    final (Color foreground, Color background, IconData icon) = switch (type) {
+      TAuthNoticeType.info => (TColors.info, TColors.infoSoft, Iconsax.info_circle),
+      TAuthNoticeType.warning => (TColors.warning, TColors.warningSoft, Iconsax.warning_2),
+      TAuthNoticeType.error => (TColors.error, TColors.errorSoft, Iconsax.close_circle),
+      TAuthNoticeType.success => (TColors.success, TColors.successSoft, Iconsax.tick_circle),
+    };
+
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(TSizes.md),
-      radius: TSizes.borderRadiusMd,
-      backgroundColor: _background,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(TSizes.borderRadiusMd),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null) ...[
-            Icon(icon, color: _foreground, size: TSizes.iconMd),
-            const SizedBox(width: TSizes.spaceBtwItems / 2),
-          ],
+          Icon(icon, color: foreground, size: TSizes.iconMd),
+          const SizedBox(width: TSizes.sm),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (title != null && title!.trim().isNotEmpty)
-                  Text(
-                    title!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                if (text.isNotEmpty)
-                  Text(text, style: Theme.of(context).textTheme.bodyMedium),
-              ],
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: TColors.textPrimary),
             ),
           ),
         ],

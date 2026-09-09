@@ -1,8 +1,6 @@
-/// Yerel bildirim kaydının modeli.
-library;
-
 import '../../../utils/formatters/formatter.dart';
 
+/// Yerel bildirim kaydının modeli (başlık, gövde, okundu bilgisi).
 class NotificationModel {
   String id; // Unique ID for the notification
   final String title; // Notification title
@@ -42,33 +40,17 @@ class NotificationModel {
       senderId: map.containsKey('senderId') ? map['senderId'] ?? '' : '',
       recipientIds: map.containsKey('recipientIds') ? List<String>.from(map['recipientIds'] ?? []) : [],
       type: map.containsKey('type') ? map['type'] ?? '' : '',
-      // 🔴 Tarih ÜÇ biçimde gelebilir. Referans Firestore'a bağlıydı ve
-      // doğrudan `.toDate()` çağırıyordu; bu API ise ISO **dize** gönderiyor
-      // (`"2026-06-25T06:46:03.589336Z"`) ve `.toDate()` çalışma anında
-      // NoSuchMethodError atıp bildirimin tamamını düşürüyordu.
-      createdAt: _parseDate(map['createdAt']) ?? DateTime.now(),
-      seenAt: _parseDate(map['seenAt']),
+      // 🔴 Referans burada Firestore `Timestamp.toDate()` çağırıyordu; bu
+      // sunucu tarihi **ISO metin** olarak gönderiyor (`"2026-07-01T05:31:19Z"`)
+      // ve `.toDate()` metin üzerinde `NoSuchMethodError` fırlatıp bildirim
+      // listesini komple çökertiyordu. Artık iki biçim de okunuyor.
+      createdAt: _toDate(map['createdAt']) ?? DateTime.now(),
+      seenAt: _toDate(map['seenAt']),
       seenBy: map.containsKey('seenBy') ? Map<String, bool>.from(map['seenBy'] ?? {}) : {},
       route: map.containsKey('route') ? map['route'] ?? '' : '',
       routeId: map.containsKey('routeId') ? map['routeId'] ?? '' : '',
       isBroadcast: map.containsKey('isBroadcast') ? map['isBroadcast'] ?? false : false,
     );
-  }
-
-  /// ISO dize · epoch (ms) · `DateTime` · Firestore `Timestamp` — hepsini
-  /// kabul eder, çözemezse `null` döner (çağıran varsayılanına düşer).
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-    if (value is String) return DateTime.tryParse(value);
-    try {
-      // Firestore `Timestamp` gibi `toDate()` taşıyan nesneler.
-      final converted = (value as dynamic).toDate();
-      return converted is DateTime ? converted : null;
-    } catch (_) {
-      return null;
-    }
   }
 
   static NotificationModel empty() => NotificationModel(
@@ -99,5 +81,21 @@ class NotificationModel {
       'routeId': routeId,
       'isBroadcast': isBroadcast,
     };
+  }
+}
+
+/// Sunucudan gelen tarihi okur.
+///
+/// Üç biçim gelebiliyor: ISO metin (bu API'nin yaptığı), hazır [DateTime] ve
+/// Firestore `Timestamp` (referanstan kalan `toDate()` arayüzü). Tanınmayan
+/// değerde `null` döner — tek bir bozuk tarih bütün listeyi düşürmesin.
+DateTime? _toDate(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value)?.toLocal();
+  try {
+    return (value as dynamic).toDate() as DateTime?;
+  } catch (_) {
+    return null;
   }
 }

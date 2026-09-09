@@ -3,9 +3,14 @@ import 'package:get/get.dart';
 
 import '../constants/text_strings.dart';
 
-/// Generic helper functions for handling [FutureBuilder]/[StreamBuilder] state.
+/// [FutureBuilder] / [StreamBuilder] durumlarını tek yerden karşılayan
+/// yardımcılar.
+///
+/// Ekranlar "yükleniyor / veri yok / hata" üçlüsünü kendi başlarına çizmesin
+/// diye var: üçünden biri geçerliyse hazır widget döner, hiçbiri değilse
+/// `null` döner ve çağıran asıl içeriği çizer.
 class TCloudHelperFunctions {
-  /// Helper function to check the state of a single async record.
+  /// Tek kayıtlık isteğin durumu.
   static Widget? checkSingleRecordState<T>(AsyncSnapshot<T> snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return const Center(child: CircularProgressIndicator());
@@ -22,7 +27,7 @@ class TCloudHelperFunctions {
     return null;
   }
 
-  /// Helper function to check the state of multiple (list) async records.
+  /// Liste döndüren isteğin durumu.
   static Widget? checkMultiRecordState<T>({required AsyncSnapshot<List<T>> snapshot, Widget? loader, Widget? error, Widget? nothingFound}) {
     if (snapshot.connectionState == ConnectionState.waiting) {
       if (loader != null) return loader;

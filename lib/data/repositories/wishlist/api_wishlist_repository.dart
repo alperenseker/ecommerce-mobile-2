@@ -1,12 +1,10 @@
-/// Favoriler / istek listesi (`Wishlist/...`).
-library;
-
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../repositories/authentication/authentication_repository.dart';
 import '../../../utils/http/dio_client.dart';
 
+/// Favori (istek listesi) uçları (`Wishlist/...`). Kullanıcıya özel, önbelleksiz.
 class ApiWishlistRepository extends GetxController {
   static ApiWishlistRepository get instance => Get.find();
 

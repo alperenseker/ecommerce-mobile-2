@@ -21,6 +21,7 @@ import '../../../controllers/return_controller.dart';
 import '../../../models/return_request_model.dart';
 import '../return_request_detail_screen.dart';
 import 'return_status_badge.dart';
+import '../../../../../common/widgets/loaders/delayed_loader.dart';
 
 class TReturnRequestListItems extends StatefulWidget {
   const TReturnRequestListItems({super.key});
@@ -46,7 +47,7 @@ class _TReturnRequestListItemsState extends State<TReturnRequestListItems> {
       future: _future,
       builder: (_, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: TColors.primary));
+          return const TDelayedLoader();
         }
 
         final requests = snapshot.data ?? const <ReturnRequest>[];

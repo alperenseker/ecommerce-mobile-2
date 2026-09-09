@@ -1,6 +1,3 @@
-/// Giriş formu: e-posta, şifre, beni hatırla, şifremi unuttum ve iki düğme.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
@@ -11,6 +8,7 @@ import '../../../../../utils/constants/text_strings.dart';
 import '../../../../../utils/validators/validation.dart';
 import '../../../controllers/login_in_controller.dart';
 
+/// Giriş formu: e-posta + şifre, "beni hatırla" ve şifremi unuttum.
 class TLoginForm extends StatelessWidget {
   const TLoginForm({
     super.key,

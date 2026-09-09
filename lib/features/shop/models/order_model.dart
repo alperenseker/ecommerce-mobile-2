@@ -1,7 +1,3 @@
-/// Tek sipariş. Bir alışveriş (grup) şirket başına birden çok sipariş
-/// içerebilir; bkz. `order_group_model.dart`.
-library;
-
 import 'dart:convert';
 
 import 'package:t_utils/utils/constants/enums.dart';
@@ -33,6 +29,11 @@ double _parseDouble(dynamic value) {
   return 0.0;
 }
 
+/// Tek bir sipariş satırı.
+///
+/// 🔴 Bir alışveriş şirket (1C kaynağı) başına birden çok siparişe bölünebilir;
+/// hepsi aynı `GroupId` altında toplanır. Müşteriye gösterilen bütün
+/// [OrderGroupModel]'dir, bu model onun bir parçasıdır.
 class OrderModel {
   String docId;
   final String id;

@@ -1,11 +1,8 @@
-/// Platform hatalarının okunur mesaja çevirisi.
-library;
-
 import 'package:get/get.dart';
 
 import '../constants/text_strings.dart';
 
-/// Exception class for handling various platform-related errors.
+/// Platform kaynaklı hataları okunur mesaja çeviren sınıf.
 class TPlatformException implements Exception {
   final String code;
 

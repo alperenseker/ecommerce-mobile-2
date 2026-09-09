@@ -12,7 +12,6 @@ import '../../../../common/widgets/layouts/grid_layout.dart';
 import '../../../../common/widgets/products/product_cards/product_card_vertical.dart';
 import '../../../../common/widgets/shimmers/vertical_product_shimmer.dart';
 import '../../../../utils/constants/sizes.dart';
-import '../../../../utils/device/device_utility.dart';
 import '../../../../utils/helpers/cloud_helper_functions.dart';
 import '../../controllers/all_products_controller.dart';
 import '../../models/product_model.dart';
@@ -104,7 +103,7 @@ class TSortableProductList extends StatelessWidget {
         ),
 
         /// Alt gezinme çubuğunun altında kalmasın diye boşluk
-        SizedBox(height: TDeviceUtils.getBottomNavigationBarHeight() + TSizes.defaultSpace),
+        SizedBox(height: MediaQuery.paddingOf(context).bottom + TSizes.defaultSpace),
       ],
     );
   }

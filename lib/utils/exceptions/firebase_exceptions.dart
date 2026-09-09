@@ -1,13 +1,10 @@
-/// Firebase hatalarının çevirisi.
-///
-/// ⚠️ Bu proje Firebase KULLANMIYOR; dosya referansla eşitlik için duruyor.
-library;
-
 import 'package:get/get.dart';
 
 import '../constants/text_strings.dart';
 
-/// Custom exception class to handle various Firebase-related errors.
+/// Firebase hatalarını okunur mesaja çeviren sınıf.
+///
+/// ⚠️ Proje Firebase kullanmıyor; dosya referansla eşitlik için duruyor.
 class TFirebaseException implements Exception {
   /// The error code associated with the exception.
   final String code;

@@ -11,7 +11,6 @@ import 'package:iconsax/iconsax.dart';
 import '../../../../features/shop/controllers/all_products_controller.dart';
 import '../../../../features/shop/models/product_model.dart';
 import '../../../../utils/constants/sizes.dart';
-import '../../../../utils/device/device_utility.dart';
 import '../../layouts/grid_layout.dart';
 import '../product_cards/product_card_vertical.dart';
 
@@ -56,7 +55,7 @@ class TSortableProducts extends StatelessWidget {
                 TProductCardVertical(product: controller.products[index], isNetworkImage: true),
           ),
         ),
-        SizedBox(height: TDeviceUtils.getBottomNavigationBarHeight() + TSizes.defaultSpace),
+        SizedBox(height: MediaQuery.paddingOf(context).bottom + TSizes.defaultSpace),
       ],
     );
   }

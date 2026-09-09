@@ -1,12 +1,11 @@
-/// Kupon doğrulama ve indirim hesabı uçları.
-library;
-
 import 'package:get/get.dart';
 
 import '../../../features/shop/models/coupon_model.dart';
 
-/// TODO: backend'de /coupons endpoint'i yok. Eklenince dio ile bu metodları
-/// gerçek isteklere bağlayın (bkz. ApiCategoryRepository deseni).
+/// Kupon repository'si.
+///
+/// TODO: sunucuda `/coupons` ucu yok. Eklenince bu metotlar `dio` ile gerçek
+/// isteklere bağlanmalı (bkz. [ApiCategoryRepository] deseni).
 class ApiCouponRepository extends GetxController {
   static ApiCouponRepository get instance => Get.isRegistered<ApiCouponRepository>() ? Get.find() : Get.put(ApiCouponRepository());
 

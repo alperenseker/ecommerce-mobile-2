@@ -1,11 +1,8 @@
-/// Genel hata kodlarını okunur mesaja çeviren yardımcı.
-library;
-
 import 'package:get/get.dart';
 
 import '../constants/text_strings.dart';
 
-/// Exception class for handling various errors.
+/// Genel hata sınıfı — hata kodunu kullanıcıya okunur mesaja çevirir.
 class TExceptions implements Exception {
   /// The associated error message.
   final String message;

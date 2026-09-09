@@ -1,8 +1,6 @@
-/// Kategori repository'sinin arayüzü.
-library;
-
 import '../../../features/shop/models/category_model.dart';
 
+/// Kategori repository sözleşmesi.
 abstract class CategoryRepository {
   Future<List<CategoryModel>> fetchAllItems();
   Future<CategoryModel> fetchSingleItem(String id);

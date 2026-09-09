@@ -1,12 +1,3 @@
-/// Telefon OTP ekranının controller'ı (60 saniyelik sayaç + tekrar gönder).
-///
-/// ⚠️ Telefonla giriş sunucuda **henüz yok**:
-/// `AuthenticationRepository.loginWithPhoneNo/verifyOTP` bilerek hata
-/// fırlatıyor. Ekran ve controller referansla eşitlik için duruyor; e-posta
-/// kaydının OTP'si ayrı bir ekranda (`RegisterOtpScreen`) ve 5 dakikalık
-/// sayaçla çalışıyor.
-library;
-
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -17,6 +8,12 @@ import '../../../utils/helpers/network_manager.dart';
 import '../../../utils/popups/full_screen_loader.dart';
 import '../../../utils/popups/loaders.dart';
 
+/// Telefon OTP ekranının denetleyicisi.
+///
+/// ⚠️ Telefonla giriş sunucuda **yok**: `loginWithPhoneNo` / `verifyOTP`
+/// bilerek hata fırlatıyor (referansta da öyle). Bu denetleyici ve `OtpScreen`
+/// bu yüzden ekranda çalışmıyor; uç eklendiğinde çalışır hâle gelsin diye
+/// silinmedi (KURALLAR §4: hiçbir fonksiyon eksilmez).
 class OTPController extends GetxController {
   static OTPController get instance => Get.find();
 
@@ -104,5 +101,12 @@ class OTPController extends GetxController {
       TFullScreenLoader.stopLoading();
       TLoaders.warningSnackBar(title: TTexts.ohSnap.tr, message: e.toString());
     }
+  }
+
+  @override
+  void onClose() {
+    // Ekran kapanınca sayaç durdurulmazsa `Timer` arkada saymaya devam ediyor.
+    _timer?.cancel();
+    super.onClose();
   }
 }

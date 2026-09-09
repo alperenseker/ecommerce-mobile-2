@@ -44,6 +44,7 @@ import 'widgets/order_status.dart';
 import 'widgets/payment_details.dart';
 import '../widgets/order_payment_gate.dart';
 import 'widgets/purchase_group_view.dart';
+import '../../../../../common/widgets/loaders/delayed_loader.dart';
 
 class OrderDetail extends StatefulWidget {
   const OrderDetail({super.key});
@@ -199,7 +200,7 @@ class _OrderDetailState extends State<OrderDetail> {
         title: Text(isGroup ? TTexts.purchaseDetails.tr : TTexts.orderDetails.tr),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: TColors.primary))
+          ? const TDelayedLoader()
           : _notFound
               ? TEmptyState(
                   icon: Iconsax.receipt_search,
@@ -374,7 +375,13 @@ class _OrderDetailState extends State<OrderDetail> {
           ),
           TextButton(
             // Aynı rota, bu kez grup argümanıyla.
-            onPressed: () => Get.toNamed(TRoutes.orderDetail, arguments: {'groupId': order.groupId}),
+            // 🔴 `preventDuplicates: false` — iki görünüm de `/orderDetail`
+            // rotasında; bayrak olmadan GetX aynı rotaya gitmeyi engelliyor.
+            onPressed: () => Get.toNamed(
+              TRoutes.orderDetail,
+              arguments: {'groupId': order.groupId},
+              preventDuplicates: false,
+            ),
             child: Text(TTexts.viewWholePurchase.tr),
           ),
         ],

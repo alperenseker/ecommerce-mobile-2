@@ -1,8 +1,9 @@
-/// Ödeme yöntemi tanımı.
-library;
-
 import '../../../utils/constants/enums.dart';
 
+/// Ödeme yöntemi seçeneği (ad, simge, [PaymentMethods] karşılığı).
+///
+/// 🔴 Hangi seçeneklerin çizileceğini sunucudaki `paymentMode` belirler:
+/// `transfer_only` modunda kart akışı hiç gösterilmez.
 class PaymentMethodModel {
   String name;
   String image;

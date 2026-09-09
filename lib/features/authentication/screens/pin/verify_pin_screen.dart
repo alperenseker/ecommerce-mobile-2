@@ -1,6 +1,3 @@
-/// PIN doğrulama ekranı. Doğru PIN girilirse ana sayfaya geçilir.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -8,18 +5,26 @@ import 'package:lottie/lottie.dart';
 import '../../../../common/widgets/appbar/appbar.dart';
 import '../../../../common/widgets/login_signup/otp_code_field.dart';
 import '../../../../routes/routes.dart';
+import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/image_strings.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/pin_controller.dart';
 
+/// PIN doğrulama ekranı.
+///
+/// 🔴 Doğrulama **istemcide** yapılıyor (kayıtlı PIN ile karşılaştırma); bu
+/// ekranı bir güvenlik kapısı gibi kullanma.
 class VerifyPinScreen extends StatelessWidget {
   const VerifyPinScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final PinController controller = Get.put(PinController());
+    final dark = THelperFunctions.isDarkMode(context);
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       appBar: const TAppBar(
         showBackArrow: true,
         showActions: true,
@@ -49,9 +54,10 @@ class VerifyPinScreen extends StatelessWidget {
               Obx(
                 () => TOtpCodeField(
                   length: 4,
+                  obscure: true,
                   hasError: controller.hasError.value,
-                  onChanged: (code) => controller.setEnteredOTP(code),
-                  onCompleted: (code) => controller.setEnteredOTP(code),
+                  onChanged: controller.setEnteredOTP,
+                  onCompleted: controller.setEnteredOTP,
                 ),
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
@@ -69,7 +75,8 @@ class VerifyPinScreen extends StatelessWidget {
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
 
-              // Forget Pin
+              // PIN'i unuttum — güncelleme akışı telefon OTP'sine bağlı ve o uç
+              // sunucuda yok; referansta da yorumda.
               // TextButton(onPressed: () => Get.toNamed(TRoutes.updatePin), child: Text(TTexts.forgetPin.tr)),
               // const SizedBox(height: TSizes.spaceBtwSections),
             ],

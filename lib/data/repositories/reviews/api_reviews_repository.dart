@@ -1,12 +1,10 @@
-/// Ürün değerlendirmeleri (`reviews/...`).
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:get/get.dart';
 import '../../../features/shop/models/product_model.dart';
 import '../../../features/shop/models/product_review_model.dart';
 import 'reviews_repository.dart';
 
+/// Değerlendirme uçları (`reviews/...`).
 class ApiReviewsRepository extends TApiRepositoryController<ReviewModel>
     implements ReviewRepository {
 

@@ -1,12 +1,11 @@
-/// Dil seçimi: seçili yerel ayar, arama süzgeci ve kalıcı kayıt.
+/// Dil seçimi.
 ///
-/// 🔴 Diller **istek üzerine** yüklenir: `Languages.ensureLoaded` yalnız
-/// seçilen dilin sözlüğünü belleğe alır (bkz. `localization/languages.dart`).
-/// Sözlüğü olmayan bir dil seçilirse İngilizceye düşülür — ekranda ham
-/// çeviri anahtarı görünmesin.
+/// Seçilen dil `GetStorage`'a **`'language'`** anahtarıyla yazılır — aynı
+/// anahtarı `data/services/epay/epay_service.dart` de okuyor (ödeme
+/// widget'ının dili), değiştirme.
 ///
-/// Depolama anahtarı `'language'` referanstakiyle aynıdır ve ePay servisi de
-/// (`data/services/epay/epay_service.dart`) aynı anahtarı okuyor; değiştirme.
+/// Diller **istek üzerine** yükleniyor: `Languages.ensureLoaded` yalnız
+/// seçilen dilin haritasını belleğe alır (bkz. `localization/languages.dart`).
 library;
 
 import 'package:flutter/material.dart';
@@ -18,13 +17,16 @@ import '../../../utils/constants/image_strings.dart';
 
 class LanguageController extends GetxController {
   static LanguageController get instance => Get.find();
-
   final box = GetStorage();
   var selectedLocale = const Locale('en', 'US').obs;
   var searchQuery = ''.obs;
   var filteredLanguages = <Map<String, String>>[].obs;
 
-  /// Görünüm sırası: Kazakça · Rusça · Türkçe · İngilizce, sonra diğerleri.
+  /// Gerçekten sözlüğü olan diller. FAZ 11 on dilin hepsini eklediğinde bu
+  /// küme değişmez; kapı `Languages.hasTranslation` üzerinden de sorulur.
+  static const _translated = {'en', 'fr', 'de', 'pt', 'pt_BR', 'vi', 'es', 'ru', 'tr', 'kk'};
+
+  /// Bütün diller, ekranda görünecekleri sırayla.
   final allLanguages = [
     {'name': 'Kazakh', 'code': 'kk', 'flag': TImages.kazakhstan},
     {'name': 'Russian', 'code': 'ru', 'flag': TImages.russia},
@@ -39,32 +41,39 @@ class LanguageController extends GetxController {
   ];
 
   /// [languageCode] için gerçekten uygulanacak yerel ayar. Sözlüğü olmayan
-  /// dil İngilizceye düşer.
-  Locale _localeFor(String languageCode) =>
-      Languages.hasTranslation(languageCode) ? Locale(languageCode) : const Locale('en', 'US');
+  /// dil İngilizceye düşer ki ekranda ham anahtar görünmesin.
+  Locale localeFor(String languageCode) =>
+      _translated.contains(languageCode) ? Locale(languageCode) : const Locale('en', 'US');
 
   @override
   void onInit() {
     super.onInit();
-    final String? savedLang = box.read<String>('language');
+    // Kayıtlı dil tercihi
+    String? savedLang = box.read<String>('language');
     if (savedLang != null) {
       selectedLocale.value = Locale(savedLang);
       Languages.ensureLoaded(savedLang);
-      Get.updateLocale(_localeFor(savedLang));
+      // 🔴 `Get.updateLocale` ilk kareden SONRA çağrılır: bu denetleyici
+      // `runApp`'ten önce (main.dart) kuruluyor ve o an widget ağacı yok —
+      // `forceAppUpdate` orada patlıyor. Açılış dili zaten `GetMaterialApp`'in
+      // `locale:` alanından geliyor, bu çağrı yalnız pekiştirme.
+      WidgetsBinding.instance.addPostFrameCallback((_) => Get.updateLocale(localeFor(savedLang)));
     }
     filteredLanguages.value = List.from(allLanguages);
   }
 
-  /// Dili değiştirir. Sözlük **önce** yüklenir, sonra yerel ayar güncellenir;
-  /// aksi hâlde ekran bir kare boyunca ham anahtar gösterir.
+  /// Dili değiştirir. `Get.updateLocale` uygulamayı **yeniden başlatmadan**
+  /// bütün `.tr` metinlerini yeniden çizdiriyor.
   void changeLanguage(String languageCode) {
     selectedLocale.value = Locale(languageCode);
+    // Sözlüğü değiştirmeden ÖNCE yükle: aksi hâlde bir kare boyunca ham
+    // anahtar görünüyor.
     Languages.ensureLoaded(languageCode);
-    Get.updateLocale(_localeFor(languageCode));
+    Get.updateLocale(localeFor(languageCode));
     box.write('language', languageCode);
   }
 
-  /// Arama kutusu: dil adına göre süzer.
+  /// Arama kutusuna göre dil listesini süzer.
   void filterLanguages(String query) {
     searchQuery.value = query;
     if (query.isEmpty) {

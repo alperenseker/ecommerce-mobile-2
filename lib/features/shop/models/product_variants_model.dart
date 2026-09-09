@@ -1,18 +1,24 @@
 /// `/products/{id}/variants` ucunun modelleri.
 ///
-/// Sunucu bir urunun varyantlarini "Design" (ekranda **Model**) ve "Color"
-/// (ekranda **Renk**) altinda grupluyor. Model + Renk secimi somut bir varyant
-/// URUNUNE (kendi `ProductId`si) cozuluyor; uygulama onu tam urun olarak
-/// yukluyor. Web `getProductVariants()` akisiyla ayni.
+/// 🔴 Uç **dizi değil NESNE** döndürür: `{ ParentProductId, CurrentProductId,
+/// TotalVariants, HasVariants, Variants[], DesignOptions[], ColorOptions[],
+/// DesignColorMap }`. Web'de varyantların hiç görünmemesinin sebebi buydu.
 ///
-/// 🔴 UC DIZI, UC AYRI BICIM (canlidan dogrulandi, 2026-09-04):
+/// Sunucu varyantları bir "Design" (kullanıcıya **Model**) ve bir "Color"
+/// (**Renk**) üzerinden gruplar. Model + Renk seçimi somut bir varyant ürüne
+/// (kendi `ProductId`'si olan) çözülür ve uygulama onu tam ürün olarak yükler.
+///
+/// ⚠️ `SelectedDesign` / `SelectedColor` **her yanıtta gelmez**; okurken
+/// yokluğa dayanıklı ol.
+///
+/// 🔴 UÇ TEK DEĞİL, **ÜÇ AYRI BİÇİM** gönderiyor (canlıdan doğrulandı):
 ///   * `DesignOptions[]` -> `{ Type, Value, ProductIds[], IsAvailable }`
 ///   * `ColorOptions[]`  -> `{ Type, Value, ProductIds[], IsAvailable }`
 ///   * `DesignColorMap[model][]` -> `{ Color, ProductId, IsAvailable }`
-/// Yani ust seviyedeki secenekler `Value` + **cogul** `ProductIds` tasiyor,
-/// eslemedekiler `Color` + **tekil** `ProductId`. Yalniz `Color`/`ProductId`
-/// okuyan bir ayrıştırıcı butun renkleri tek bos secenege cokertir — web'de
-/// varyantlarin hic gorunmemesinin sebebi tam olarak buydu. Iki bicim de
+/// Yani üst seviyedeki seçenekler `Value` + **çoğul** `ProductIds` taşıyor,
+/// eşlemedekiler `Color` + **tekil** `ProductId`. Yalnız `Color`/`ProductId`
+/// okuyan bir ayrıştırıcı bütün renkleri tek boş seçeneğe çökertir — web'de
+/// varyantların hiç görünmemesinin sebebi tam olarak buydu. İki biçim de
 /// kabul edilir.
 class ProductVariantsModel {
   final bool hasVariants;
@@ -45,24 +51,24 @@ class ProductVariantsModel {
         variants: const [],
       );
 
-  /// Cizilecek anlamli bir sey var mi (birden fazla model YA DA birden fazla
-  /// renk). Tek uyeli grupta secilecek bir sey yoktur.
+  /// Çizilecek anlamlı bir şey var mı (birden fazla model YA DA birden fazla
+  /// renk). Tek üyeli grupta seçilecek bir şey yoktur.
   bool get isSelectable =>
       hasVariants && (designOptions.length > 1 || colorOptions.length > 1);
 
-  /// Ekranda kullanilabilir hale getirilmis kopya.
+  /// Ekranda kullanılabilir hâle getirilmiş kopya.
   ///
-  /// Web `ui/variants.js` -> `V.load()` ile ayni iki kural:
-  ///   1. Tek uye varsa (varyant <= 1, model <= 1, renk <= 1) secici hic
-  ///      cizilmez -> [ProductVariantsModel.empty].
-  ///   2. TEK MODELLI (ya da modelsiz) gruplarda renk listesi `Variants`ten
-  ///      YENIDEN KURULUR. Sunucu `ColorOptions`i RENK ADINA gore grupluyor:
-  ///      iki ayri urun ayni '7016' kodunu tasiyorsa TEK secenek doner ve
-  ///      icinde iki `ProductId` olur — o secenege dokunan kullaniciyi hangi
-  ///      urune goturecegimiz belirsiz kalir. Uyelerin rengi hic yoksa (elle
-  ///      kurulan gruplar) hepsi tek BOS secenege coker. Iki durumda da her
-  ///      uye kendi seceneğini alir.
-  ///      Cok modelli grupta renkler zaten `DesignColorMap`ten okunuyor
+  /// Web `ui/variants.js` -> `V.load()` ile aynı iki kural:
+  ///   1. Tek üye varsa (varyant <= 1, model <= 1, renk <= 1) seçici hiç
+  ///      çizilmez -> [ProductVariantsModel.empty].
+  ///   2. TEK MODELLİ (ya da modelsiz) gruplarda renk listesi `Variants`ten
+  ///      YENİDEN KURULUR. Sunucu `ColorOptions`ı RENK ADINA göre grupluyor:
+  ///      iki ayrı ürün aynı '7016' kodunu taşıyorsa TEK seçenek döner ve
+  ///      içinde iki `ProductId` olur — o seçeneğe dokunan kullanıcıyı hangi
+  ///      ürüne götüreceğimiz belirsiz kalır. Üyelerin rengi hiç yoksa (elle
+  ///      kurulan gruplar) hepsi tek BOŞ seçeneğe çöker. İki durumda da her
+  ///      üye kendi seçeneğini alır.
+  ///      Çok modelli grupta renkler zaten `DesignColorMap`ten okunuyor
   ///      (orada `ProductId` tekil), dokunulmaz.
   ProductVariantsModel normalized() {
     if (!hasVariants) return ProductVariantsModel.empty();
@@ -88,12 +94,12 @@ class ProductVariantsModel {
     if (variants.length <= 1) return colorOptions;
     if (designOptions.length > 1) return colorOptions;
 
-    // Her uye kendi seceneğini alsin. Etiket renk kodu; renk yoksa bos kalir
-    // ve secici liste kipine duser (bkz. [colorsDistinguishVariants]).
+    // Her üye kendi seçeneğini alsın. Etiket renk kodu; renk yoksa boş kalır
+    // ve seçici liste kipine düşer (bkz. [colorsDistinguishVariants]).
     return variants
         .map((v) => VariantColorOption(
               color: _cleanColor(v.color),
-              // Stok kurali urun kartindakiyle ayni: miktar > 0 VE
+              // Stok kuralı ürün kartındakiyle aynı: miktar > 0 VE
               // `StockStatus != 'out_of_stock'`.
               isAvailable: v.stockAmount > 0 && v.stockStatus != 'out_of_stock',
               productIds: [v.productId],
@@ -101,11 +107,11 @@ class ProductVariantsModel {
         .toList();
   }
 
-  /// Renk yuvarlaklari varyantlari birbirinden AYIRABILIYOR mu.
+  /// Renk yuvarlakları varyantları birbirinden AYIRABİLİYOR mu.
   ///
-  /// Ayiramiyorsa (renk bos ya da iki urun ayni kodu tasiyor) yuvarlak
-  /// gostermek yaniltici olur: kullanici iki ayri urunu tek dugme olarak
-  /// gorur. O durumda secici resim + isim + fiyat satirlarina duser.
+  /// Ayıramıyorsa (renk boş ya da iki ürün aynı kodu taşıyor) yuvarlak
+  /// göstermek yanıltıcı olur: kullanıcı iki ayrı ürünü tek düğme olarak
+  /// görür. O durumda seçici resim + isim + fiyat satırlarına düşer.
   bool get colorsDistinguishVariants {
     if (variants.length < 2) return false;
     final codes = variants.map((v) => _cleanColor(v.color)).toList();
@@ -154,8 +160,8 @@ class VariantDesignOption {
   final String value;
   final bool isAvailable;
 
-  /// Bu modele ait varyant urun kimlikleri (`ProductIds`). Sunucu burada
-  /// **cogul** gonderiyor; tekil `ProductId` de kabul edilir.
+  /// Bu modele ait varyant ürün kimlikleri (`ProductIds`). Sunucu burada
+  /// **çoğul** gönderiyor; tekil `ProductId` de kabul edilir.
   final List<String> productIds;
 
   VariantDesignOption({
@@ -179,10 +185,9 @@ class VariantDesignOption {
 class VariantColorOption {
   final String color;
   final bool isAvailable;
-
-  /// Bu renge ait varyant urun kimlikleri. Ust seviyedeki `ColorOptions`
-  /// **cogul** (`ProductIds`), `DesignColorMap` icindekiler **tekil**
-  /// (`ProductId`) gonderiyor; ikisi de buraya akiyor.
+  /// Bu renge ait varyant ürün kimlikleri. Üst seviyedeki `ColorOptions`
+  /// **çoğul** (`ProductIds`), `DesignColorMap` içindekiler **tekil**
+  /// (`ProductId`) gönderiyor; ikisi de buraya akıyor.
   final List<String> productIds;
 
   VariantColorOption({
@@ -191,7 +196,7 @@ class VariantColorOption {
     required this.productIds,
   });
 
-  /// Secim yapilinca acilacak urun. Cogul listede ilk uye kullanilir.
+  /// Seçim yapılınca açılacak ürün. Çoğul listede ilk üye kullanılır.
   String get productId => productIds.isNotEmpty ? productIds.first : '';
 
   factory VariantColorOption.fromJson(Map<String, dynamic> json) =>
@@ -281,8 +286,8 @@ List<String> _asIdList(Map<String, dynamic> json) {
   return single.isEmpty ? const [] : [single];
 }
 
-/// Sunucu renksiz uyelerde bazen `"undefined"` metnini gonderiyor; bos deger
-/// ile ayni sey: renk yok.
+/// Sunucu renksiz üyelerde bazen `"undefined"` metnini gönderiyor; boş değer
+/// ile aynı şey: renk yok.
 String _cleanColor(String value) {
   final v = value.trim();
   return (v.isEmpty || v == 'undefined' || v == 'null') ? '' : v;

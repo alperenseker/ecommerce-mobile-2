@@ -1,11 +1,24 @@
-/// Profil ekranı: hesap kimliği, kişisel bilgiler, hesap tipi/fiyat kategorisi,
-/// güvenlik (şifre) ve —yetkisi varsa— kredi limiti.
+/// Profil ekranı: kimlik, iletişim, hesap tipi, fiyat kategorisi, güvenlik ve
+/// (yetkisi varsa) kredi limiti.
 ///
-/// 🔴 Şirket hesabında şirket adı / direktör / BİN **salt okunur**: bu alanlar
-/// 1C'den geliyor, uygulamadan değiştirilemez. Kilit ikonu ve altındaki not
-/// bunu söylüyor.
+/// 🔴 Düzen tamamen değişti. Eskiden avatar, altında `Divider`larla ayrılmış
+/// "etiket — değer — ok" satırları vardı: satırların üçe bölünmüş hizası uzun
+/// değerlerde kayıyor, salt okunur satırla düzenlenebilir satır aynı
+/// görünüyordu. Artık üstte **avatar kartı**, altında konularına göre
+/// **gruplanmış satır kartları** (`TSettingsGroup`) var; salt okunur satırlar
+/// kilit ikonu taşıyor ve dokunmaya tepki vermiyor, düzenlenebilir olanlar ok
+/// gösteriyor.
 ///
-/// 🔴 Kredi limiti bölümü **herkese çizilmez** — bkz. [_CreditSection].
+/// 🔴 **Şirket / İP hesabında şirket adı · direktör · BİN SALT OKUNUR.**
+/// O üç alan 1C'den geliyor (`GET /company/{iin}`), uygulamadan
+/// değiştirilemez; satırların ikonu kilit ve altlarında sebebi yazıyor.
+/// Bireysel hesapta ad satırı `ChangeName` ekranını açar.
+///
+/// 🔴 Fiyat kategorisi satırı KALDIRILDI: bayi iskontosunu belirleyen bir
+/// yönetici alanı, müşteriye bir şey anlatmıyordu.
+///
+/// 🔴 **Kredi bölümü herkese çizilmez**: kapı tek yerde,
+/// `common/widgets/credit/credit_limit_section.dart` → `creditSectionVisible()`.
 library;
 
 import 'package:flutter/material.dart';
@@ -14,18 +27,16 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../../../common/widgets/appbar/appbar.dart';
 import '../../../../common/widgets/credit/credit_limit_section.dart';
-import '../../../../common/widgets/custom_shapes/containers/rounded_container.dart';
 import '../../../../common/widgets/images/t_circular_image.dart';
-import '../../../../common/widgets/texts/section_heading.dart';
+import '../../../../common/widgets/list_tiles/settings_group.dart';
+import '../../../../utils/helpers/helper_functions.dart';
 import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/constants/text_strings.dart';
-import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/user_controller.dart';
 import '../../controllers/user_settings_controller.dart';
 import 'change_name.dart';
 import 'change_password.dart';
-import 'widgets/profile_menu.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -33,186 +44,167 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = UserController.instance;
+    final dark = THelperFunctions.isDarkMode(context);
 
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.light,
       appBar: TAppBar(
         showBackArrow: true,
         showSkipButton: false,
         showActions: false,
         title: Text(TTexts.profile.tr, style: Theme.of(context).textTheme.headlineSmall),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(TSizes.defaultSpace),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// -- Avatar
-              SizedBox(
-                width: double.infinity,
-                child: Obx(() {
-                  final networkImage = controller.user.value.profilePicture;
-                  return TCircularImage(
-                    image: networkImage,
-                    width: 80,
-                    height: 80,
-                    padding: 0,
-                    isNetworkImage: networkImage.isNotEmpty,
-                    placeholderIcon: Icons.person,
-                    placeholderIconColor: TColors.white,
-                    backgroundColor: networkImage.isNotEmpty ? null : TColors.primary,
-                  );
-                }),
-              ),
-              const SizedBox(height: TSizes.spaceBtwItems / 2),
-              const Divider(),
-              const SizedBox(height: TSizes.spaceBtwItems),
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(
+          TSizes.defaultSpace,
+          TSizes.md,
+          TSizes.defaultSpace,
+          MediaQuery.paddingOf(context).bottom + TSizes.spaceBtwSections,
+        ),
+        children: [
+          /// -- Avatar kartı
+          const _AvatarCard(),
+          const SizedBox(height: TSizes.spaceBtwItems),
 
-              /// -- Hesap kimliği
-              TSectionHeading(title: TTexts.profileInfo.tr, showActionButton: false),
-              const SizedBox(height: TSizes.spaceBtwItems),
-              Obx(() {
-                final user = controller.user.value;
-
-                // Şirket / İP hesabı: 1C'den gelen üç alan, hepsi kilitli.
-                if (user.isCompanyLike) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          /// -- Kimlik
+          Obx(() {
+            final user = controller.user.value;
+            if (user.isCompanyLike) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TSettingsGroup(
+                    title: TTexts.profileInfo.tr,
                     children: [
-                      TProfileMenu(
-                        onPressed: () {},
+                      // Sunucu şirket adını `FirstName`, direktörü `LastName`
+                      // alanında taşıyor (kayıt akışı 1C'den böyle dolduruyor).
+                      TSettingsRow(
+                        icon: Iconsax.buildings_2,
                         title: TTexts.companyName.tr,
                         value: user.firstName,
-                        icon: Iconsax.lock,
+                        locked: true,
                       ),
-                      TProfileMenu(
-                        onPressed: () {},
+                      TSettingsRow(
+                        icon: Iconsax.user_tag,
                         title: TTexts.director.tr,
                         value: user.lastName,
-                        icon: Iconsax.lock,
+                        locked: true,
                       ),
                       if (user.iin.isNotEmpty)
-                        TProfileMenu(
-                          onPressed: () {},
+                        TSettingsRow(
+                          icon: Iconsax.card,
                           title: TTexts.iinBin.tr,
                           value: user.iin,
-                          icon: Iconsax.lock,
+                          locked: true,
                         ),
-                      const SizedBox(height: TSizes.sm),
-                      const _LockedNote(),
                     ],
-                  );
-                }
+                  ),
+                  // Kilidin sebebi yazılmazsa müşteri düzenleme düğmesini arıyor.
+                  const _LockedNote(),
+                  const SizedBox(height: TSizes.spaceBtwSections / 1.5),
+                ],
+              );
+            }
+            return TSettingsGroup(
+              title: TTexts.profileInfo.tr,
+              children: [
+                TSettingsRow(
+                  icon: Iconsax.user,
+                  title: TTexts.name.tr,
+                  value: user.fullName,
+                  onTap: () => Get.to(() => const ChangeName()),
+                ),
+                TSettingsRow(
+                  icon: Iconsax.tag_user,
+                  title: TTexts.username.tr,
+                  value: user.userName,
+                  locked: true,
+                ),
+              ],
+            );
+          }),
 
-                // Bireysel hesap: ad düzenlenebilir.
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TProfileMenu(
-                      onPressed: () => Get.to(() => const ChangeName()),
-                      title: TTexts.name.tr,
-                      value: user.fullName,
-                    ),
-                    TProfileMenu(onPressed: () {}, title: TTexts.username.tr, value: user.userName),
-                  ],
-                );
-              }),
-              const SizedBox(height: TSizes.spaceBtwItems),
-              const Divider(),
-              const SizedBox(height: TSizes.spaceBtwItems),
+          /// -- İletişim + hesap tipi + fiyat kategorisi
+          Obx(() {
+            final user = controller.user.value;
+            return TSettingsGroup(
+              title: TTexts.personalInfo.tr,
+              children: [
+                TSettingsRow(
+                  icon: Iconsax.sms,
+                  title: TTexts.email.tr,
+                  value: user.email,
+                  locked: true,
+                ),
+                if (user.phoneNumber.isNotEmpty)
+                  TSettingsRow(
+                    icon: Iconsax.call,
+                    title: TTexts.phoneNo.tr,
+                    value: user.phoneNumber,
+                    locked: true,
+                  ),
+                TSettingsRow(
+                  icon: Iconsax.profile_2user,
+                  title: TTexts.accountType.tr,
+                  value: (user.isCompanyLike ? TTexts.accountTypeCompany : TTexts.accountTypeRetail).tr,
+                  locked: true,
+                ),
+              ],
+            );
+          }),
 
-              /// -- Kişisel bilgiler
-              TSectionHeading(title: TTexts.personalInfo.tr, showActionButton: false),
-              const SizedBox(height: TSizes.spaceBtwItems),
-              Obx(() {
-                final user = controller.user.value;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TProfileMenu(onPressed: () {}, title: TTexts.email.tr, value: user.email, icon: Iconsax.lock),
-                    if (user.phoneNumber.isNotEmpty)
-                      TProfileMenu(
-                        onPressed: () {},
-                        title: TTexts.phoneNo.tr,
-                        value: user.formattedPhoneNo,
-                        icon: Iconsax.lock,
-                      ),
-
-                    /// Hesap tipi ve fiyat kategorisi — ikisi de sunucunun
-                    /// kararı, ekrandan değiştirilemez.
-                    TProfileMenu(
-                      onPressed: () {},
-                      title: TTexts.accountType.tr,
-                      value: user.isCompanyLike ? TTexts.accountTypeCompany.tr : TTexts.accountTypeRetail.tr,
-                      icon: Iconsax.lock,
-                    ),
-                    const _PriceCategoryRow(),
-                  ],
-                );
-              }),
-              const SizedBox(height: TSizes.spaceBtwItems),
-              const Divider(),
-              const SizedBox(height: TSizes.spaceBtwItems),
-
-              /// -- Güvenlik
-              TSectionHeading(title: TTexts.security.tr, showActionButton: false),
-              const SizedBox(height: TSizes.spaceBtwItems),
-              TProfileMenu(
-                onPressed: () => Get.to(() => const ChangePasswordScreen()),
+          /// -- Güvenlik
+          TSettingsGroup(
+            title: TTexts.security.tr,
+            children: [
+              TSettingsRow(
+                icon: Iconsax.lock_1,
                 title: TTexts.password.tr,
                 value: TTexts.changePassword.tr,
-                icon: Iconsax.lock_1,
+                onTap: () => Get.to(() => const ChangePasswordScreen()),
               ),
-              const SizedBox(height: TSizes.spaceBtwItems),
-              const Divider(),
-              const SizedBox(height: TSizes.spaceBtwItems),
-
-              /// -- Kredi limiti (yalnız yetkili kullanıcıda; kapı ortak
-              /// dosyada: `common/widgets/credit/credit_limit_section.dart`)
-              const TCreditLimitSection(),
-              const SizedBox(height: TSizes.spaceBtwItems),
-
-              /// -- Hesabı sil
-              Center(
-                child: TextButton(
-                  onPressed: () => controller.deleteAccountWarningPopup(),
-                  child: Text(
-                    TTexts.deleteAccount.tr,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: TColors.error),
-                  ),
-                ),
-              ),
-              const SizedBox(height: TSizes.spaceBtwSections),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
 
-/// "Bu bilgiler 1C'den geliyor" notu — kilitli alanların neden kilitli
-/// olduğunu söylemezsek kullanıcı düzenlemeye çalışıp takılıyor.
-class _LockedNote extends StatelessWidget {
-  const _LockedNote();
+          /// -- Kredi limiti (yalnız yetkisi olana)
+          Obx(() {
+            if (!creditSectionVisible()) return const SizedBox.shrink();
+            final userSettings = UserSettingsController.instance;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: TSizes.spaceBtwSections / 1.5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: TSizes.xs, bottom: TSizes.sm),
+                    child: Text(
+                      TTexts.creditLimit.tr,
+                      style: Theme.of(context).textTheme.labelMedium!
+                          .apply(color: TColors.darkGrey, fontWeightDelta: 1)
+                          .copyWith(letterSpacing: 0.4),
+                    ),
+                  ),
+                  TCreditLimitSection(
+                    creditLimit: userSettings.creditLimit,
+                    usedCredit: userSettings.usedCredit,
+                    availableCredit: userSettings.availableCredit,
+                  ),
+                ],
+              ),
+            );
+          }),
 
-  @override
-  Widget build(BuildContext context) {
-    final dark = THelperFunctions.isDarkMode(context);
-    return TRoundedContainer(
-      radius: TSizes.borderRadiusSm,
-      padding: const EdgeInsets.all(TSizes.sm),
-      backgroundColor: dark ? TColors.darkAccent : TColors.infoSoft,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Iconsax.info_circle, size: TSizes.iconSm, color: TColors.info),
-          const SizedBox(width: TSizes.sm),
-          Expanded(
-            child: Text(
-              TTexts.companyDataFrom1C.tr,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: TColors.textSecondary),
-            ),
+          /// -- Hesabı sil
+          TSettingsGroup(
+            children: [
+              TSettingsRow(
+                icon: Iconsax.trash,
+                title: TTexts.deleteAccount.tr,
+                danger: true,
+                guestMode: false,
+                onTap: controller.deleteAccountWarningPopup,
+              ),
+            ],
           ),
         ],
       ),
@@ -220,23 +212,84 @@ class _LockedNote extends StatelessWidget {
   }
 }
 
-/// Fiyat kategorisi satırı. Sunucu boş döndürdüyse satır **hiç çizilmez** —
-/// boş bir "Fiyat kategorisi: —" satırı bilgi vermiyor.
-class _PriceCategoryRow extends StatelessWidget {
-  const _PriceCategoryRow();
+/// Avatar kartı — sayfanın kime ait olduğunu söyleyen tek yer.
+class _AvatarCard extends StatelessWidget {
+  const _AvatarCard();
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      if (!Get.isRegistered<UserSettingsController>()) return const SizedBox.shrink();
-      final category = UserSettingsController.instance.settings.value.priceCategory.trim();
-      if (category.isEmpty) return const SizedBox.shrink();
-      return TProfileMenu(
-        onPressed: () {},
-        title: TTexts.priceCategory.tr,
-        value: category,
-        icon: Iconsax.lock,
-      );
-    });
+    final controller = UserController.instance;
+    final dark = THelperFunctions.isDarkMode(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: TSizes.lg, horizontal: TSizes.md),
+      decoration: BoxDecoration(
+        color: dark ? TColors.darkAccent : TColors.accent,
+        borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
+      ),
+      child: Obx(() {
+        final user = controller.user.value;
+        final image = user.profilePicture;
+        return Column(
+          children: [
+            // `Center` şart: satır tam genişlik kaplıyor ve `TCircularImage`
+            // sınırsız genişlik alınca daireden hapa dönüşüyor.
+            Center(
+              child: TCircularImage(
+                image: image,
+                width: 84,
+                height: 84,
+                padding: 0,
+                isNetworkImage: image.isNotEmpty,
+                placeholderIcon: Iconsax.user,
+                placeholderIconColor: TColors.primary,
+                backgroundColor: dark ? TColors.darkSurface : TColors.white,
+              ),
+            ),
+            const SizedBox(height: TSizes.md),
+            Text(
+              user.fullName.trim().isEmpty ? TTexts.guestUser.tr : user.fullName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            if (user.email.isNotEmpty)
+              Text(
+                user.email,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+/// "Bu bilgiler 1C'den geliyor" notu. Kilidin sebebi yazılmazsa müşteri
+/// düzenleme düğmesini arıyor.
+class _LockedNote extends StatelessWidget {
+  const _LockedNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(TSizes.xs, TSizes.sm, TSizes.xs, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Iconsax.info_circle, size: TSizes.iconXs, color: TColors.darkGrey),
+          const SizedBox(width: TSizes.xs),
+          Expanded(
+            child: Text(
+              TTexts.companyDataFrom1C.tr,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: TColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,4 +1,4 @@
-/// Duruma göre sipariş sayıları.
+/// Sipariş istatistiklerinin duruma göre kırılımı (adet ve ciro).
 class OrderStatsByStatusModel {
   final String id;
   final Map<String, int> countByStatus;

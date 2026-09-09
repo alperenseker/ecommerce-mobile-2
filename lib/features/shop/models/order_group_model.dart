@@ -1,7 +1,3 @@
-/// Alışveriş grubu: tek ödemeyle kapanan, şirket (1C `erpSource`) başına
-/// bölünmüş siparişlerin bütünü.
-library;
-
 import 'package:t_utils/utils/constants/enums.dart';
 
 import 'order_model.dart';
@@ -64,6 +60,13 @@ class OrderGroupModel {
 
   /// Grupta ödenmemiş sipariş var mı — "ödemeyi tamamla" akışının koşulu.
   bool get isUnpaid => paymentStatus != PaymentStatus.paid;
+
+  /// Alışverişin TAMAMI iptal edilmiş mi.
+  ///
+  /// Grubun kendi durumu yok; sunucu durumu sipariş başına tutuyor. Biri bile
+  /// ayaktaysa alışveriş iptal sayılmaz — o siparişin ödemesi hâlâ alınabilir.
+  bool get isCanceled =>
+      orders.isNotEmpty && orders.every((o) => o.orderStatus == OrderStatus.canceled);
 
   // ─── Serialization ────────────────────────────────────────────────────────
 

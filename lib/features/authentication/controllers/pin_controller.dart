@@ -1,10 +1,3 @@
-/// PIN ekranlarının (kur / doğrula / güncelle) ortak controller'ı.
-///
-/// PIN 4 hanelidir ve **kullanıcı kaydının bir alanı** olarak tutulur
-/// (`UserController.updateUserRecordWithPin`). Doğrulama istemcide yapılır:
-/// sunucuda ayrı bir PIN ucu yok.
-library;
-
 import 'package:get/get.dart';
 
 import '../../../data/repositories/authentication/authentication_repository.dart';
@@ -16,6 +9,15 @@ import '../../../utils/popups/full_screen_loader.dart';
 import '../../../utils/popups/loaders.dart';
 import '../../personalization/controllers/user_controller.dart';
 
+/// PIN ekranlarının denetleyicisi (kur / doğrula / güncelle).
+///
+/// 🔴 PIN **yalnız istemcide** doğrulanıyor: `UserController.user.value.pin`
+/// ile karşılaştırılıyor ve sunucuya yazılmıyor
+/// (`updateUserRecordWithPin` içindeki TODO). Yani PIN bir kolaylık, güvenlik
+/// katmanı değil — para/veri koruyan bir kararı PIN'e dayandırma.
+///
+/// ⚠️ [updatePin] telefon OTP'sine bağlı; o uç sunucuda olmadığı için
+/// güncelleme ekranı bugün çalışmıyor.
 class PinController extends GetxController {
   var enteredOTP = ''.obs;
   var hasError = false.obs;
@@ -86,8 +88,7 @@ class PinController extends GetxController {
 
       final userController = UserController.instance;
 
-      // PIN değişimi telefon OTP'siyle doğrulanıyor.
-      // ⚠️ Telefon OTP'si sunucuda henüz yok; bu çağrı bilerek hata fırlatır.
+      // Trigger the OTP resend logic
       await AuthenticationRepository.instance.loginWithPhoneNo(userController.user.value.phoneNumber);
 
       // Redirect to OTP screen for verification

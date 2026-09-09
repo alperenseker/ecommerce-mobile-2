@@ -3,32 +3,32 @@ import 'package:get/get.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import 'bindings/general_bindings.dart';
-import 'features/personalization/controllers/language_controller.dart';
-import 'localization/languages.dart';
 import 'routes/app_routes.dart';
 import 'utils/constants/colors.dart';
 import 'utils/constants/image_strings.dart';
+import 'utils/constants/sizes.dart';
 import 'utils/constants/text_strings.dart';
 import 'utils/theme/theme.dart';
+import 'features/personalization/controllers/language_controller.dart';
+import 'localization/languages.dart';
 
-/// Uygulamanın kökü: tema, rotalar, çeviri ve genel bağımlılıklar burada
-/// kurulur. Ekranların hepsi bu ağacın altında çalışır.
+/// Uygulamanın kökü: tema, rotalar, diller ve genel bağlamalar burada kurulur.
+///
+/// `GetMaterialApp` kullanılıyor çünkü mimarinin tamamı GetX üzerine oturuyor
+/// (rota, bağlama, çeviri, snackbar hepsi Get üzerinden çalışıyor).
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Dil katmanı FAZ 09'da bağlandı. `LanguageController` `main.dart`'ta
-    // `permanent` kuruluyor, bu yüzden burada hazır.
-    //
-    // 🔴 Sözlüklerin kendisi FAZ 11'in işi: `Languages` bugün boş bir
-    // yükleyici (bkz. `localization/languages.dart`). Sözlük yokken `.tr`
-    // anahtarın kendisini döndürüyor; `TTexts` değerleri okunabilir metin
-    // olduğu için ekranda ham anahtar değil İngilizce görünüyor.
-    final langController = LanguageController.instance;
+    // Başlangıç dili: kullanıcının kayıtlı seçimi (bkz. `LanguageController`).
+    final langController = Get.find<LanguageController>();
     return GetMaterialApp(
       title: TTexts.appName,
-      locale: langController.selectedLocale.value,
+      locale: langController.localeFor(langController.selectedLocale.value.languageCode),
+      // 🔴 `Languages` şu an İSKELET (sözlükler FAZ 11'de geliyor); sözlük
+      // yokken `.tr` anahtarın kendisini döndürür. FAZ 11'in burayı
+      // değiştirmesine gerek yok, yalnız `_builders` haritasını dolduracak.
       translations: Languages(),
       fallbackLocale: const Locale('en', 'US'),
       theme: TAppTheme.lightTheme,
@@ -41,10 +41,9 @@ class App extends StatelessWidget {
       ],
       getPages: AppRoutes.pages,
 
-      /// Yönlendirme kararı verilene kadar duran bekleme ekranı.
-      /// `AuthenticationRepository.screenRedirect()` bunu hemen değiştirir.
-      /// Nötr zeminde FORES logosu duruyor (native açılış görseliyle aynı),
-      /// böylece açılışta renkli bir ekran parlamıyor.
+      /// `AuthenticationRepository` hangi ekrana gidileceğine karar verene
+      /// kadar duran yer tutucu. Marka logosu **nötr zeminde** kalıyor (yerel
+      /// açılış görseliyle aynı), böylece açılışta renkli bir ekran parlamıyor.
       home: Scaffold(
         backgroundColor: TColors.white,
         body: Center(
@@ -52,10 +51,10 @@ class App extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset(TImages.foresLogo, width: 160, fit: BoxFit.contain),
-              const SizedBox(height: 32),
+              const SizedBox(height: TSizes.xl),
               const SizedBox(
-                width: 24,
-                height: 24,
+                width: TSizes.iconMd,
+                height: TSizes.iconMd,
                 child: CircularProgressIndicator(color: TColors.primary, strokeWidth: 2.5),
               ),
             ],

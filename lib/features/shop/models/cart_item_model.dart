@@ -1,8 +1,10 @@
-/// Sepetteki tek kalem.
-library;
-
 import 'dart:convert';
 
+/// Sepetteki tek kalem.
+///
+/// FAZ 01'de yalnız `utils/helpers/erp_source_helper.dart` ve
+/// `pricing_calculator.dart` derlenebilsin diye getirildi; asıl sahibi
+/// FAZ 02'nin veri katmanıdır.
 class CartItemModel {
   String productId;
   String title;
@@ -45,7 +47,7 @@ class CartItemModel {
   /// 🔴 FAZ 05'te ortaya çıkan fiyat semantiği: sunucuda `Price` GÜNCEL,
   /// `OldPrice` indirimden ÖNCEKİ fiyattır ve `ProductModel` `OldPrice`ı
   /// `salePrice` alanına ayrıştırıyor (alan adı referanstan geliyor,
-  /// değiştirilmedi). Eski kod "salePrice varsa indirimli fiyat odur" diyordu;
+  /// değiştirilmedi). "salePrice varsa indirimli fiyat odur" varsayımı,
   /// indirimli bir üründe müşteriye **eski, yüksek** fiyatı ödetirdi.
   /// Sunucu sepeti zaten `UnitPrice`ı `price`e yazıyor, `salePrice`ı 0
   /// bırakıyor — yani tek doğru kaynak `price`.

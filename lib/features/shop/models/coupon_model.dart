@@ -1,11 +1,9 @@
-/// İndirim kuponu.
-library;
-
 import 'package:flutter/foundation.dart';
 
 import '../../../utils/constants/enums.dart';
 import '../../../utils/formatters/formatter.dart';
 
+/// İndirim kuponu (kod, tip, tutar, geçerlilik).
 class CouponModel {
   String id;
   String code;

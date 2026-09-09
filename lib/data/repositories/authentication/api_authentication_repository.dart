@@ -1,20 +1,19 @@
-/// `package:http` ile yazılmış eski kimlik sarmalayıcı.
-///
-/// Sınıf adı `api_auth.dart` ile aynıdır (`ApiAuth`) ama farklı dosyadadır;
-/// yalnız `verify_email_controller` (FAZ 03) bunu kullanır. Karıştırmamak
-/// için: yeni akışların hepsi `api_auth.dart`'tan geçer.
-library;
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../utils/http/dio_client.dart';
 
+/// Kimlik uçlarının **`package:http`** tabanlı eski istemcisi.
+///
+/// ⚠️ Sınıf adı `ApiAuth` — `api_auth.dart` içindeki dio tabanlı `ApiAuth` ile
+/// aynıdır; ikisini aynı dosyaya import etme. Bunu yalnız FAZ 03'teki
+/// `verify_email_controller` kullanıyor.
 class ApiAuth {
-  // Taban adres tek kaynaktan okunur. Buradaki yollar `'$baseUrl/auth/...'`
-  // biçiminde yazıldığı için `THttpClient.baseUrl`'ün sonundaki '/' atılır.
+  // Taban adres tek yerde (`THttpClient`) tanımlı. Buradaki çağrılar yolu
+  // `'$baseUrl/auth/login'` gibi kurduğu için sondaki eğik çizgi atılıyor;
+  // aksi hâlde `//auth/login` oluşurdu. Uç adları değişmedi.
   static final String baseUrl =
-      THttpClient.baseUrl.replaceFirst(RegExp(r'/+$'), '');
+      THttpClient.baseUrl.replaceFirst(RegExp(r'/+\$'), '');
   
   /// Login with Email and Password using custom API
   static Future<Map<String, dynamic>> loginWithEmailPassword({

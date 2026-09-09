@@ -1,6 +1,3 @@
-/// Görsel/dosya yükleme uçları (`media/...`).
-library;
-
 import 'dart:typed_data';
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:dio/dio.dart';
@@ -11,6 +8,7 @@ import '../../../features/personalization/models/image_model.dart';
 import '../../../utils/constants/enums.dart';
 import '../media/media_repository.dart';
 
+/// Görsel/medya uçları (`media/...`).
 class ApiMediaRepository extends TApiRepositoryController<ImageModel>
     implements MediaRepository {
   static ApiMediaRepository get instance =>

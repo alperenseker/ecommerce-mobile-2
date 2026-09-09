@@ -1,4 +1,4 @@
-/// Yönetici tarafındaki genel ayarlar (`settings` ucu, yetki ister).
+/// Tam ayar kaydı (`GET /settings`, yetki ister).
 class SettingsModel {
   final String? id;
   double taxRate;

@@ -1,15 +1,14 @@
-/// Dil adına göre yerel ayar kuran **yardımcı controller** (referansla eşlik).
+/// Dil tercihini `GetStorage`'da tutan yardımcı denetleyici.
 ///
-/// 🔴 Uygulamada kullanılan dil kapısı bu DEĞİL,
-/// `features/personalization/controllers/language_controller.dart`'tır.
-/// Bu dosya referansta da hiçbir yerden çağrılmıyor; KURALLAR §4 gereği
-/// (hiçbir fonksiyon eksilmez) birebir taşındı.
+/// ⚠️ **Uygulamanın dil kapısı bu sınıf DEĞİL, `LanguageController`'dır.**
+/// İkisi ayrı depolama anahtarı kullanıyor: burada `'Language'` (büyük L),
+/// dil ekranında `'language'` (küçük l) — referanstaki ayrım korundu.
+/// Dosya KURALLAR §4 gereği ("hiçbir dosya eksilmez") taşındı; dil
+/// değiştirmek için `LanguageController.changeLanguage` çağrılır.
 ///
-/// ⚠️ Depolama anahtarı referansta `'Language'` (büyük L) — dil ekranının
-/// kullandığı `'language'` anahtarı DEĞİL. Referanstaki bu ayrım korundu;
-/// iki sınıf aynı anda kullanılırsa dil seçimi iki ayrı yerde tutulur ve
-/// birbirini görmez. Bu yüzden yeni bir yerden buraya bağlanma, dil
-/// değiştirmek için `LanguageController.changeLanguage` çağır.
+/// Referanstan iki fark: Kazakça ile Türkçe dalları eklendi (referans sekiz
+/// dil biliyordu) ve yerel ayar değişmeden önce `Languages.ensureLoaded`
+/// çağrılıyor — tembel yükleme yüzünden sözlük o an bellekte olmayabilir.
 library;
 
 import 'package:flutter/material.dart';
@@ -21,7 +20,6 @@ import 'languages.dart';
 
 class TLocalizationHelper extends GetxController {
   static TLocalizationHelper get instance => Get.find();
-
   final storage = GetStorage();
   final RxString currentLanguage = TTexts.english.obs;
 
@@ -44,39 +42,26 @@ class TLocalizationHelper extends GetxController {
     _updateLocale(value);
   }
 
-  /// Dil adını yerel ayara çevirir ve **önce sözlüğü yükler**.
-  ///
-  /// Referansta `Languages.ensureLoaded` çağrısı yoktu çünkü orada on dilin
-  /// tamamı açılışta belleğe alınıyordu. Bu projede sözlükler tembel
-  /// yükleniyor; çağrı olmadan ekran bir kare boyunca ham anahtar gösterirdi.
-  ///
-  /// Kazakça ve Türkçe dalları referansta **yoktu** (şablondan kalma bir
-  /// eksik). Bu uygulamanın ilk iki dili onlar olduğu için eklendi.
   void _updateLocale(String value) {
-    Locale? locale;
-    if (value == TTexts.english) {
-      locale = const Locale('en', 'US');
-    } else if (value == TTexts.french) {
-      locale = const Locale('fr', 'CA');
-    } else if (value == TTexts.german) {
-      locale = const Locale('de', 'DE');
-    } else if (value == TTexts.portuguese) {
-      locale = const Locale('pt', 'PT');
-    } else if (value == TTexts.brazilian) {
-      locale = const Locale('pt', 'BR');
-    } else if (value == TTexts.vietnamese) {
-      locale = const Locale('vi', 'VN');
-    } else if (value == TTexts.spanish) {
-      locale = const Locale('es', 'ES');
-    } else if (value == TTexts.russian) {
-      locale = const Locale('ru', 'RU');
-    } else if (value == TTexts.turkish) {
-      locale = const Locale('tr', 'TR');
-    } else if (value == TTexts.kazakh) {
-      locale = const Locale('kk', 'KZ');
-    }
+    // Sözlük tembel yükleniyor: yerel ayarı değiştirmeden ÖNCE haritayı
+    // belleğe al, yoksa bir kare boyunca ham anahtar görünür.
+    final locale = _localeFor(value);
     if (locale == null) return;
-    Languages.ensureLoaded(locale.languageCode);
+    Languages.ensureLoaded(locale.countryCode == 'BR' ? 'pt_BR' : locale.languageCode);
     Get.updateLocale(locale);
+  }
+
+  Locale? _localeFor(String value) {
+    if (value == TTexts.english) return const Locale('en', 'US');
+    if (value == TTexts.french) return const Locale('fr', 'CA');
+    if (value == TTexts.german) return const Locale('de', 'DE');
+    if (value == TTexts.portuguese) return const Locale('pt', 'PT');
+    if (value == TTexts.brazilian) return const Locale('pt', 'BR');
+    if (value == TTexts.vietnamese) return const Locale('vi', 'VN');
+    if (value == TTexts.spanish) return const Locale('es', 'ES');
+    if (value == TTexts.russian) return const Locale('ru', 'RU');
+    if (value == TTexts.turkish) return const Locale('tr', 'TR');
+    if (value == TTexts.kazakh) return const Locale('kk', 'KZ');
+    return null;
   }
 }

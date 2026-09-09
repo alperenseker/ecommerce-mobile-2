@@ -1,19 +1,11 @@
-/// Şirket kaydının iki penceresi.
-///
-/// 1C'de **bulunan** şirket için doğrulama penceresi, **bulunamayan** şirket
-/// için elle giriş penceresi (bireysel girişimci akışı). İkisi de
-/// `SignupController._companyFlow()` içinden çağrılır.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../utils/constants/colors.dart';
 import '../../../../../utils/constants/sizes.dart';
 import '../../../models/company_model.dart';
 
-/// Confirmation dialog shown when the company is found in the registry.
-/// Returns `true` if the user confirms the official record.
+/// Şirket 1C kütüğünde **bulunduğunda** açılan onay penceresi.
+/// Kullanıcı resmi kaydı onaylarsa `true` döner.
 Future<bool> showCompanyConfirmDialog(CompanyModel company) async {
   final result = await Get.dialog<bool>(
     AlertDialog(
@@ -43,9 +35,8 @@ Future<bool> showCompanyConfirmDialog(CompanyModel company) async {
   return result ?? false;
 }
 
-/// Manual entry dialog shown when the company is NOT found in the registry
-/// (IP / individual entrepreneur flow). Returns `{name, director}` or null on
-/// cancel.
+/// Şirket kütükte **bulunamadığında** açılan elle giriş penceresi
+/// (İP / şahıs şirketi yolu). `{name, director}` ya da iptalde null döner.
 Future<Map<String, String>?> showIpCompanyDialog() async {
   final nameController = TextEditingController();
   final directorController = TextEditingController();
@@ -100,14 +91,13 @@ Future<Map<String, String>?> showIpCompanyDialog() async {
   return result;
 }
 
-/// Pencere içindeki etiket/değer satırı.
 Widget _row(String label, String value) {
   return Padding(
     padding: const EdgeInsets.only(bottom: TSizes.sm),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 2, child: Text(label, style: Get.textTheme.bodySmall?.copyWith(color: TColors.textSecondary))),
+        Expanded(flex: 2, child: Text(label, style: Get.textTheme.bodySmall?.copyWith(color: Colors.grey))),
         Expanded(
           flex: 3,
           child: Text(value, style: Get.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),

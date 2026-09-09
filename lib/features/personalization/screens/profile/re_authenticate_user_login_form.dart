@@ -1,8 +1,8 @@
 /// Yeniden kimlik doğrulama formu.
 ///
-/// Hesap silme gibi geri dönüşü olmayan işlemlerden önce kullanıcıdan
-/// e-posta + şifre istenir; doğrulama başarılıysa silme yapılır
-/// (`UserController.reAuthenticateEmailAndPasswordUser`).
+/// Hesap silme gibi geri alınamaz işlemlerden önce kullanıcıdan e-posta ve
+/// şifresini yeniden ister; doğrulama `Auth/login` ucuna gerçek bir istekle
+/// yapılır (`UserController.reAuthenticateEmailAndPasswordUser`).
 library;
 
 import 'package:flutter/material.dart';
@@ -58,8 +58,6 @@ class ReAuthLoginForm extends StatelessWidget {
                       prefixIcon: const Icon(Iconsax.password_check),
                       suffixIcon: IconButton(
                         onPressed: () => controller.hidePassword.value = !controller.hidePassword.value,
-                        // Referansta ikon sabit "kapalı göz"dü ve basınca
-                        // değişmiyordu; durumu göstersin diye ikon da döner.
                         icon: Icon(controller.hidePassword.value ? Iconsax.eye_slash : Iconsax.eye),
                       ),
                     ),
@@ -67,7 +65,6 @@ class ReAuthLoginForm extends StatelessWidget {
                 ),
                 const SizedBox(height: TSizes.spaceBtwSections),
 
-                /// -- Doğrula
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

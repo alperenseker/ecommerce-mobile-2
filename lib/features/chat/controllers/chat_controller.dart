@@ -1,22 +1,15 @@
-/// Destek sohbetinin durumu: sohbeti bul-ya-da-aç, mesajları yükle, gönder,
-/// okundu bilgisini yaz ve panel açıkken **yoklama** ile yenile.
+/// Destek sohbetinin tüm iş kuralları: sohbeti bul-ya-da-aç, mesajları çek,
+/// gönder, okundu işaretle ve **yoklama** ile tazele.
 ///
-/// 🔴 **SOHBET KULLANICI BAŞINA TEKTİR.** Ekran her açıldığında önce var olan
-/// `support` sohbeti aranır (`chat/user/{userId}/type/support`); yalnız hiç
-/// yoksa yeni sohbet açılır. Her açılışta yeni sohbet yaratmak destek
-/// ekibinde aynı kişiyi 20 ayrı konu hâline getiriyordu (web'de de aynı kural:
-/// `services/chat.service.js` → `Chat.ensure`).
-///
-/// 🔴 **Yeni mesajlar YOKLAMA ile alınır, SignalR ile değil.** Yoklama YALNIZ
-/// sohbet ekranı açıkken çalışır; ekran kapanınca ya da uygulama arka plana
-/// düşünce durur — kapalı panelde 8 saniyede bir istek atmak sunucuyu boşuna
-/// yorar ve pil yakar. Referanstaki SignalR yardımcıları (`notifyTyping`,
-/// `onUserTyping`, `stopTyping`) silinmedi; hub bağlı değilken sessizce boşa
-/// düşerler.
+/// Referans mobil uygulama mesajları SignalR (`chathub`) üzerinden canlı
+/// alıyordu; bu sunucuda hub açık değil. Web projesi (`chat.service.js`) aynı
+/// işi 8 saniyelik yoklamayla yapıyor — destek sohbetinde birkaç saniye
+/// gecikme sorun değil, buna karşılık her sunucuda kurulumsuz çalışıyor.
+/// Repository'deki hub kodu **silinmedi**; sunucuda `chathub` açılırsa
+/// burada yalnız bağlanma çağrısı geri açılır.
 library;
 
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart';
@@ -39,50 +32,45 @@ class ChatController extends GetxController with WidgetsBindingObserver {
   static ChatController get instance => Get.find();
   final _chatRepository = ApiChatRepository.instance;
 
-  /// Yoklama aralığı. Web'deki `App.config.CHAT_POLL` ile aynı (8 sn):
-  /// destek sohbetinde birkaç saniye gecikme sorun değil, daha sıkı yoklama
-  /// yalnız sunucuyu yorar.
+  /// Yoklama aralığı. Web'deki `App.config.CHAT_POLL` ile **aynı** olmalı;
+  /// iki istemcinin destek ekibine farklı hızda görünmesi kafa karıştırıyor.
   static const Duration pollInterval = Duration(seconds: 8);
 
-  /// Sunucudaki kimliği henüz bilinmeyen, yerel olarak çizilmiş mesajların
-  /// kimlik öneki. Gerçek mesaj gelince bunlar kopya bırakmadan eşleştirilir.
+  /// Sunucuya henüz gitmemiş (iyimser) mesajların kimlik ön eki. Boş kimlik
+  /// listede çakışıp çizimi düşürdüğü için geçici kimlik veriliyor.
   static const String tempIdPrefix = 'temp_';
 
-  // -- Gözlemlenebilir durum
-  final chats = <ChatModel>[].obs;
+  // ─── Gözlenenler ──────────────────────────────────────────────────────────
+  var chats = <ChatModel>[].obs;
+  var messages = <MessageModel>[].obs;
+  var isLoading = true.obs;
+  var isEditing = false.obs;
+  var isSending = false.obs;
+  var hasError = false.obs;
+  var currentChatId = ''.obs;
+  var currentChat = ChatModel.empty().obs;
+  var admin = UserModel.empty().obs;
+  var isOtherTyping = false.obs;
 
-  /// Mesajlar **yeniden eskiye** dizilidir (index 0 = en yeni) — `flutter_chat_ui`
-  /// listeyi bu sırayla bekliyor.
-  final messages = <MessageModel>[].obs;
-  final isLoading = true.obs;
-  final isEditing = false.obs;
-  final isSending = false.obs;
-  final isUploading = false.obs;
-  final currentChatId = ''.obs;
-  final currentChat = ChatModel.empty().obs;
-  final admin = UserModel.empty().obs;
-  final isOtherTyping = false.obs;
-
-  /// Sohbet hiç açılamadıysa (uç 401/500) ekran boş balon yerine hata
-  /// durumunu gösterir; kullanıcı yeniden deneyebilsin.
-  final hasError = false.obs;
-
-  Timer? _pollTimer;
+  StreamSubscription<bool>? _typingSubscription;
+  StreamSubscription<String>? _seenSubscription;
   Timer? _typingDebounce;
 
-  /// Panel (sohbet ekranı) açık mı — yoklamanın birinci koşulu.
+  Timer? _pollTimer;
+
+  /// Panel (sohbet ekranı) açık mı. Yoklama yalnız açıkken döner; kapalı
+  /// panelde 8 saniyede bir istek atmak sunucuyu boşuna yoruyor.
   bool _panelOpen = false;
 
-  /// Uygulama ön planda mı — yoklamanın ikinci koşulu.
+  /// Uygulama önde mi. Arka plandayken sayaç boşa dönmesin.
   bool _appResumed = true;
 
-  /// Aynı anda ikinci bir yoklama başlamasın (yavaş ağda istekler üst üste
-  /// binip listeyi zıplatıyordu).
-  bool _polling = false;
-
-  /// Devam eden "sohbeti bul-ya-da-aç" işi. İki çağrı üst üste gelirse
-  /// (ekran açılışı + ilk mesaj) İKİSİ DE sohbet açmasın diye paylaşılır.
+  /// Aynı anda iki yerden gelen "sohbeti hazırla" çağrısı (ekran açılışı ve
+  /// hızla yazılan ilk mesaj) tek `Future`'ı paylaşsın; yoksa ikisi de "sohbet
+  /// yok" görüp **iki ayrı sohbet** açıyor.
   Future<ChatModel>? _ensureFuture;
+
+  bool get isPolling => _pollTimer?.isActive ?? false;
 
   @override
   void onInit() {
@@ -93,16 +81,37 @@ class ChatController extends GetxController with WidgetsBindingObserver {
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
-    _pollTimer?.cancel();
+    _typingSubscription?.cancel();
+    _seenSubscription?.cancel();
     _typingDebounce?.cancel();
+    stopPolling();
     super.onClose();
+  }
+
+  // ─── Yaşam döngüsü ────────────────────────────────────────────────────────
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    _appResumed = state == AppLifecycleState.resumed;
+
+    if (_appResumed) {
+      // Öne dönüşte bir kez hemen tazele; kullanıcı 8 saniye boş ekrana
+      // bakmasın.
+      if (_panelOpen) {
+        refreshMessages();
+        startPolling();
+      }
+    } else {
+      stopPolling();
+    }
   }
 
   // ─── Yoklama ──────────────────────────────────────────────────────────────
 
-  /// Yoklamanın çalışması gereken durum. **Saf fonksiyon** (test edilebilir):
-  /// panel kapalıysa, uygulama arka plandaysa ya da kullanıcı misafirse
-  /// sayaç boşa dönmemeli.
+  /// Yoklamanın dönmesi gereken durum. **Saf** tutuldu ki testte donanım
+  /// olmadan sabitlenebilsin: sayacın "boşa dönmesi" en kolay gözden kaçan
+  /// pil/veri kaybı.
   static bool shouldPoll({
     required bool panelOpen,
     required bool appResumed,
@@ -111,20 +120,20 @@ class ChatController extends GetxController with WidgetsBindingObserver {
   }) =>
       panelOpen && appResumed && !isGuest && hasChat;
 
-  bool get _shouldPoll => shouldPoll(
+  void startPolling() {
+    stopPolling();
+    _pollTimer = Timer.periodic(pollInterval, (_) {
+      if (!shouldPoll(
         panelOpen: _panelOpen,
         appResumed: _appResumed,
         isGuest: AuthenticationRepository.instance.isGuestUser,
-        hasChat: currentChatId.value.isNotEmpty,
-      );
-
-  /// Yoklama sayacı ayakta mı (test ve ekran için).
-  bool get isPolling => _pollTimer?.isActive ?? false;
-
-  void startPolling() {
-    stopPolling();
-    if (!_shouldPoll) return;
-    _pollTimer = Timer.periodic(pollInterval, (_) => _poll());
+        hasChat: currentChat.value.id.isNotEmpty,
+      )) {
+        stopPolling();
+        return;
+      }
+      refreshMessages();
+    });
   }
 
   void stopPolling() {
@@ -132,138 +141,22 @@ class ChatController extends GetxController with WidgetsBindingObserver {
     _pollTimer = null;
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    _appResumed = state == AppLifecycleState.resumed;
-
-    if (!_appResumed) {
-      // Arka planda yoklama YOK — kabul kriteri: sayaç boşa dönmemeli.
-      stopPolling();
-      return;
-    }
-
-    if (_panelOpen) {
-      // Öne dönerken beklemeden bir kez tazele; 8 sn'lik boşluk kullanıcıya
-      // "mesaj gelmemiş" gibi görünüyordu.
-      _poll();
-      startPolling();
-    }
-  }
-
-  /// Tek yoklama turu: mesajları çeker, yerel iyimser mesajlarla birleştirir
-  /// ve yeni gelen varsa okundu bilgisini yazar.
-  Future<void> _poll() async {
-    if (_polling || !_shouldPoll) return;
-    _polling = true;
-    try {
-      final fresh = await _chatRepository.fetchMessages(currentChatId.value);
-      final beforeIds = messages.map((m) => m.id).toSet();
-      messages.value = mergeMessages(fresh, messages);
-      final gotNew = messages.any((m) => !beforeIds.contains(m.id));
-      if (gotNew) markMessagesAsSeen();
-    } catch (e) {
-      // Yoklama hatası sessizdir: ağ bir tur düşerse kullanıcıya balon
-      // göstermenin anlamı yok, bir sonraki tur zaten deneyecek.
-      TLoggerHelper.warning('Sohbet yoklaması başarısız: $e');
-    } finally {
-      _polling = false;
-    }
-  }
-
-  // ─── Mesaj birleştirme ────────────────────────────────────────────────────
-
-  /// Sunucu listesiyle yerel iyimser mesajları birleştirir. **Saf fonksiyon.**
-  ///
-  /// Sunucu her yoklamada TÜM geçmişi döndürüyor; onu doğrudan yazmak, henüz
-  /// sunucuya ulaşmamış (ya da gönderilemeyip `failed` kalmış) yerel mesajları
-  /// ekrandan siliyordu. Bu yüzden geçici kimlikli mesajlar, sunucuda karşılığı
-  /// **bulunamayanlar** kadar korunur; karşılığı bulunan her biri tek bir
-  /// sunucu mesajını "sahiplenir" (aynı metni iki kez yazan kullanıcıda ikinci
-  /// mesaj kaybolmasın).
-  static List<MessageModel> mergeMessages(
-    List<MessageModel> serverMessages,
-    List<MessageModel> localMessages,
-  ) {
-    final server = [...serverMessages]
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    final claimed = <int>{};
-    final pending = <MessageModel>[];
-
-    for (final local in localMessages) {
-      if (!local.id.startsWith(tempIdPrefix)) continue;
-
-      var matched = false;
-      for (var i = 0; i < server.length; i++) {
-        if (claimed.contains(i)) continue;
-        final candidate = server[i];
-        if (candidate.senderId == local.senderId &&
-            candidate.content == local.content &&
-            candidate.type == local.type) {
-          claimed.add(i);
-          matched = true;
-          break;
-        }
-      }
-      if (!matched) pending.add(local);
-    }
-
-    pending.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    return [...pending, ...server];
-  }
-
-  // ─── Sohbeti aç ───────────────────────────────────────────────────────────
-
-  /// Sohbet ekranının giriş noktası: hangi sohbetin gösterileceğini çözer
-  /// (ilk kullanımda destek sohbetini açar) ve mesajlarını yükler.
-  ///
-  /// Ekranın kendi (kapatılabilir) yükleme durumunun arkasında çalışır; yavaş
-  /// ya da başarısız bir çağrı kullanıcıyı engelleyici bir diyalogda hapsetmez.
-  Future<void> openSupportChat() async {
-    _panelOpen = true;
-    hasError.value = false;
-
-    // Misafir kullanıcı hiçbir uca gitmez: mesaj sunucuda kullanıcıya
-    // bağlanıyor. Ekran giriş bağlantısını gösterir (duvara çarptırma yok).
-    if (AuthenticationRepository.instance.isGuestUser) {
-      isLoading.value = false;
-      return;
-    }
-
-    try {
-      if (currentChatId.value.isEmpty) {
-        final chat = await ensureSupportChat();
-        currentChat.value = chat;
-        currentChatId.value = chat.id;
-      }
-
-      await fetchMessages();
-      markMessagesAsSeen();
-      startPolling();
-    } catch (e) {
-      TLoggerHelper.error('Destek sohbeti açılamadı', e);
-      isLoading.value = false;
-      hasError.value = true;
-      TLoaders.errorSnackBar(
-        title: TTexts.ohSnap.tr,
-        message: TTexts.unableFetchMessage.tr,
-      );
-    }
-  }
-
-  /// Sohbet ekranı kapanırken çağrılır: yoklama durur.
+  /// Ekran kapanırken çağrılır: sayaç durur, panel kapalı işaretlenir.
   void closeSupportChat() {
     _panelOpen = false;
     stopPolling();
   }
 
-  /// Var olan destek sohbetini döndürür, yoksa **bir kez** açar.
-  ///
-  /// 🔴 Yeni sohbet açmadan önce DAİMA arama yapılır. Arama ucu hata verirse
-  /// (uç yok / geçici sorun) web'deki gibi açmaya geçilir; ama iki eşzamanlı
-  /// çağrı aynı işi paylaşır, ikinci bir sohbet yaratılmaz.
+  // ─── Sohbeti bul ya da aç ─────────────────────────────────────────────────
+
+  /// 🔴 **Destek sohbeti kullanıcı başına TEKTİR.** Önce var olan `support`
+  /// sohbeti aranır; **yalnız hiç sonuç yoksa** yenisi açılır. Her açılışta
+  /// yeni sohbet yaratmak destek ekibinde aynı kişiyi ayrı ayrı konu hâline
+  /// getiriyordu. Sohbet açan başka bir yer yazma — bu kapıyı çağır.
   Future<ChatModel> ensureSupportChat() {
+    if (currentChat.value.id.isNotEmpty) {
+      return Future.value(currentChat.value);
+    }
     return _ensureFuture ??= _ensureSupportChat().whenComplete(() {
       _ensureFuture = null;
     });
@@ -274,42 +167,288 @@ class ChatController extends GetxController with WidgetsBindingObserver {
       isLoading.value = true;
       final userId = AuthenticationRepository.instance.getUserID;
 
-      // Admin bilgisi yalnız başlıkta/ listede isim göstermek için; bulunamazsa
-      // sohbet yine de açılmalı — referansta bu çağrı zincirin başındaydı ve
-      // 401 alınca sohbet hiç açılmıyordu.
+      // Başlıkta isim/avatar göstermek için; sorgu 401 verirse sohbet yine de
+      // açılmalı, bu yüzden hata yutuluyor.
       await fetchAdmin();
 
-      try {
-        final existing = await _chatRepository.getChatsByType(
-          userId,
-          ChatType.support,
-        );
-        if (existing.isNotEmpty) {
-          chats.assignAll(existing);
-          currentChat.value = existing.first;
-          currentChatId.value = existing.first.id;
-          return existing.first;
-        }
-      } catch (e) {
-        // Arama başarısızsa aşağıda açmayı deneriz (web ile aynı davranış).
-        TLoggerHelper.warning('Var olan destek sohbeti aranamadı: $e');
+      final existingChats = await _chatRepository.getChatsByType(
+        userId,
+        ChatType.support,
+      );
+      if (existingChats.isNotEmpty) {
+        currentChat.value = existingChats.first;
+        currentChatId.value = existingChats.first.id;
+        return existingChats.first;
       }
 
       final created = await _chatRepository.createSupportChat(userId);
-      if (created == null || created.id.isEmpty) {
-        throw TTexts.unableFindChat.tr;
+      if (created != null && created.id.isNotEmpty) {
+        currentChat.value = created;
+        currentChatId.value = created.id;
+        chats.add(created);
+        return created;
       }
-
-      currentChat.value = created;
-      currentChatId.value = created.id;
-      if (!chats.any((c) => c.id == created.id)) chats.add(created);
-      return created;
+      return ChatModel.empty();
     } finally {
       isLoading.value = false;
     }
   }
 
+  /// Sohbet ekranının giriş noktası: sohbeti çözer, mesajları yükler ve
+  /// yoklamayı başlatır.
+  ///
+  /// Girişsiz kullanıcı hiçbir sohbet ucuna gitmez ve yoklama başlamaz;
+  /// ekranda giriş bağlantısı gösterilir (web `support-widget.js` ile aynı).
+  Future<void> openSupportChat() async {
+    _panelOpen = true;
+
+    if (AuthenticationRepository.instance.isGuestUser ||
+        AuthenticationRepository.instance.getUserID.isEmpty) {
+      isLoading.value = false;
+      return;
+    }
+
+    try {
+      hasError.value = false;
+
+      if (currentChat.value.id.isEmpty) {
+        // Liste ekranından kimlikle gelindiyse doğrudan o sohbet açılır.
+        if (currentChatId.value.isNotEmpty) {
+          currentChat.value = await _chatRepository.getChatById(
+            currentChatId.value,
+          );
+        } else {
+          await ensureSupportChat();
+        }
+      }
+
+      await fetchMessages();
+      startPolling();
+    } catch (e) {
+      hasError.value = true;
+      isLoading.value = false;
+      TLoggerHelper.error('Destek sohbeti açılamadı', e);
+      TLoaders.errorSnackBar(
+        title: TTexts.ohSnap.tr,
+        message: TTexts.unableFetchMessage.tr,
+      );
+    }
+  }
+
+  // ─── Mesajlar ─────────────────────────────────────────────────────────────
+
+  /// 🔴 Sunucu her çağrıda **tüm geçmişi** ve **eskiden yeniye** döndürüyor
+  /// (2026-09-09'da canlı doğrulandı). `flutter_chat_ui` ise listeyi
+  /// **yeniden eskiye** bekliyor (index 0 = en yeni), bu yüzden ters çevrilir.
+  List<MessageModel> _normalize(List<MessageModel> serverMessages) {
+    final sorted = List<MessageModel>.from(serverMessages)
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return sorted;
+  }
+
+  /// Sunucu geçmişini yerel listeyle birleştirir. **Saf** fonksiyon.
+  ///
+  /// Sunucu her yoklamada tüm geçmişi döndürdüğü için listeyi doğrudan
+  /// üzerine yazmak, henüz gitmemiş ya da `failed` kalmış yerel mesajları
+  /// ekrandan **siliyordu**. Kural: geçici kimlikli mesaj, sunucuda karşılığı
+  /// bulunana kadar korunur; karşılığı bulunan her biri **tek** bir sunucu
+  /// mesajını sahiplenir — aynı metni iki kez yazan kullanıcıda ikinci mesaj
+  /// kaybolmasın.
+  ///
+  /// Her iki liste de **yeniden eskiye** dizilidir.
+  static List<MessageModel> mergeMessages(
+    List<MessageModel> local,
+    List<MessageModel> server,
+  ) {
+    final claimed = <int>{};
+    final pending = <MessageModel>[];
+
+    for (final message in local) {
+      if (!message.id.startsWith(tempIdPrefix)) continue;
+
+      var matched = false;
+      for (var i = 0; i < server.length; i++) {
+        if (claimed.contains(i)) continue;
+        final candidate = server[i];
+        if (candidate.senderId == message.senderId &&
+            candidate.content == message.content &&
+            candidate.type == message.type) {
+          claimed.add(i);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) pending.add(message);
+    }
+
+    return [...pending, ...server];
+  }
+
+  Future<void> fetchMessages() async {
+    try {
+      isLoading.value = true;
+
+      if (currentChat.value.id.isEmpty && currentChatId.value.isNotEmpty) {
+        currentChat.value = await _chatRepository.getChatById(
+          currentChatId.value,
+        );
+      }
+
+      if (currentChat.value.id.isEmpty) {
+        messages.value = [];
+        return;
+      }
+
+      currentChatId.value = currentChat.value.id;
+      final fetched = await _chatRepository.fetchMessages(
+        currentChat.value.id,
+      );
+      messages.value = mergeMessages(messages, _normalize(fetched));
+      hasError.value = false;
+
+      markMessagesAsSeen();
+    } catch (e) {
+      hasError.value = true;
+      TLoggerHelper.error('Sohbet mesajları alınamadı', e);
+      TLoaders.errorSnackBar(
+        title: TTexts.ohSnap.tr,
+        message: TTexts.unableFetchMessage.tr,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Yoklamanın çağırdığı sessiz tazeleme: yükleniyor göstergesi çizilmez ve
+  /// hata balonu atılmaz — 8 saniyede bir "bağlantı yok" balonu çıkarmak
+  /// yazışmayı okunmaz hâle getiriyor.
+  Future<void> refreshMessages() async {
+    if (currentChat.value.id.isEmpty) return;
+    try {
+      final fetched = await _chatRepository.fetchMessages(
+        currentChat.value.id,
+      );
+      messages.value = mergeMessages(messages, _normalize(fetched));
+      hasError.value = false;
+      markMessagesAsSeen();
+    } catch (e) {
+      TLoggerHelper.warning('Yoklama başarısız: $e');
+    }
+  }
+
+  /// Okundu bilgisi. Başarısızlığı kullanıcıya yansıtılmaz: mesaj gitti
+  /// sayılır (web `chat.service.js` de bu çağrının hatasını yutuyor).
+  void markMessagesAsSeen() async {
+    if (currentChatId.value.isEmpty) return;
+    final currentUserId = AuthenticationRepository.instance.getUserID;
+    try {
+      await _chatRepository.markMessagesAsSeen(
+        currentChatId.value,
+        currentUserId,
+      );
+    } catch (e) {
+      TLoggerHelper.warning('Okundu bilgisi gönderilemedi: $e');
+    }
+  }
+
+  // ─── Gönderme ─────────────────────────────────────────────────────────────
+
+  Future<void> sendTextMessage(String content) async {
+    final body = content.trim();
+    if (body.isEmpty) return;
+    await _sendMessage(body, MessageType.text);
+  }
+
+  Future<void> _sendMessage(String content, MessageType messageType) async {
+    final chat = await ensureSupportChat();
+    if (chat.id.isEmpty) {
+      TLoaders.warningSnackBar(
+        title: TTexts.ohSnap.tr,
+        message: TTexts.unableSendMessage.tr,
+      );
+      return;
+    }
+
+    // Geçici kimlik: sunucu kimliği gelene kadar mesajı listede benzersiz
+    // tutar (boş kimlik diğerleriyle çakışıp çizimi düşürüyordu).
+    final tempId = '$tempIdPrefix${DateTime.now().microsecondsSinceEpoch}';
+    final newMessage = MessageModel(
+      id: tempId,
+      senderId: AuthenticationRepository.instance.getUserID,
+      content: content,
+      timestamp: DateTime.now(),
+      status: ChatMessageStatus.sending,
+      type: messageType,
+    );
+
+    // Anında görünsün (iyimser ekleme); liste yeniden eskiye dizili.
+    messages.insert(0, newMessage);
+    updateChatLastMessage(newMessage);
+    isEditing.value = false;
+
+    try {
+      isSending.value = true;
+      final messageId = await _chatRepository.sendMessage(chat.id, newMessage);
+
+      final tempIndex = messages.indexWhere((msg) => msg.id == tempId);
+      if (messageId.isNotEmpty && tempIndex != -1) {
+        final alreadyThere = messages.indexWhere((msg) => msg.id == messageId);
+        if (alreadyThere != -1 && alreadyThere != tempIndex) {
+          // Yoklama sunucu sürümünü çoktan getirmiş — geçici olanı düşür.
+          messages.removeAt(tempIndex);
+        } else {
+          newMessage.id = messageId;
+          newMessage.status = ChatMessageStatus.sent;
+          messages[tempIndex] = newMessage;
+        }
+      }
+
+      _syncChatListEntry(newMessage);
+      messages.refresh();
+    } catch (e) {
+      final failedIndex = messages.indexWhere((msg) => msg.id == tempId);
+      if (failedIndex != -1) {
+        messages[failedIndex].status = ChatMessageStatus.failed;
+        messages.refresh();
+      }
+      TLoggerHelper.error('Mesaj gönderilemedi', e);
+      TLoaders.warningSnackBar(
+        title: TTexts.ohSnap.tr,
+        message: TTexts.unableSendMessage.tr,
+      );
+    } finally {
+      isSending.value = false;
+    }
+  }
+
+  /// Liste ekranındaki satırın son mesajını da güncel tutar.
+  void _syncChatListEntry(MessageModel message) {
+    final index = chats.indexWhere((chat) => chat.id == currentChat.value.id);
+    if (index == -1) return;
+    final entry = chats[index];
+    entry.lastMessage = message.content;
+    entry.lastMessageType = message.type;
+    entry.lastMessageTime = message.timestamp;
+    entry.lastMessageStatus = message.status;
+    entry.lastMessageSenderId = message.senderId;
+    chats[index] = entry;
+  }
+
+  void updateChatLastMessage(MessageModel message) {
+    currentChat.value.lastMessage = message.content;
+    currentChat.value.lastMessageType = message.type;
+    currentChat.value.lastMessageStatus = message.status;
+    currentChat.value.lastMessageTime = message.timestamp;
+    currentChat.value.lastMessageSenderId = message.senderId;
+  }
+
+  // ─── Sohbet listesi ───────────────────────────────────────────────────────
+
   Future<void> fetchSupportChat() async {
+    if (AuthenticationRepository.instance.isGuestUser) {
+      isLoading.value = false;
+      return;
+    }
     try {
       isLoading.value = true;
       chats.clear();
@@ -317,7 +456,8 @@ class ChatController extends GetxController with WidgetsBindingObserver {
       await fetchChatsByType(userId, ChatType.support);
       await fetchAdmin();
     } catch (e) {
-      TLoggerHelper.warning('Sohbet listesi alınamadı: $e');
+      hasError.value = true;
+      TLoggerHelper.error('Sohbet listesi alınamadı', e);
     } finally {
       isLoading.value = false;
     }
@@ -328,9 +468,21 @@ class ChatController extends GetxController with WidgetsBindingObserver {
     await fetchChatsByType(userId, ChatType.support);
   }
 
-  /// Referanstan taşındı: belirli bir "referans kimliği" (eski sürümde yolculuk)
-  /// için açılmış sohbeti bulur. Bu uygulamada `referenceId` boş geliyor ama
-  /// işlev eksiltilmedi.
+  Future<void> fetchChatsByType(String currentUserId, ChatType chatType) async {
+    try {
+      isLoading.value = true;
+      final typedChats = await _chatRepository.getChatsByType(
+        currentUserId,
+        chatType,
+      );
+      chats.assignAll(typedChats);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Referanstaki sürücü/yolculuk sohbeti araması. Bu uygulamada yalnız
+  /// `support` türü var; işlev **eksiltilmedi**, referansla aynı duruyor.
   Future<ChatModel> getChatsForSpecificRide(
     String rideId,
     String driverId,
@@ -341,7 +493,8 @@ class ChatController extends GetxController with WidgetsBindingObserver {
       (chat) =>
           chat.referenceId == rideId &&
           chat.participants.any(
-            (part) => part.userId == AuthenticationRepository.instance.getUserID,
+            (part) =>
+                part.userId == AuthenticationRepository.instance.getUserID,
           ) &&
           chat.participants.any((part) => part.userId == driverId),
     );
@@ -355,59 +508,10 @@ class ChatController extends GetxController with WidgetsBindingObserver {
     return ChatModel.empty();
   }
 
-  // ─── Mesajlar ─────────────────────────────────────────────────────────────
-
-  /// Geçerli sohbetin mesajlarını sunucudan yükler (tek seferlik; sürekli
-  /// yenileme yoklamayla).
-  Future<void> fetchMessages() async {
-    try {
-      isLoading.value = true;
-
-      if (currentChat.value.id.isEmpty && currentChatId.value.isNotEmpty) {
-        currentChat.value = await _chatRepository.getChatById(
-          currentChatId.value,
-        );
-      }
-
-      if (currentChatId.value.isEmpty) {
-        messages.clear();
-        return;
-      }
-
-      final fresh = await _chatRepository.fetchMessages(currentChatId.value);
-      messages.value = mergeMessages(fresh, messages);
-      hasError.value = false;
-    } catch (e) {
-      TLoggerHelper.error('Mesajlar yüklenemedi', e);
-      hasError.value = true;
-      TLoaders.errorSnackBar(
-        title: TTexts.ohSnap.tr,
-        message: TTexts.unableFetchMessage.tr,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /// Okundu bilgisi (`chat/{chatId}/seen`).
+  /// Referanstaki genel sohbet açma yolu (alıcıyı çağıran belirler).
   ///
-  /// Sessizdir: okundu yazılamadı diye mesajlaşma durmamalı (web de
-  /// `.catch(function () {})` ile yutuyor).
-  Future<void> markMessagesAsSeen() async {
-    if (currentChatId.value.isEmpty) return;
-    final currentUserId = UserController.instance.user.value.id;
-    try {
-      await _chatRepository.markMessagesAsSeen(
-        currentChatId.value,
-        currentUserId,
-      );
-    } catch (e) {
-      TLoggerHelper.warning('Okundu bilgisi yazılamadı: $e');
-    }
-  }
-
-  /// Referanstaki genel sohbet açma yolu (katılımcı listesiyle). Destek
-  /// sohbeti için [createSupportChat] kullanılır; bu işlev eksiltilmedi.
+  /// ⚠️ Destek sohbeti için bunu **çağırma** — [ensureSupportChat] kullan;
+  /// bu yol var olanı aramadığı için ikinci bir sohbet açar.
   Future<void> createChat({
     required ParticipantModel receiver,
     required ChatType chatType,
@@ -415,7 +519,7 @@ class ChatController extends GetxController with WidgetsBindingObserver {
   }) async {
     try {
       isLoading.value = true;
-      final participants = <ParticipantModel>[
+      final participants = [
         ParticipantModel(
           userId: UserController.instance.user.value.id,
           name: UserController.instance.user.value.fullName,
@@ -444,192 +548,15 @@ class ChatController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  Future<void> fetchChatsByType(String currentUserId, ChatType chatType) async {
-    try {
-      isLoading.value = true;
-      final typedChats = await _chatRepository.getChatsByType(
-        currentUserId,
-        chatType,
-      );
-      chats.assignAll(typedChats);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   Future<void> markChatAsRead(String chatId) async {
-    try {
-      await _chatRepository.markChatAsRead(chatId);
-    } catch (e) {
-      TLoggerHelper.warning('Sohbet okundu işaretlenemedi: $e');
-    }
+    await _chatRepository.markChatAsRead(chatId);
   }
 
-  // ─── Gönderme ─────────────────────────────────────────────────────────────
+  // ─── Yazıyor bilgisi (hub'a bağlı) ────────────────────────────────────────
 
-  Future<void> sendTextMessage(String content) =>
-      _sendMessage(content.trim(), MessageType.text);
-
-  /// Ek gönderir: önce `chat/{chatId}/upload`, sonra `mediaUrl`li bir görsel
-  /// mesajı. Yükleme desteklenmiyorsa **uygulama kırılmaz**, yalnız uyarı
-  /// balonu çıkar (web `Chat.upload` ile aynı).
-  Future<bool> sendAttachment({
-    required Uint8List fileData,
-    required String filename,
-    required String mimeType,
-  }) async {
-    final chatId = await _resolveChatId();
-    if (chatId.isEmpty) return false;
-
-    try {
-      isUploading.value = true;
-      final url = await _chatRepository.uploadAttachment(
-        chatId: chatId,
-        fileData: fileData,
-        filename: filename,
-        mimeType: mimeType,
-      );
-      if (url == null) {
-        TLoaders.warningSnackBar(
-          title: TTexts.ohSnap.tr,
-          message: TTexts.attachmentFailed.tr,
-        );
-        return false;
-      }
-      await sendImageMessage(url: url, name: filename);
-      return true;
-    } finally {
-      isUploading.value = false;
-    }
-  }
-
-  /// Hazır bir adresle görsel mesajı gönderir (yükleme ucu kullanılmadan).
-  ///
-  /// İçerik alanına dosya adı yazılır (web `Chat.upload` ile aynı), adres
-  /// `mediaUrl`'e gider; adı bilinmiyorsa adresin kendisi içerik olur.
-  Future<void> sendImageMessage({required String url, String? name}) {
-    final address = url.trim();
-    final label = (name ?? '').trim();
-    return _sendMessage(
-      label.isEmpty ? address : label,
-      MessageType.image,
-      mediaUrl: address,
-    );
-  }
-
-  Future<void> _sendMessage(
-    String content,
-    MessageType messageType, {
-    String? mediaUrl,
-  }) async {
-    if (content.isEmpty) return;
-
-    final chatId = await _resolveChatId();
-    if (chatId.isEmpty) return;
-
-    // Geçici kimlik: gerçek kimlik gelene kadar mesajı listede tekil tutar
-    // (boş kimlik diğer mesajlarla çakışıp listeyi düşürüyordu).
-    final tempId = '$tempIdPrefix${DateTime.now().microsecondsSinceEpoch}';
-    final newMessage = MessageModel(
-      id: tempId,
-      senderId: AuthenticationRepository.instance.getUserID,
-      content: content,
-      timestamp: DateTime.now(),
-      status: ChatMessageStatus.sending,
-      type: messageType,
-      mediaUrl: mediaUrl,
-    );
-
-    // İyimser çizim: mesaj hemen görünsün, sunucu sonra onaylasın.
-    messages.insert(0, newMessage);
-    updateChatLastMessage(newMessage);
-    isEditing.value = false;
-
-    try {
-      isSending.value = true;
-      final messageId = await _chatRepository.sendMessage(chatId, newMessage);
-
-      final tempIndex = messages.indexWhere((msg) => msg.id == tempId);
-      if (tempIndex != -1) {
-        if (messageId.isNotEmpty) newMessage.id = messageId;
-        newMessage.status = ChatMessageStatus.sent;
-        messages[tempIndex] = newMessage;
-      }
-
-      _touchChatListEntry(newMessage);
-
-      // Gönderdikten sonra sunucudan tazele: karşı taraf bu arada yazmışsa
-      // yoklamanın turunu beklemeden görünsün.
-      await refreshMessages();
-      markMessagesAsSeen();
-    } catch (e) {
-      TLoggerHelper.error('Mesaj gönderilemedi', e);
-      final failedIndex = messages.indexWhere((msg) => msg.id == tempId);
-      if (failedIndex != -1) {
-        messages[failedIndex].status = ChatMessageStatus.failed;
-        messages.refresh();
-      }
-      TLoaders.warningSnackBar(
-        title: TTexts.ohSnap.tr,
-        message: TTexts.unableSendMessage.tr,
-      );
-    } finally {
-      isSending.value = false;
-    }
-  }
-
-  /// Mesajları sessizce tazeler (gönderme sonrası / elle yenileme).
-  Future<void> refreshMessages() async {
-    if (currentChatId.value.isEmpty) return;
-    try {
-      final fresh = await _chatRepository.fetchMessages(currentChatId.value);
-      messages.value = mergeMessages(fresh, messages);
-    } catch (e) {
-      TLoggerHelper.warning('Mesajlar tazelenemedi: $e');
-    }
-  }
-
-  /// Gönderim anında sohbet henüz açılmamış olabilir (ekran yüklenirken
-  /// kullanıcı hızlı yazdıysa); tek sohbet kuralını bozmadan çözer.
-  Future<String> _resolveChatId() async {
-    if (currentChatId.value.isNotEmpty) return currentChatId.value;
-    try {
-      final chat = await ensureSupportChat();
-      return chat.id;
-    } catch (e) {
-      TLoggerHelper.error('Sohbet çözümlenemedi', e);
-      TLoaders.warningSnackBar(
-        title: TTexts.ohSnap.tr,
-        message: TTexts.unableSendMessage.tr,
-      );
-      return '';
-    }
-  }
-
-  void updateChatLastMessage(MessageModel message) {
-    currentChat.value.lastMessage = message.content;
-    currentChat.value.lastMessageType = message.type;
-    currentChat.value.lastMessageStatus = message.status;
-    currentChat.value.lastMessageTime = message.timestamp;
-    currentChat.value.lastMessageSenderId = message.senderId;
-  }
-
-  /// Sohbet listesindeki satırın son mesaj özetini günceller (liste ekranı
-  /// açıldığında eski özeti göstermesin).
-  void _touchChatListEntry(MessageModel message) {
-    final index = chats.indexWhere((chat) => chat.id == currentChat.value.id);
-    if (index == -1) return;
-    final entry = chats[index];
-    entry.lastMessage = message.content;
-    entry.lastMessageType = message.type;
-    entry.lastMessageTime = message.timestamp;
-    entry.lastMessageStatus = message.status;
-    entry.lastMessageSenderId = message.senderId;
-    chats[index] = entry;
-  }
-
-  // ─── Yazıyor bilgisi (SignalR yokken sessizce boşa düşer) ─────────────────
-
+  /// Hub bağlı olmadığı için bu bildirimler sessizce boşa düşer ve
+  /// [isOtherTyping] daima `false` kalır. İşlev referanstan **eksiltilmedi**:
+  /// sunucuda `chathub` açılırsa çalışmaya başlar.
   void notifyTyping(bool isTyping) {
     if (currentChat.value.id.isEmpty) return;
     _chatRepository.sendTyping(
@@ -653,18 +580,21 @@ class ChatController extends GetxController with WidgetsBindingObserver {
     notifyTyping(false);
   }
 
-  // ─── Destek kullanıcısı ───────────────────────────────────────────────────
+  // ─── Yönetici ─────────────────────────────────────────────────────────────
 
-  /// Destek (admin) kullanıcısını bulur; yalnız başlıkta/listede isim ve
-  /// avatar göstermek için. Bulunamazsa boş kalır ve ekran "Destek" yazar —
-  /// bu çağrı sohbeti açmanın ön koşulu DEĞİLDİR.
+  /// Başlıkta destek tarafının adını/avatarını göstermek için. Normal
+  /// kullanıcı jetonuyla `users?role=admin` 401 dönebiliyor; sohbetin açılması
+  /// buna **bağlı olmamalı**, bu yüzden hata yutuluyor.
   Future<void> fetchAdmin() async {
     try {
       final admins = await ApiUserRepository.instance
-          .fetchFilteredPaginatedItems(limit: 1, isEqualTo: {'role': 'admin'});
+          .fetchFilteredPaginatedItems(
+            limit: 1,
+            isEqualTo: {'role': 'admin'},
+          );
       admin.value = admins.isNotEmpty ? admins.first : UserModel.empty();
     } catch (e) {
-      TLoggerHelper.warning('Destek kullanıcısı bulunamadı: $e');
+      TLoggerHelper.warning('Yönetici bilgisi alınamadı: $e');
       admin.value = UserModel.empty();
     }
   }

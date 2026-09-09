@@ -1,9 +1,3 @@
-/// Adres uçları (`Address/...`).
-///
-/// Sunucu `FirstName`/`LastName`'i ayrı tutar; ekranda tek "ad soyad" alanı
-/// vardır, çeviri tek yerde yapılır.
-library;
-
 import 'package:tstore_ecommerce_app/data/abstract/api_base_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -12,6 +6,11 @@ import '../../../features/personalization/models/address_model.dart';
 import '../authentication/authentication_repository.dart';
 import 'address_repository.dart';
 
+/// Adres uçları (`Address/...`).
+///
+/// Sunucu `FirstName`/`LastName` alanlarını ayrık tutar; ekranda tek "ad soyad"
+/// alanı vardır ve çeviri tek yerde yapılır — iki tarafta ayrı ayrı bölmek
+/// adı sessizce bozar.
 class ApiAddressRepository extends TApiRepositoryController<AddressModel>
     implements AddressRepository {
 
@@ -110,7 +109,11 @@ class ApiAddressRepository extends TApiRepositoryController<AddressModel>
 
       if (response.data['Success'] == true) {
         final data = response.data['Data'] as Map<String, dynamic>;
-        return AddressModel.fromJson(data['id']?.toString() ?? '', data);
+        // 🔴 Sunucu kimliği **`AddressId`** yazıyor; yalnız `id` okunursa
+        // model boş kimlikle döner ve ona yapılacak her çağrı (güncelle,
+        // sil, varsayılan yap) yanlış adrese gider.
+        return AddressModel.fromJson(
+            data['AddressId']?.toString() ?? data['id']?.toString() ?? '', data);
       } else {
         throw response.data['Message'] ?? 'Failed to fetch address';
       }
@@ -125,15 +128,27 @@ class ApiAddressRepository extends TApiRepositoryController<AddressModel>
   @override
   Future<AddressModel> createAddress(AddressModel address) async {
     try {
+      // 🔴 `userId` gövdeye BURADA ekleniyor. `AddressModel.toJson` onu
+      // bilerek yazmıyor (kimlik bağlamı repository katmanının); eklenmezse
+      // sunucu `{UserId: [The UserId field is required.]}` ile reddediyor ve
+      // **yeni adres ekleme hiç çalışmıyor** (canlıda doğrulandı).
+      // `updateAddress` zaten aynı şeyi yapıyordu.
+      final data = address.toJson()..['userId'] = AuthenticationRepository.instance.getUserID;
+
       final response = await dio.post(
         getEndpoint(),
-        data: address.toJson(),
+        data: data,
       );
 
       if (response.data['Success'] == true) {
         // print('✅ [AddressRepository] Address created successfully');
         final d = response.data['Data'] as Map<String, dynamic>;
-        return AddressModel.fromJson(d['id']?.toString() ?? '', d);
+        // 🔴 `AddressId` (bkz. yukarıdaki not). Burada boş kimlik dönmek
+        // özellikle pahalıydı: `AddressController.addNewAddresses` dönen
+        // kimliği hemen `set-default` çağrısına veriyor ve boş kimlikle o
+        // çağrı patlıyordu — yani **yeni adres ekleme hiç çalışmıyordu**.
+        return AddressModel.fromJson(
+            d['AddressId']?.toString() ?? d['id']?.toString() ?? '', d);
       } else {
         throw response.data['Message'] ?? 'Failed to create address';
       }
@@ -212,7 +227,9 @@ class ApiAddressRepository extends TApiRepositoryController<AddressModel>
       if (response.data['Success'] == true) {
         // print('✅ [AddressRepository] Default address set successfully');
         final d = response.data['Data'] as Map<String, dynamic>;
-        return AddressModel.fromJson(d['id']?.toString() ?? '', d);
+        // 🔴 `AddressId` (bkz. yukarıdaki not).
+        return AddressModel.fromJson(
+            d['AddressId']?.toString() ?? d['id']?.toString() ?? '', d);
       } else {
         throw response.data['Message'] ?? 'Failed to set default address';
       }

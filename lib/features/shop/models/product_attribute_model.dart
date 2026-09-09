@@ -1,4 +1,4 @@
-/// Ürün özniteliği ve seçilebilir değerleri.
+/// Ürün özniteliği (ad + seçilebilir değerler).
 class ProductAttributeModel {
   String id;
   String attributeId;

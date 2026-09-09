@@ -1,20 +1,16 @@
-/// Giriş yapmış kullanıcının yöneticiye bağlı ticari ayarları (stoksuz
-/// sipariş, kredi limiti, fiyat kategorisi, özel indirim).
-library;
-
 import 'package:get/get.dart';
 
 import '../../../data/repositories/authentication/authentication_repository.dart';
 import '../../../data/repositories/user/api_user_settings_repository.dart';
 import '../models/user_settings_model.dart';
 
-/// Holds the logged-in user's admin-managed commercial settings and exposes
-/// them app-wide (stock override, credit limit, price tier, custom discount).
+/// Giriş yapan kullanıcının **yönetici tarafından verilen ticari yetkileri**:
+/// stok aşımı, kredi limiti, fiyat kategorisi, özel iskonto.
 ///
-/// Varsayılanlar **bilerek en kısıtlayıcı** hâldedir (stoksuz sipariş yok,
-/// kredi yok): gerçek ayarlar gelene kadar ya da çağrı başarısız olduğunda
-/// davranış güvenli tarafta kalır. Yetki çağrısının başarısız olması girişi
-/// bozmaz.
+/// 🔴 Varsayılanlar bilerek **en kısıtlayıcı**: stoksuz sipariş yok, kredi yok.
+/// Yetki çağrısı başarısız olsa bile uygulama çalışmaya devam eder ama
+/// müşteriye hak etmediği bir yetki verilmez — bu yüzden [fetchUserSettings]
+/// hatayı yukarı fırlatmaz, sessizce varsayılana döner.
 class UserSettingsController extends GetxController {
   static UserSettingsController get instance => Get.find();
 
@@ -29,11 +25,11 @@ class UserSettingsController extends GetxController {
   bool get canOrderWithoutStock => settings.value.canOrderWithoutStock;
   bool get canBypassPayment => settings.value.canBypassPayment;
 
-  /// FAZ 34 — müşterinin gerçekten kendi kredi satırı var mı.
+  /// Müşterinin gerçekten kendi kredi satırı var mı.
   ///
-  /// [canBypassPayment] `transfer_only` modunda **herkes için** true dönüyor
-  /// (K29.7); "kredili müşteri" ile "ödeme genel olarak kapalı" ayrımı yalnız
-  /// bununla yapılabilir.
+  /// [canBypassPayment] `transfer_only` modunda **herkes için** true dönüyor;
+  /// "kredili müşteri" ile "ödeme genel olarak kapalı" ayrımı yalnız bununla
+  /// yapılabilir.
   bool get hasCreditLine => settings.value.hasCreditLine;
   String get priceCategory => settings.value.priceCategory;
   bool get hasCreditLimit => settings.value.hasCreditLimit;
@@ -61,8 +57,8 @@ class UserSettingsController extends GetxController {
       loading.value = true;
       settings.value = await _repository.getUserSettings(userId);
     } catch (_) {
-      // Hata hâlinde güvenli varsayılanlarda kalınır — ayarlar yüzünden
-      // uygulama asla bloklanmaz.
+      // Hata hâlinde güvenli varsayılan korunur — ayar yüzünden uygulama
+      // durdurulmaz.
       settings.value = UserSettingsModel.empty();
     } finally {
       loading.value = false;

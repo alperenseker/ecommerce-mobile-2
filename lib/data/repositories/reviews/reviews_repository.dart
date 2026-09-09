@@ -1,9 +1,7 @@
-/// Değerlendirme repository'sinin arayüzü.
-library;
-
 import '../../../features/shop/models/product_model.dart';
 import '../../../features/shop/models/product_review_model.dart';
 
+/// Değerlendirme repository sözleşmesi.
 abstract class ReviewRepository {
   Future<({
     List<ReviewModel> reviews,

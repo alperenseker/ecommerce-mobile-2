@@ -1,12 +1,10 @@
-/// Destek sohbeti başlığı.
-library;
-
 import 'package:flutter_chat_types/flutter_chat_types.dart';
 
 import '../../../utils/constants/enums.dart';
 import 'message_model.dart';
 import 'participant_model.dart';
 
+/// Sohbet başlığı (katılımcılar, son mesaj, okunmamış sayısı).
 class ChatModel {
   String id;
   List<ParticipantModel> participants; // List of ParticipantModel instances

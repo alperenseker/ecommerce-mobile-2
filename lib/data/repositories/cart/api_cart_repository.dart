@@ -1,9 +1,3 @@
-/// Sunucu tarafı sepet (`Cart/...`).
-///
-/// 🔴 Sepet kullanıcıya özeldir; `THttpClient` önbelleği bu yolu **kapsamaz**,
-/// yoksa bayat miktar/fiyat gösterilirdi.
-library;
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -13,10 +7,14 @@ import '../../repositories/authentication/authentication_repository.dart';
 import '../../../features/shop/models/cart_item_model.dart';
 import '../../../utils/http/dio_client.dart';
 
+/// Sepet uçları (`Cart/...`).
+///
+/// 🔴 Sepet kullanıcıya özeldir; [TCacheInterceptor] izin listesinde yoktur ve
+/// asla önbelleklenmez — bayat bir sepet yanlış tutar demektir.
 class ApiCartRepository extends GetxController {
   static ApiCartRepository get instance => Get.find();
 
-  /// Uygulama genelinde paylaşılan `Dio` (bkz. [THttpClient]).
+  /// Uygulama genelinde paylaşılan Dio (bkz. [THttpClient]).
   final Dio _dio = THttpClient.dio;
 
   Options get _authOptions {

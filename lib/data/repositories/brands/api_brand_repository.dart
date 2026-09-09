@@ -1,12 +1,11 @@
-/// Marka uçları (`brands`).
-library;
-
 import 'package:get/get.dart';
 
 import '../../../features/shop/models/brand_model.dart';
 
-/// TODO: backend'de /brands endpoint'i yok. Eklenince dio ile bu metodları
-/// gerçek isteklere bağlayın (bkz. ApiCategoryRepository deseni).
+/// Marka repository'si.
+///
+/// TODO: sunucuda `/brands` ucu yok. Eklenince bu metotlar `dio` ile gerçek
+/// isteklere bağlanmalı (bkz. [ApiCategoryRepository] deseni).
 class ApiBrandRepository extends GetxController {
   static ApiBrandRepository get instance => Get.isRegistered<ApiBrandRepository>() ? Get.find() : Get.put(ApiBrandRepository());
 

@@ -1,9 +1,3 @@
-/// Telefon numarasıyla giriş ekranı.
-///
-/// ⚠️ Sunucuda karşılığı yok; karşılama ekranında bu seçenek yorumda. Ekran
-/// referansla eşitlik için duruyor.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -18,6 +12,10 @@ import '../../../../utils/helpers/helper_functions.dart';
 import '../../controllers/phone_number_controller.dart';
 import 'widget/phone_number_field.dart';
 
+/// Telefon numarasıyla giriş ekranı.
+///
+/// ⚠️ Sunucuda telefon OTP ucu yok; "Devam"a basınca hata mesajı alınıyor.
+/// Ekran, uç eklendiğinde hazır olsun diye referanstaki gibi duruyor.
 class PhoneNumberScreen extends StatelessWidget {
   const PhoneNumberScreen({super.key});
 
@@ -27,6 +25,7 @@ class PhoneNumberScreen extends StatelessWidget {
     final controller = SignInController.instance;
 
     return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: TSpacingStyle.paddingWithAppBarHeight,

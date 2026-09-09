@@ -1,18 +1,18 @@
-/// Karşılaştırma ekranı — satır bazlı tablo.
+/// Karşılaştırma ekranı — ürün başlıkları + özellik blokları.
 ///
-/// Solda özellik adı, sağda her ürün için bir sütun; dört ürün yan yana
-/// kıyaslanır (web `pages/compare.js` ile aynı okuma yönü).
+/// 🔴 Sunum tamamen değişti. Eskiden **donuk etiket sütunlu, yatay kaydırılan
+/// bir tablo** vardı: telefonda ürün sütunlarının yarısı ekran dışında
+/// kalıyordu, kullanıcı karşılaştırmak için sağa sola sürüyordu — oysa
+/// karşılaştırmanın bütün anlamı değerleri AYNI ANDA görmek. Yeni düzende
+/// etiket, değerlerin **üstünde** tam genişlikte duruyor; altındaki hücreler
+/// ekranı eşit bölüşüyor ve yatay kaydırma tamamen kalktı. İki üründe hücre
+/// ~%50, dörtte ~%25 genişlik alıyor.
 ///
-/// 🔴 Üç tasarım kuralı web'den birebir geliyor:
-///   1. **Sütunlar eşit genişlikte.** İçeriğe göre bölünen tabloda uzun adlı
-///      ürünün sütunu şişip ötekileri eziyordu.
-///   2. **Ürün adı KIRPILMAZ**, uzunsa alt satıra geçer. Karşılaştırmada
-///      kesilen ad iki ürünü ayırt etmeyi imkânsız kılıyor.
-///   3. **Dört üründe de boş olan satır çizilmez** — "—" dolu bir tablo
+/// Alan kuralları aynen korundu (web `pages/compare.js`):
+///   1. **Sütunlar eşit genişlikte** — uzun adlı ürün ötekileri ezmez.
+///   2. **Ürün adı KIRPILMAZ**, uzunsa alt satıra geçer.
+///   3. **Bütün ürünlerde boş olan satır çizilmez** — "—" dolu bir tablo
 ///      bilgiden çok gürültü.
-///
-/// Satır yükseklikleri `Table` tarafından o satırın en uzun hücresine göre
-/// belirlenir; sabit yükseklik verilirse sarılan ad taşıyor.
 library;
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -21,7 +21,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import '../../../../common/widgets/appbar/appbar.dart';
-import '../../../../common/widgets/appbar/profile_action_icon.dart';
+import '../../../../common/widgets/appbar/appbar_actions.dart';
 import '../../../../common/widgets/loaders/t_empty_state.dart';
 import '../../../../common/widgets/products/product_cards/widgets/product_stock_badge.dart';
 import '../../../../data/repositories/authentication/authentication_repository.dart';
@@ -37,48 +37,45 @@ import '../../controllers/product/cart_controller.dart';
 import '../../controllers/product/compare_controller.dart';
 import '../../models/compare_item_model.dart';
 import '../../models/product_model.dart';
+import '../../../../common/widgets/loaders/delayed_loader.dart';
 
 class CompareScreen extends StatelessWidget {
   const CompareScreen({super.key});
 
-  /// Sabit ölçüler: donuk etiket sütunu ile kaydırılabilir ürün sütunları
-  /// aynı hizada kalsın diye. Ürün sütunlarının hepsi **aynı** genişlikte.
-  static const double _labelW = 116;
-  static const double _colW = 168;
-  static const double _imageH = 120;
+  /// Başlık kartındaki ürün görselinin yüksekliği.
+  static const double _imageH = 96;
 
   @override
   Widget build(BuildContext context) {
     final authRepo = AuthenticationRepository.instance;
+    final dark = THelperFunctions.isDarkMode(context);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, Object? result) async => await Get.offAllNamed(TRoutes.homeMenu),
-      child: Scaffold(
-        appBar: TAppBar(
-          title: Text(TTexts.comparison.tr),
-          showActions: true,
-          showSkipButton: false,
-          actions: const [TProfileActionIcon()],
-        ),
-        body: authRepo.isGuestUser
-            ? TEmptyState.signInRequired(message: TTexts.compareLoginText.tr)
-            : _body(context),
+    return Scaffold(
+      backgroundColor: dark ? TColors.dark : TColors.light,
+      appBar: TAppBar(
+        showBackArrow: true,
+        title: Text(TTexts.comparison.tr),
+        showActions: true,
+        showSkipButton: false,
+        actions: const [TAppBarActions()],
       ),
+      body:
+          authRepo.isGuestUser
+              ? TEmptyState.signInRequired(message: TTexts.compareLoginText.tr)
+              : _body(context, dark),
     );
   }
 
-  Widget _body(BuildContext context) {
+  Widget _body(BuildContext context, bool dark) {
     final controller = CompareController.instance;
-    final dark = THelperFunctions.isDarkMode(context);
 
     return Obx(() {
       if (controller.isLoading.value && controller.items.isEmpty) {
-        return const Center(child: CircularProgressIndicator(color: TColors.primary));
+        return const TDelayedLoader();
       }
       if (controller.items.isEmpty) {
         return TEmptyState(
-          icon: Icons.balance,
+          icon: Iconsax.arrow_swap_horizontal,
           title: TTexts.comparisonEmpty.tr,
           message: TTexts.comparisonEmptyText.tr,
           actionText: TTexts.startShopping.tr,
@@ -86,243 +83,318 @@ class CompareScreen extends StatelessWidget {
         );
       }
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      final items = controller.items.toList();
+      final products = [for (final item in items) controller.productDetails[item.productId]];
+
+      return ListView(
+        padding: EdgeInsets.fromLTRB(
+          TSizes.defaultSpace,
+          TSizes.md,
+          TSizes.defaultSpace,
+          TSizes.defaultSpace + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
-          _topBar(context, controller),
-          Expanded(child: _buildTable(context, controller, dark)),
+          _summary(context, controller, items.length),
+          const SizedBox(height: TSizes.spaceBtwItems),
+          _headerCard(context, controller, items, products, dark),
+          const SizedBox(height: TSizes.spaceBtwItems),
+          ..._specBlocks(context, controller, items, products, dark),
         ],
       );
     });
   }
 
-  /// Tablonun üstü: kalem sayısı + "hepsini temizle".
-  Widget _topBar(BuildContext context, CompareController controller) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(TSizes.defaultSpace, TSizes.sm, TSizes.defaultSpace, TSizes.sm),
-      child: Row(
-        children: [
-          Text(
-            '${controller.items.length} / ${CompareController.maxItems} ${TTexts.products.tr}',
+  /// Kaç ürün karşılaştırılıyor + hepsini temizle.
+  Widget _summary(BuildContext context, CompareController controller, int count) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            '$count / ${CompareController.maxItems} ${TTexts.products.tr}',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: controller.clearAll,
-            icon: const Icon(Iconsax.trash, size: 18, color: TColors.error),
-            label: Text(TTexts.clearAll.tr, style: const TextStyle(color: TColors.error)),
-            style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTable(BuildContext context, CompareController controller, bool dark) {
-    final items = controller.items;
-    final products = [for (final item in items) controller.productDetails[item.productId]];
-    final rows = _rowSpecs(context, controller, items, products);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(TSizes.defaultSpace, 0, TSizes.defaultSpace, TSizes.defaultSpace),
-      child: Container(
-        decoration: BoxDecoration(
-          color: dark ? TColors.darkSurface : TColors.white,
-          borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
-          border: Border.all(color: dark ? TColors.darkBorder : TColors.borderSecondary),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Table(
-              // Etiket sütunu dar ve sabit; ürün sütunları BİRBİRİYLE EŞİT.
-              columnWidths: {
-                0: const FixedColumnWidth(_labelW),
-                for (var i = 0; i < items.length; i++) i + 1: const FixedColumnWidth(_colW),
-              },
-              // Satır yüksekliği en uzun hücreye göre; sarılan ad taşımasın.
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: [
-                for (var i = 0; i < rows.length; i++)
-                  TableRow(
-                    decoration: BoxDecoration(color: _zebra(i, dark)),
-                    children: [
-                      _labelCell(context, rows[i].label),
-                      for (final cell in rows[i].cells) _valueCell(cell),
-                    ],
-                  ),
-              ],
-            ),
-          ),
+        TextButton.icon(
+          onPressed: controller.clearAll,
+          icon: const Icon(Iconsax.trash, size: 16, color: TColors.error),
+          label: Text(TTexts.clearAll.tr, style: const TextStyle(color: TColors.error)),
+          style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _labelCell(BuildContext context, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TSizes.md, vertical: TSizes.sm),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-
-  Widget _valueCell(Widget child) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TSizes.sm, vertical: TSizes.sm),
-      // Görseller ve değerler sütunun ORTASINDA hizalanır.
-      child: Align(alignment: Alignment.center, child: child),
-    );
-  }
-
-  /// Tablo satırları. Metin satırlarında dört ürünün de değeri boşsa satır
-  /// **hiç üretilmez** (bkz. [_textRow]).
-  List<_Row> _rowSpecs(
+  /// Ürün başlıkları: görsel · ad · fiyat · stok · eylemler.
+  ///
+  /// Eskiden bunlar da tablonun birer satırıydı; artık tek bir kartta
+  /// toplanıyorlar — karşılaştırılan ürünler önce **kim oldukları** ile
+  /// tanıtılıyor, özellikler ondan sonra geliyor.
+  Widget _headerCard(
     BuildContext context,
     CompareController controller,
     List<CompareItemModel> items,
     List<ProductModel?> products,
+    bool dark,
   ) {
     final theme = Theme.of(context).textTheme;
-    final rows = <_Row>[];
 
-    /// -- Görsel (dokununca ürün detayı açılır)
-    rows.add(_Row(TTexts.products.tr, [
-      for (final item in items)
-        GestureDetector(
-          onTap: () => controller.openProduct(item.productId),
-          child: SizedBox(
-            height: _imageH,
-            child: item.mainImage.isEmpty
-                ? Image.asset(TImages.productImageFallback, fit: BoxFit.contain)
-                : CachedNetworkImage(
-                    imageUrl: item.mainImage,
-                    fit: BoxFit.contain,
-                    memCacheWidth: 320,
-                    errorWidget: (_, _, _) => Image.asset(TImages.productImageFallback),
-                  ),
-          ),
-        ),
-    ]));
-
-    /// -- Ad: KIRPILMAZ, uzunsa alt satıra geçer.
-    rows.add(_Row(TTexts.name.tr, [
-      for (final item in items)
-        GestureDetector(
-          onTap: () => controller.openProduct(item.productId),
-          child: Text(
-            item.productName,
-            textAlign: TextAlign.center,
-            style: theme.titleSmall,
-          ),
-        ),
-    ]));
-
-    /// -- Fiyat (gizli fiyatta rakam basılmaz)
-    rows.add(_Row(TTexts.price.tr.replaceAll(':', '').trim(), [
-      for (final item in items)
-        Column(
-          mainAxisSize: MainAxisSize.min,
+    return _Card(
+      dark: dark,
+      // Ayırıcı çizgiler en uzun sütun kadar uzasın diye.
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              item.isPriceHidden ? TTexts.priceOnRequest.tr : '₸${_fmt(item.price)}',
-              textAlign: TextAlign.center,
-              style: item.isPriceHidden
-                  ? theme.bodySmall?.copyWith(fontWeight: FontWeight.w500)
-                  : theme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            // Fiyat gizliyse eski fiyat da gösterilmez (sızıntı olur).
-            if (!item.isPriceHidden && item.oldPrice != null && item.oldPrice! > item.price)
-              Text(
-                '₸${_fmt(item.oldPrice)}',
-                style: theme.bodySmall?.copyWith(
-                  decoration: TextDecoration.lineThrough,
-                  color: TColors.darkGrey,
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0) _VerticalRule(dark: dark, stretch: true),
+              Expanded(
+                child: Padding(
+                  // Anahtar, sütun genişliklerini ölçen widget testi için.
+                  key: ValueKey('compare-column-${items[i].productId}'),
+                  padding: const EdgeInsets.symmetric(horizontal: TSizes.xs),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () => controller.openProduct(items[i].productId),
+                        child: SizedBox(
+                          height: _imageH,
+                          child:
+                              items[i].mainImage.isEmpty
+                                  ? Image.asset(TImages.productImageFallback, fit: BoxFit.contain)
+                                  : CachedNetworkImage(
+                                    imageUrl: items[i].mainImage,
+                                    fit: BoxFit.contain,
+                                    memCacheWidth: 320,
+                                    errorWidget:
+                                        (_, _, _) => Image.asset(TImages.productImageFallback),
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(height: TSizes.sm),
+
+                      /// Ad KIRPILMAZ: kesilen ad iki ürünü ayırt etmeyi
+                      /// imkânsız kılıyor.
+                      GestureDetector(
+                        onTap: () => controller.openProduct(items[i].productId),
+                        child: Text(
+                          items[i].productName,
+                          textAlign: TextAlign.center,
+                          style: theme.labelLarge,
+                        ),
+                      ),
+                      const SizedBox(height: TSizes.xs),
+
+                      /// Fiyat gizliyse rakam da eski fiyat da basılmaz.
+                      Text(
+                        items[i].isPriceHidden
+                            ? TTexts.priceOnRequest.tr
+                            : '₸${_fmt(items[i].price)}',
+                        textAlign: TextAlign.center,
+                        style:
+                            items[i].isPriceHidden
+                                ? theme.bodySmall
+                                : theme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      if (!items[i].isPriceHidden &&
+                          items[i].oldPrice != null &&
+                          items[i].oldPrice! > items[i].price)
+                        Text(
+                          '₸${_fmt(items[i].oldPrice)}',
+                          style: theme.bodySmall?.copyWith(
+                            decoration: TextDecoration.lineThrough,
+                            color: TColors.darkGrey,
+                          ),
+                        ),
+                      const SizedBox(height: TSizes.sm),
+                      _stockCell(context, items[i], products[i]),
+                      const SizedBox(height: TSizes.sm),
+                      _actions(context, controller, items[i], products[i]),
+                    ],
+                  ),
                 ),
               ),
+            ],
           ],
         ),
-    ]));
+      ),
+    );
+  }
 
-    /// -- Stok: kuralın tek kaynağı `TProductStock`; ürün kaydı gelmediyse
-    /// kalemin kendi stok adedine düşülür.
-    rows.add(_Row(TTexts.availability.tr, [
-      for (var i = 0; i < items.length; i++)
-        products[i] != null
-            ? ProductStockBadge(product: products[i]!, compact: true)
-            : _pill(
-                context,
-                text: items[i].stockAmount > 0 ? TTexts.inStock.tr : TTexts.outOfStock.tr,
-                color: items[i].stockAmount > 0 ? TColors.success : TColors.darkGrey,
-                background: items[i].stockAmount > 0 ? TColors.successSoft : TColors.softGrey,
-              ),
-    ]));
+  /// Sepete ekle + karşılaştırmadan kaldır.
+  ///
+  /// Stok kuralı [TProductStock] üzerinden okunur; ürün kaydı henüz
+  /// gelmemişse "sepete ekle" kapalıdır (neyi ekleyeceğini bilmiyoruz).
+  Widget _actions(
+    BuildContext context,
+    CompareController controller,
+    CompareItemModel item,
+    ProductModel? product,
+  ) {
+    final orderable = product != null && TProductStock.resolve(product).canOrder;
 
-    /// -- Metin satırları: dördü de boşsa çizilmez.
-    _textRow(rows, context, TTexts.sku.tr, [for (final p in products) p?.sku ?? '']);
-    _textRow(rows, context, TTexts.category.tr,
-        [for (var i = 0; i < items.length; i++) _categoryName(items[i], products[i])]);
-    _textRow(rows, context, TTexts.company.tr,
-        [for (final p in products) TErpSource.label(p?.erpSource)]);
-    _textRow(rows, context, TTexts.unitWeight.tr, [
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 32,
+          child: OutlinedButton(
+            onPressed:
+                orderable
+                    ? () {
+                      final cart = CartController.instance;
+                      cart.addOneToCart(cart.convertToCartItem(product, 1));
+                    }
+                    : null,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              (orderable ? TTexts.addToBag : TTexts.outOfStock).tr,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: () => controller.removeItem(item.comparisonItemId),
+          icon: const Icon(Iconsax.trash, size: 14, color: TColors.error),
+          label: Text(TTexts.remove.tr, style: const TextStyle(color: TColors.error)),
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stockCell(BuildContext context, CompareItemModel item, ProductModel? product) {
+    if (product != null) return ProductStockBadge(product: product, compact: true);
+    final inStock = item.stockAmount > 0;
+    return _pill(
+      context,
+      text: (inStock ? TTexts.inStock : TTexts.outOfStock).tr,
+      color: inStock ? TColors.success : TColors.darkGrey,
+      background: inStock ? TColors.successSoft : TColors.softGrey,
+    );
+  }
+
+  /// Özellik blokları: etiket üstte tam genişlikte, değerler altında eşit
+  /// hücrelerde. Bütün ürünlerde boş olan özellik **hiç çizilmez**.
+  List<Widget> _specBlocks(
+    BuildContext context,
+    CompareController controller,
+    List<CompareItemModel> items,
+    List<ProductModel?> products,
+    bool dark,
+  ) {
+    final theme = Theme.of(context).textTheme;
+    final blocks = <Widget>[];
+
+    void textBlock(String label, List<String> values) {
+      if (!values.any((v) => v.trim().isNotEmpty)) return;
+      blocks.add(
+        _block(context, dark, label, [
+          for (final value in values)
+            Text(
+              value.trim().isEmpty ? '—' : value,
+              textAlign: TextAlign.center,
+              style:
+                  value.trim().isEmpty
+                      ? theme.bodyMedium?.copyWith(color: TColors.darkGrey)
+                      : theme.bodyMedium,
+            ),
+        ]),
+      );
+    }
+
+    textBlock(TTexts.sku.tr, [for (final p in products) p?.sku ?? '']);
+    textBlock(TTexts.category.tr, [
+      for (var i = 0; i < items.length; i++) _categoryName(items[i], products[i]),
+    ]);
+    textBlock(TTexts.company.tr, [for (final p in products) TErpSource.label(p?.erpSource)]);
+    textBlock(TTexts.unitWeight.tr, [
       for (var i = 0; i < items.length; i++) _measure(products[i]?.weight ?? items[i].weight, 'kg'),
     ]);
-    _textRow(rows, context, TTexts.dimensions.tr, [
+    textBlock(TTexts.dimensions.tr, [
       for (var i = 0; i < items.length; i++) _dimensions(items[i], products[i]),
     ]);
 
-    /// -- Puan: hiçbir üründe değerlendirme yoksa satır çizilmez (sıfır
-    /// yıldız dizisi "kötü ürün" izlenimi veriyor — FAZ 04'teki kartla aynı
-    /// kural).
-    final hasAnyRating = products.any((p) => (p?.reviewsCount ?? 0) > 0);
-    if (hasAnyRating) {
-      rows.add(_Row(TTexts.rating.tr, [
-        for (final p in products)
-          (p?.reviewsCount ?? 0) > 0
-              ? Row(
+    /// Puan: hiçbir üründe değerlendirme yoksa blok çizilmez — sıfır yıldız
+    /// dizisi "kötü ürün" izlenimi veriyor (ürün kartıyla aynı kural).
+    if (products.any((p) => (p?.reviewsCount ?? 0) > 0)) {
+      blocks.add(
+        _block(context, dark, TTexts.rating.tr, [
+          for (final p in products)
+            (p?.reviewsCount ?? 0) > 0
+                ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Iconsax.star1, color: TColors.star, size: 14),
                     const SizedBox(width: 4),
                     Text((p!.rating ?? 0).toStringAsFixed(1), style: theme.bodyMedium),
                     const SizedBox(width: 2),
-                    Text('(${p.reviewsCount})',
-                        style: theme.labelMedium?.apply(color: TColors.darkGrey)),
+                    Text(
+                      '(${p.reviewsCount})',
+                      style: theme.labelMedium?.apply(color: TColors.darkGrey),
+                    ),
                   ],
                 )
-              : Text('—', style: theme.bodyMedium?.copyWith(color: TColors.darkGrey)),
-      ]));
+                : Text('—', style: theme.bodyMedium?.copyWith(color: TColors.darkGrey)),
+        ]),
+      );
     }
 
-    /// -- Eylemler: sepete ekle + karşılaştırmadan kaldır.
-    rows.add(_Row(TTexts.actions.tr, [
-      for (var i = 0; i < items.length; i++)
-        _Actions(item: items[i], product: products[i]),
-    ]));
-
-    return rows;
+    return blocks;
   }
 
-  /// Metin satırı ekler; **dört üründe de boşsa satırı hiç eklemez**.
-  void _textRow(List<_Row> rows, BuildContext context, String label, List<String> values) {
-    if (!values.any((v) => v.trim().isNotEmpty)) return;
-
-    final style = Theme.of(context).textTheme.bodyMedium;
-    rows.add(_Row(label, [
-      for (final value in values)
-        Text(
-          value.trim().isEmpty ? '—' : value,
-          textAlign: TextAlign.center,
-          style: value.trim().isEmpty ? style?.copyWith(color: TColors.darkGrey) : style,
+  /// Tek özellik bloğu.
+  Widget _block(BuildContext context, bool dark, String label, List<Widget> cells) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: TSizes.spaceBtwItems / 2),
+      child: _Card(
+        dark: dark,
+        padding: const EdgeInsets.fromLTRB(TSizes.md, TSizes.sm + 2, TSizes.md, TSizes.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔴 BÜYÜK HARFE ÇEVRİLMİYOR: Dart'ın `toUpperCase`i yerelden
+            // habersiz, Türkçe "i" harfini "I" yapıyor ("İstek" → "ISTEK").
+            // Küçük etiket görüntüsü harf aralığıyla veriliyor.
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium!
+                  .apply(color: TColors.darkGrey, fontWeightDelta: 1)
+                  .copyWith(letterSpacing: 0.4),
+            ),
+            const SizedBox(height: TSizes.sm),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                for (var i = 0; i < cells.length; i++) ...[
+                  if (i > 0) _VerticalRule(dark: dark),
+                  Expanded(child: Center(child: cells[i])),
+                ],
+              ],
+            ),
+          ],
         ),
-    ]));
+      ),
+    );
   }
 
-  /// Küçük hap rozet (ürün kaydı gelmemiş satırlar için).
-  Widget _pill(BuildContext context, {required String text, required Color color, required Color background}) {
+  /// Küçük hap rozet (ürün kaydı gelmemiş kalemler için).
+  Widget _pill(
+    BuildContext context, {
+    required String text,
+    required Color color,
+    required Color background,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: TSizes.sm, vertical: 4),
       decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(100)),
@@ -331,16 +403,14 @@ class CompareScreen extends StatelessWidget {
         textAlign: TextAlign.center,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
 
-  /// Okunabilirlik için hafif zebra; tek satırlar saydam.
-  Color _zebra(int i, bool dark) =>
-      i.isOdd ? (dark ? TColors.darkContainer : TColors.lightGrey) : Colors.transparent;
-
-  /// Birim ekli ölçü; null ya da 0 ise boş döner (satır kuralına girsin).
+  /// Birim ekli ölçü; null ya da 0 ise boş döner (blok kuralına girsin).
   static String _measure(double? value, String unit) =>
       (value == null || value == 0) ? '' : '${_fmt(value)} $unit';
 
@@ -370,68 +440,46 @@ class CompareScreen extends StatelessWidget {
   }
 }
 
-/// Bir tablo satırı: etiket + ürün başına bir hücre.
-class _Row {
-  const _Row(this.label, this.cells);
+/// Ekranın beyaz kartı — TASARIM.md §5: gölge yok, ayrım 1px çizgi.
+class _Card extends StatelessWidget {
+  const _Card({required this.child, required this.dark, this.padding});
 
-  final String label;
-  final List<Widget> cells;
-}
-
-/// Bir ürün sütununun eylemleri: sepete ekle · karşılaştırmadan kaldır.
-///
-/// Stok kuralı [TProductStock] üzerinden okunur; ürün kaydı henüz gelmemişse
-/// "sepete ekle" kapalıdır (neyi ekleyeceğini bilmiyoruz).
-class _Actions extends StatelessWidget {
-  const _Actions({required this.item, required this.product});
-
-  final CompareItemModel item;
-  final ProductModel? product;
+  final Widget child;
+  final bool dark;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
-    final controller = CompareController.instance;
-    final orderable = product != null && TProductStock.resolve(product!).canOrder;
+    return Container(
+      width: double.infinity,
+      padding: padding ?? const EdgeInsets.all(TSizes.md),
+      decoration: BoxDecoration(
+        color: dark ? TColors.darkSurface : TColors.white,
+        borderRadius: BorderRadius.circular(TSizes.cardRadiusLg),
+        border: Border.all(color: dark ? TColors.darkBorder : TColors.borderSecondary),
+      ),
+      child: child,
+    );
+  }
+}
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 32,
-          child: OutlinedButton(
-            onPressed: orderable
-                ? () {
-                    final cart = CartController.instance;
-                    cart.addOneToCart(cart.convertToCartItem(product!, 1));
-                  }
-                : null,
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              (orderable ? TTexts.addToBag : TTexts.outOfStock).tr,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-          ),
-        ),
-        const SizedBox(height: TSizes.xs),
-        TextButton.icon(
-          onPressed: () => controller.removeItem(item.comparisonItemId),
-          icon: const Icon(Iconsax.trash, size: 14, color: TColors.error),
-          label: Text(TTexts.remove.tr, style: const TextStyle(color: TColors.error)),
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-      ],
+/// Hücreleri ayıran ince dikey çizgi.
+class _VerticalRule extends StatelessWidget {
+  const _VerticalRule({required this.dark, this.stretch = false});
+
+  final bool dark;
+
+  /// Sütun boyunca uzasın mı (başlık kartı) yoksa kısa bir işaret mi kalsın
+  /// (özellik blokları).
+  final bool stretch;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: stretch ? null : 20,
+      margin: const EdgeInsets.symmetric(horizontal: TSizes.xs),
+      color: dark ? TColors.darkBorder : TColors.borderSecondary,
     );
   }
 }

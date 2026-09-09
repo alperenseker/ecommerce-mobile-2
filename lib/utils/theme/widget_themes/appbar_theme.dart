@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../constants/sizes.dart';
 
-/// Başlık çubuğu (TASARIM.md §6).
+/// Başlık çubuğu teması.
 ///
-/// Beyaz zemin, **gölgesiz**, altında 1px çizgi. Referansta zemin saydamdı ve
-/// bazı ekranlarda koyu kavisli bir başlık çiziliyordu; yeni tasarımda başlık
-/// her yerde aynı sade beyaz bant. Ayrım gölgeyle değil çizgiyle veriliyor.
+/// TASARIM.md §6: **beyaz zemin, gölgesiz**, başlık `w700` 18px.
+/// Altındaki 1px çizgi burada verilemiyor (AppBarTheme'in böyle bir alanı yok);
+/// onu `common/widgets/appbar/appbar.dart` çiziyor — bu yüzden `elevation` ve
+/// `scrolledUnderElevation` sıfır bırakıldı, yoksa kaydırınca gölge belirirdi.
 class TAppBarTheme {
   TAppBarTheme._();
 
@@ -16,7 +17,6 @@ class TAppBarTheme {
     scrolledUnderElevation: 0,
     backgroundColor: TColors.white,
     surfaceTintColor: Colors.transparent,
-    shape: Border(bottom: BorderSide(color: TColors.borderSecondary, width: TSizes.dividerHeight)),
     iconTheme: IconThemeData(color: TColors.iconPrimaryLight, size: TSizes.iconMd),
     actionsIconTheme: IconThemeData(color: TColors.iconPrimaryLight, size: TSizes.iconMd),
     titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: TColors.textPrimary, fontFamily: 'Poppins'),
@@ -26,11 +26,10 @@ class TAppBarTheme {
     elevation: 0,
     centerTitle: false,
     scrolledUnderElevation: 0,
-    backgroundColor: TColors.darkSurface,
+    backgroundColor: TColors.dark,
     surfaceTintColor: Colors.transparent,
-    shape: Border(bottom: BorderSide(color: TColors.darkBorder, width: TSizes.dividerHeight)),
     iconTheme: IconThemeData(color: TColors.iconPrimaryDark, size: TSizes.iconMd),
     actionsIconTheme: IconThemeData(color: TColors.iconPrimaryDark, size: TSizes.iconMd),
-    titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: TColors.white, fontFamily: 'Poppins'),
+    titleTextStyle: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700, letterSpacing: -0.2, color: TColors.light, fontFamily: 'Poppins'),
   );
 }

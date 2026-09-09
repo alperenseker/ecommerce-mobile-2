@@ -1,8 +1,9 @@
-/// Şifre değiştirme formu: mevcut şifre + yeni şifre + tekrar.
+/// Şifre değiştirme ekranı: mevcut şifre + yeni şifre + tekrar.
 ///
-/// Doğrulama `TValidator.validatePassword` üzerinden yapılıyor: en az 6
-/// karakter (sunucunun kuralı) **artı** büyük harf/rakam/özel karakter
-/// (istemcinin ek kuralı, referansla aynı — bkz. `utils/validators`).
+/// ⚠️ Yeni şifre kuralı `TValidator.validatePassword` — en az 6 karakter,
+/// artı bir büyük harf, bir rakam ve bir özel karakter (referanstaki kural,
+/// olduğu gibi korundu). Sunucu bundan **daha gevşek**: kısa şifreleri de
+/// kabul ediyor. Kuralı gevşetmek istersen tek yer o doğrulayıcıdır.
 library;
 
 import 'package:flutter/material.dart';
@@ -29,15 +30,15 @@ class ChangePasswordScreen extends StatelessWidget {
         showSkipButton: false,
         title: Text(TTexts.changePassword.tr, style: Theme.of(context).textTheme.headlineSmall),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(TSizes.defaultSpace),
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(TSizes.defaultSpace),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                TTexts.changePasswordSubTitle.tr,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: TColors.textSecondary),
+                TTexts.changePasswordHint.tr,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: TColors.textSecondary),
               ),
               const SizedBox(height: TSizes.spaceBtwSections),
 
@@ -81,16 +82,15 @@ class ChangePasswordScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: TSizes.spaceBtwInputFields),
 
-                    /// -- Yeni şifre (tekrar)
+                    /// -- Yeni şifre tekrar
                     Obx(
                       () => TextFormField(
                         controller: controller.confirmPassword,
                         obscureText: controller.hideConfirm.value,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return TValidator.validateEmptyText(TTexts.confirmPassword.tr, value);
+                            return TValidator.validateEmptyText(TTexts.confirmNewPassword.tr, value);
                           }
-                          // Eşleşme kontrolü: sunucuya gitmeden burada yakalanır.
                           if (value.trim() != controller.newPassword.text.trim()) {
                             return TTexts.passwordsDoNotMatch.tr;
                           }
@@ -113,7 +113,10 @@ class ChangePasswordScreen extends StatelessWidget {
 
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: () => controller.changePassword(), child: Text(TTexts.save.tr)),
+                child: ElevatedButton(
+                  onPressed: () => controller.changePassword(),
+                  child: Text(TTexts.save.tr),
+                ),
               ),
             ],
           ),

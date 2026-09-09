@@ -1,13 +1,10 @@
-/// Yüklenmiş görsel kaydı.
-library;
-
 import 'dart:typed_data';
 
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 
 import '../../../utils/formatters/formatter.dart';
 
-/// Model class representing user data.
+/// Yüklenen görselin modeli (url, ad, boyut, yükleyen).
 class ImageModel {
   String id;
   final String url;

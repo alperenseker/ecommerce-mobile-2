@@ -1,15 +1,17 @@
-/// Çeviri katmanının **yükleyicisi**.
+/// Uygulamanın çeviri kaynağı.
 ///
-/// Sözlüklerin kendisi `Languages/` altındaki 10 dosyadadır (~800 anahtar ×
-/// 10 dil). Hepsini birden belleğe almak boşuna: kullanıcı yalnız birini
-/// görüyor ve haritalar toplamda birkaç yüz KB tutuyor. Bu yüzden [keys]
-/// açılışta **yalnız iki** harita kurar — **İngilizce (yedek)** ve
-/// **kullanıcının kayıtlı dili**; dil değişince [ensureLoaded] o dili
-/// `Get.addTranslations` ile ekler.
+/// On dilin sözlüğü birlikte ~400 KB metin tutuyor; kullanıcı yalnız birini
+/// görüyor. Bu yüzden [keys] açılışta **hepsini** değil yalnız
+///   * İngilizceyi (yedek dil) ve
+///   * kayıtlı dili
+/// döndürür. Kullanıcı dili değiştirdiğinde [ensureLoaded] o dilin haritasını
+/// `Get.addTranslations` ile **istek üzerine** ekler — böylece ekranda bir an
+/// için ham anahtar görünmez.
 ///
-/// Yedek dil daima yüklü olduğu için, bir dilde eksik kalan anahtar ekranda
-/// ham anahtar (`someKey.someOther`) olarak değil İngilizce olarak görünür.
-/// (Bugün eksik anahtar yok: on dosyanın anahtar kümesi birebir aynı.)
+/// 🔴 [_builders] değerleri **fonksiyondur**, sabit harita değil. Doğrudan
+/// `English.language` yazılırsa Dart sınıf yüklenirken on sözlüğü birden
+/// belleğe alır ve tembel yükleme anlamını yitirir — bu satırları sabit
+/// haritaya çevirme.
 library;
 
 import 'package:get/get.dart';
@@ -27,45 +29,37 @@ import 'Languages/turkish.dart';
 import 'Languages/vietnamese.dart';
 
 class Languages extends Translations {
-  /// Dil haritalarının **tembel üreticileri**, GetX çeviri anahtarına göre.
-  ///
-  /// Değer bir `Function()` — harita ancak çağrıldığında kurulur. Buraya
-  /// doğrudan `English.language` yazılsaydı sınıf yüklenirken **on dilin
-  /// tamamı** belleğe alınırdı ve tembel yüklemenin anlamı kalmazdı.
-  ///
-  /// Anahtar sırası dil ekranındaki sıradır: Kazakça · Rusça · Türkçe ·
-  /// İngilizce, sonra diğerleri (`LanguageController.allLanguages`).
+  /// Her çeviri haritasının **tembel** üreticisi, GetX çeviri anahtarına göre.
   static final Map<String, Map<String, String> Function()> _builders = {
-    'kk': () => Kazakh.language,
-    'ru': () => Russian.language,
-    'tr': () => Turkish.language,
     'en_US': () => English.language,
     'fr': () => French.language,
+    'ru': () => Russian.language,
     'de': () => German.language,
-    'es': () => Spanish.language,
     'pt': () => Portuguese.language,
     'pt_BR': () => PortugueseBR.language,
     'vi': () => Vietnamese.language,
+    'es': () => Spanish.language,
+    'tr': () => Turkish.language,
+    'kk': () => Kazakh.language,
   };
 
-  /// Depodaki dil kodunu (`en`) çeviri anahtarına (`en_US`) çevirir.
-  /// Diğer kodlar anahtarlarıyla birebir aynıdır.
+  /// Depodaki dil kodunu (`'en'`) GetX çeviri anahtarına (`'en_US'`) çevirir;
+  /// diğerleri anahtarlarıyla birebir eşleşir.
   static String _trKey(String code) => code == 'en' ? 'en_US' : code;
 
-  /// Bir dilin sözlüğü **gerçekten var mı**. Dil ekranı, çevirisi olmayan
-  /// bir dilde İngilizceye düşmek için bunu sorar.
-  static bool hasTranslation(String code) => _builders.containsKey(_trKey(code));
+  /// [languageCode] için bir sözlük kayıtlı mı.
+  static bool hasTranslation(String languageCode) => _builders.containsKey(_trKey(languageCode));
 
   @override
   Map<String, Map<String, String>> get keys {
     final result = <String, Map<String, String>>{};
 
-    // Yedek dil daima yüklü olmalı; çevirisi olmayan anahtar buraya düşer.
+    // Yedek dil her zaman yüklü olmalı.
     final fallback = _builders['en_US'];
     if (fallback != null) result['en_US'] = fallback();
 
-    // Artı kullanıcının kayıtlı dili — uygulama açılışta zaten çevrili gelsin,
-    // diğer 8 harita hiç okunmasın.
+    // Artı kayıtlı dil — uygulama diğer sekiz haritayı hiç okumadan çevrili
+    // açılsın diye.
     final saved = GetStorage().read<String>('language');
     if (saved != null) {
       final key = _trKey(saved);
@@ -75,15 +69,10 @@ class Languages extends Translations {
     return result;
   }
 
-  /// [languageCode] sözlüğünü **istek üzerine** belleğe alır.
-  ///
-  /// Dil değiştirilmeden ÖNCE çağrılır; yoksa ekran bir kare boyunca ham
-  /// anahtar gösterir. Zaten yüklüyse hiçbir şey yapmaz.
+  /// [languageCode] sözlüğünü, dil değiştirilmeden **önce** GetX'e yükler.
   static void ensureLoaded(String languageCode) {
     final key = _trKey(languageCode);
     final builder = _builders[key];
-    if (builder == null) return;
-    if (Get.translations.containsKey(key)) return;
-    Get.addTranslations({key: builder()});
+    if (builder != null) Get.addTranslations({key: builder()});
   }
 }
