@@ -34,6 +34,10 @@ class ProductCardAddToCartButton extends StatelessWidget {
   /// Yatay kartta daha kısa düğme.
   final bool compact;
 
+  /// Düğme ve adımlayıcı AYNI yükseklikte: ürün sepete girdiğinde kartın
+  /// dibi zıplamasın, ızgaradaki kartlar aynı hizada kalsın.
+  double get _height => compact ? 30 : 36;
+
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunctions.isDarkMode(context);
@@ -46,12 +50,17 @@ class ProductCardAddToCartButton extends StatelessWidget {
       if (quantity > 0) {
         return SizedBox(
           width: double.infinity,
-          height: compact ? 28 : 32,
+          height: _height,
           child: Center(
+            // 🔴 Ölçüler büyütüldü: düğmeler 28x28 ve ikonlar **8px**
+            // (`TSizes.sm`) idi — artı/eksi işaretleri okunmuyor, dokunma
+            // hedefi parmağın altında kayboluyordu. Adımlayıcı artık "sepete
+            // ekle" düğmesiyle aynı yükseklikte, ikonlar iki katı.
             child: TProductQuantityWithAddRemoveButton(
-              width: compact ? 24 : 28,
-              height: compact ? 24 : 28,
-              iconSize: TSizes.sm,
+              width: compact ? 28 : 32,
+              height: compact ? 28 : 32,
+              iconSize: compact ? 14 : 16,
+              dense: true,
               quantity: quantity,
               add: () => cartController.addOneToCart(cartController.convertToCartItem(product, 1)),
               remove: () => cartController.removeOneFromCart(cartController.convertToCartItem(product, 1)),
@@ -66,7 +75,7 @@ class ProductCardAddToCartButton extends StatelessWidget {
   Widget _button(BuildContext context, bool dark, bool orderable) {
     return SizedBox(
       width: double.infinity,
-      height: compact ? 28 : 32,
+      height: _height,
       child: OutlinedButton(
         onPressed: orderable ? () => _addToCart() : null,
         style: OutlinedButton.styleFrom(

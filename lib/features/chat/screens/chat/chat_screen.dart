@@ -34,9 +34,10 @@ import '../../../../common/widgets/loaders/delayed_loader.dart';
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.showBackArrow = true});
 
-  /// Alt gezinmenin **destek sekmesi** olarak açıldığında geri oku çizilmez:
-  /// sekme geri gidilecek bir yer değil, ok basılınca kabuğun rotasını
-  /// atıyordu. İtilerek (başlıktan, menüden) açıldığında ok yerinde.
+  /// Ekran gömülü olarak (bir sekmenin gövdesi gibi) çizilirse geri oku
+  /// kapatılabilir: sekme geri gidilecek bir yer değil, ok basılınca kabuğun
+  /// rotasını atıyor. Bugün destek her yerden İTİLEREK açılıyor (yan menü,
+  /// profil ekranı), o yüzden varsayılan `true`.
   final bool showBackArrow;
 
   @override

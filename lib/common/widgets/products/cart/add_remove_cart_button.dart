@@ -23,6 +23,7 @@ class TProductQuantityWithAddRemoveButton extends StatefulWidget {
     this.width = 32,
     this.height = 32,
     this.iconSize = 14,
+    this.dense = false,
     required this.remove,
     required this.quantity,
     this.onQuantitySet,
@@ -36,6 +37,11 @@ class TProductQuantityWithAddRemoveButton extends StatefulWidget {
   final int quantity;
   final double width, height;
   final double? iconSize;
+
+  /// Ürün kartı gibi dar yerler için: sayı kutusu biraz daha dar ve dolgusu
+  /// kısa olur, böylece adımlayıcı düğme yüksekliğine sığar.
+  final bool dense;
+
   final Color addBackgroundColor, removeBackgroundColor;
   final Color addForegroundColor, removeForegroundColor;
 
@@ -110,7 +116,7 @@ class _TProductQuantityWithAddRemoveButtonState extends State<TProductQuantityWi
         ),
         const SizedBox(width: TSizes.xs),
         Container(
-          width: 52,
+          width: widget.dense ? 46 : 52,
           decoration: BoxDecoration(
             color: dark ? TColors.darkSurface : TColors.lightContainer,
             borderRadius: BorderRadius.circular(TSizes.borderRadiusSm),
@@ -122,7 +128,9 @@ class _TProductQuantityWithAddRemoveButtonState extends State<TProductQuantityWi
             textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: Theme.of(context).textTheme.titleMedium,
+            style: widget.dense
+                ? Theme.of(context).textTheme.bodyLarge
+                : Theme.of(context).textTheme.titleMedium,
             onChanged: _onChanged,
             onSubmitted: (_) => _focusNode.unfocus(),
             // Alan dışına dokunmak (boşluk, +/-, "sepete ekle") önce klavyeyi
@@ -130,13 +138,15 @@ class _TProductQuantityWithAddRemoveButtonState extends State<TProductQuantityWi
             onTapOutside: (_) {
               if (_focusNode.hasFocus) _focusNode.unfocus();
             },
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               filled: false,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(vertical: TSizes.sm + 2),
+              contentPadding: EdgeInsets.symmetric(
+                vertical: widget.dense ? TSizes.xs + 2 : TSizes.sm + 2,
+              ),
             ),
           ),
         ),

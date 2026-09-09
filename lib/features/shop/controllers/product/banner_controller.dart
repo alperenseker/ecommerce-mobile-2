@@ -92,7 +92,9 @@ class BannerController extends GetxController {
         Get.toNamed(TRoutes.favourites);
         break;
       case BannerTargetType.cart:
-        Get.toNamed(TRoutes.cart);
+        // Sepet artık 3. sekme (ana sayfa · mağaza · sepet · profil).
+        AppScreenController.instance.selectedMenu.value = 2;
+        Get.toNamed(TRoutes.homeMenu);
         break;
       case BannerTargetType.orders:
         Get.toNamed(TRoutes.order);

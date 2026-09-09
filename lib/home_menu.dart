@@ -8,8 +8,9 @@ import 'utils/constants/colors.dart';
 import 'utils/constants/sizes.dart';
 import 'utils/helpers/helper_functions.dart';
 
-import 'features/chat/screens/chat/chat_screen.dart';
 import 'features/personalization/screens/setting/settings.dart';
+import 'features/shop/controllers/product/cart_controller.dart';
+import 'features/shop/screens/cart/cart.dart';
 import 'features/shop/screens/home/home.dart';
 import 'features/shop/screens/store/store.dart';
 
@@ -120,7 +121,12 @@ class HomeMenu extends StatelessWidget {
                         children: [
                           _tab(controller, 0, Iconsax.home),
                           _tab(controller, 1, Iconsax.shop),
-                          _tab(controller, 2, Iconsax.headphone),
+                          _tab(
+                            controller,
+                            2,
+                            Iconsax.shopping_bag,
+                            count: CartController.instance.noOfCartItems.value,
+                          ),
                           _tab(controller, 3, Iconsax.user),
                         ],
                       ),
@@ -138,10 +144,20 @@ class HomeMenu extends StatelessWidget {
 
   /// Tek sekme: seçiliyken ikon indigoya döner ve arkasında yumuşak hap belirir.
   ///
-  /// Sayaç balonu YOK: sayacı olan tek sekme sepetti, o da başlığa taşındı.
-  Widget _tab(AppScreenController controller, int index, IconData icon) {
+  /// [count] sıfırdan büyükse sayaç balonu çizilir (sepet). Sıfırsa balon HİÇ
+  /// çizilmez — "0" yazan balon boş sepette de dikkat çekiyordu. Balon rengi
+  /// TASARIM.md §2'deki `deal`.
+  Widget _tab(AppScreenController controller, int index, IconData icon, {int count = 0}) {
     final selected = controller.selectedMenu.value == index;
-    final child = Icon(icon, size: _iconSize, color: selected ? TColors.primary : TColors.darkGrey);
+    Widget child = Icon(icon, size: _iconSize, color: selected ? TColors.primary : TColors.darkGrey);
+    if (count > 0) {
+      child = Badge(
+        backgroundColor: TColors.deal,
+        textColor: TColors.white,
+        label: Text('$count', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+        child: child,
+      );
+    }
 
     return Expanded(
       child: InkWell(
@@ -188,21 +204,21 @@ class AppScreenController extends GetxController {
   /// Yan menüyü açar (başlıktaki menü düğmesi çağırır).
   void openMenu() => scaffoldKey.currentState?.openDrawer();
 
-  /// Dört sekme: ana sayfa · mağaza · destek · profil.
+  /// Dört sekme: ana sayfa · mağaza · sepet · profil.
   ///
   /// 🔴 İstek listesi ve karşılaştırma buradan KALKTI: ikisi de her gün
   /// açılan yerler değil, ürün kartındaki kalp/terazi ile beslenen
-  /// **birikimler**. Alt çubuğun iki değerli yuvasını tutuyorlardı; artık
-  /// profil sekmesinin içindeler. Sepet de başlığa çıktı
-  /// (`TAppBarActions`), yerlerine her ekrandan tek dokunuşla açılması
-  /// anlamlı olan destek ve profil geldi.
+  /// **birikimler**; artık profil sekmesinin içindeler. Canlı destek de bir
+  /// süre burada durdu ama alt çubuk günlük yolun yeri: destek kapısı yan
+  /// menüde ve profil ekranında duruyor, yuvasını **sepet** aldı —
+  /// alışverişin her adımında bakılan yer başparmağın altında olmalı.
   ///
-  /// İkisi de **sekme kipinde** açılıyor: geri okları yok, çünkü alt
+  /// Sepet ve profil **sekme kipinde** açılıyor: geri okları yok, çünkü alt
   /// gezinmenin bir sekmesi geri gidilecek bir yer değil.
   final screens = const [
     HomeScreen(),
     StoreScreen(),
-    ChatScreen(showBackArrow: false),
+    CartScreen(),
     SettingsScreen(isTab: true),
   ];
 }
